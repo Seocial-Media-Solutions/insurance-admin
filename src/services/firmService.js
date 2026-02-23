@@ -2,8 +2,8 @@ import apiClient from './apiClient';
 
 export const firmService = {
     // Get all firms
-    getAll: async () => {
-        const { data } = await apiClient.get('/casefirm');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/casefirm', { params: { page, limit } });
         return data;
     },
 

@@ -2,10 +2,11 @@ import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCases } from "../context/useCases";
 import CaseTable from "../components/Case/CaseTable";
+import Pagination from "../components/Ui/Pagination";
 import { Search, X, Plus, Download, Filter, Loader2 } from "lucide-react";
 
 export default function CaseManagement() {
-  const { cases, loading, removeCase } = useCases();
+  const { cases, loading, removeCase, currentPage, totalPages, total, limit, goToPage } = useCases();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
@@ -120,6 +121,15 @@ export default function CaseManagement() {
         onView={(c) => navigate(`/cases/view/${c._id}`)}
         onEdit={(c) => navigate(`/cases/edit/${c._id}`)}
         onDelete={removeCase}
+      />
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        total={total}
+        limit={limit}
+        onPageChange={goToPage}
       />
     </div>
   );

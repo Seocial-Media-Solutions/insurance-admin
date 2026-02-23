@@ -7,18 +7,19 @@ const CaseContext = createContext();
 export function CaseProvider({ children }) {
     const [cases, setCases] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
 
-    const loadCases = async () => {
+    const loadCases = async (page = currentPage) => {
         setLoading(true);
         try {
-            const resp = await caseService.getAll();
-            // Assuming response structure is { data: [...] } or { data: { data: [...] } }
-            // Based on useCases.js: const { data } = await getCases(); setCases(data.data);
-            // caseService.getAll() returns `data` from axios response directly.
-            // So if API returns { success: true, data: [...] }, then resp is that object.
-            // useCases.js had `setCases(data.data)`.
-            // Let's assume standard response structure.
+            const resp = await caseService.getAll({ page, limit });
             setCases(resp.data || []);
+            setTotalPages(resp.totalPages || 1);
+            setTotal(resp.total || 0);
+            setCurrentPage(resp.currentPage || page);
         } catch (err) {
             console.error("Error loading cases:", err);
             toast.error("Failed to load cases");
@@ -27,11 +28,17 @@ export function CaseProvider({ children }) {
         }
     };
 
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            loadCases(page);
+        }
+    };
+
     const addNewCase = async (formData) => {
         try {
             await caseService.create(formData);
             toast.success("Case added successfully");
-            loadCases();
+            loadCases(1);
         } catch (err) {
             console.error(err);
             toast.error("Failed to add case");
@@ -72,13 +79,18 @@ export function CaseProvider({ children }) {
     };
 
     useEffect(() => {
-        loadCases();
+        loadCases(1);
     }, []);
 
     const value = {
         cases,
         loading,
+        currentPage,
+        totalPages,
+        total,
+        limit,
         loadCases,
+        goToPage,
         addNewCase,
         updateExistingCase,
         removeCase,

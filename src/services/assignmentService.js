@@ -2,8 +2,8 @@ import apiClient from './apiClient';
 
 export const assignmentService = {
     // Get all assignments
-    getAll: async () => {
-        const { data } = await apiClient.get('/assignments');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/assignments', { params: { page, limit } });
         return data;
     },
 

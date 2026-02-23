@@ -2,8 +2,8 @@ import apiClient from './apiClient';
 
 export const fieldExecutiveService = {
     // Get all field executives
-    getAll: async () => {
-        const { data } = await apiClient.get('/field-executives');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/field-executives', { params: { page, limit } });
         return data;
     },
 

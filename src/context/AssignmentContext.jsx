@@ -7,12 +7,19 @@ const AssignmentContext = createContext();
 export function AssignmentProvider({ children }) {
     const [assignments, setAssignments] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
 
-    const loadAssignments = async () => {
+    const loadAssignments = async (page = currentPage) => {
         setLoading(true);
         try {
-            const resp = await assignmentService.getAll();
+            const resp = await assignmentService.getAll({ page, limit });
             setAssignments(resp.data || []);
+            setTotalPages(resp.totalPages || 1);
+            setTotal(resp.total || 0);
+            setCurrentPage(resp.currentPage || page);
         } catch (err) {
             console.error("Error loading assignments:", err);
             toast.error("Failed to load assignments");
@@ -21,11 +28,17 @@ export function AssignmentProvider({ children }) {
         }
     };
 
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            loadAssignments(page);
+        }
+    };
+
     const addAssignment = async (data) => {
         try {
             await assignmentService.create(data);
             toast.success("Assignment created successfully");
-            loadAssignments();
+            loadAssignments(1);
         } catch (err) {
             console.error(err);
             toast.error("Failed to create assignment");
@@ -55,7 +68,7 @@ export function AssignmentProvider({ children }) {
     };
 
     useEffect(() => {
-        loadAssignments();
+        loadAssignments(1);
     }, []);
 
     const getAssignmentsByCaseId = async (caseId) => {
@@ -83,7 +96,12 @@ export function AssignmentProvider({ children }) {
     const value = {
         assignments,
         loading,
+        currentPage,
+        totalPages,
+        total,
+        limit,
         loadAssignments,
+        goToPage,
         addAssignment,
         updateAssignment,
         deleteAssignment,

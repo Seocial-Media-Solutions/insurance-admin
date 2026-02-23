@@ -2,8 +2,8 @@ import apiClient from './apiClient';
 
 export const caseService = {
     // Get all cases
-    getAll: async () => {
-        const { data } = await apiClient.get('/cases');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/cases', { params: { page, limit } });
         return data;
     },
 

@@ -32,10 +32,10 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
   useEffect(() => {
     (async () => {
       try {
-        const caseRes = await axios.get("http://localhost:5000/api/cases");
+        const caseRes = await axios.get("https://insurance-backend-hvk0.onrender.com/api/cases");
         if (caseRes.data.success) setCases(caseRes.data.data);
 
-        const execRes = await axios.get("http://localhost:5000/api/field-executives");
+        const execRes = await axios.get("https://insurance-backend-hvk0.onrender.com/api/field-executives");
         if (execRes.data.success) setExecutives(execRes.data.data);
       } catch (err) {
         toast.error("Failed loading data");
@@ -159,10 +159,10 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/assignments", formData);
+      const res = await axios.post("https://insurance-backend-hvk0.onrender.com/api/assignments", formData);
 
       if (res.data.success) {
-       
+
 
         setFormData({
           caseId: "",

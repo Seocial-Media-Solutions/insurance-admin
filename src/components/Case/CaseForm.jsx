@@ -101,7 +101,7 @@ export default function CaseForm({
   const fetchCaseFirmsList = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/casefirm/city/${city}`
+        `https://insurance-backend-hvk0.onrender.com/api/casefirm/city/${city}`
       );
       const data = await res.json();
 

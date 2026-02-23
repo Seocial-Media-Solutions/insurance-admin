@@ -3,7 +3,7 @@ import axios from "axios";
 import { toast } from "react-hot-toast";
 import DragDropUpload from "./Ui/DragDropUpload";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://insurance-backend-hvk0.onrender.com/api";
 
 /* ---------------------------------------------------
    HELPER: Format camelCase to Title Case

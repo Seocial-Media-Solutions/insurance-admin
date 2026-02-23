@@ -3,9 +3,10 @@ import toast from "react-hot-toast";
 import { Plus, Edit, Trash2, X } from "lucide-react";
 import { confirmToast } from "../components/Ui/ConfirmToast";
 import { useFirms } from "../context/FirmContext";
+import Pagination from "../components/Ui/Pagination";
 
 function CaseFirmPage() {
-  const { firms, loading, addFirm, updateFirm, deleteFirm } = useFirms();
+  const { firms, loading, addFirm, updateFirm, deleteFirm, currentPage, totalPages, total, limit, goToPage } = useFirms();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Form data — backend requires 5 fields
@@ -183,6 +184,15 @@ function CaseFirmPage() {
               </table>
             </div>
           )}
+
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            total={total}
+            limit={limit}
+            onPageChange={goToPage}
+          />
         </div>
       </div>
 

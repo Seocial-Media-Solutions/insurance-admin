@@ -7,7 +7,7 @@ export default function AddFieldExecutive() {
   const navigate = useNavigate();
 
   const handleSubmit = async (data) => {
-    const res = await fetch("http://localhost:5000/api/field-executives", {
+    const res = await fetch("https://insurance-backend-hvk0.onrender.com/api/field-executives", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

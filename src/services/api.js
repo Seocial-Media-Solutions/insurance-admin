@@ -12,7 +12,7 @@ export const odCaseApi = {
     },
 
     // Get paginated OD cases
-    getAll: async ({ page = 1, limit = 20 } = {}) => {
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
         const { data } = await apiClient.get('/od-cases', {
             params: { page, limit },
         });
@@ -63,7 +63,7 @@ export const theftCaseApi = {
     },
 
     // Get paginated theft cases
-    getAll: async ({ page = 1, limit = 20 } = {}) => {
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
         const { data } = await apiClient.get('/theft-cases', {
             params: { page, limit },
         });
@@ -108,8 +108,8 @@ export const theftCaseApi = {
 
 export const fieldExecutiveApi = {
     // Get all field executives
-    getAll: async () => {
-        const { data } = await apiClient.get('/field-executives');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/field-executives', { params: { page, limit } });
         return data;
     },
 
@@ -150,8 +150,8 @@ export const fieldExecutiveApi = {
 
 export const caseAssignmentApi = {
     // Get all assignments
-    getAll: async () => {
-        const { data } = await apiClient.get('/case-assignments');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/case-assignments', { params: { page, limit } });
         return data;
     },
 
@@ -186,8 +186,8 @@ export const caseAssignmentApi = {
 
 export const caseApi = {
     // Get all cases
-    getAll: async () => {
-        const { data } = await apiClient.get('/cases');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/cases', { params: { page, limit } });
         return data;
     },
 
@@ -222,8 +222,8 @@ export const caseApi = {
 
 export const caseFirmApi = {
     // Get all firms
-    getAll: async () => {
-        const { data } = await apiClient.get('/case-firms');
+    getAll: async ({ page = 1, limit = 10 } = {}) => {
+        const { data } = await apiClient.get('/case-firms', { params: { page, limit } });
         return data;
     },
 

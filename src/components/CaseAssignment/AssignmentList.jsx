@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Pagination from "../Ui/Pagination";
 
 const AssignmentList = () => {
   const [assignments, setAssignments] = useState([]);
@@ -20,23 +21,39 @@ const AssignmentList = () => {
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortField, setSortField] = useState("assignedDate");
   const [sortDirection, setSortDirection] = useState("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchAssignments();
+    fetchAssignments(1);
   }, []);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = async (page = 1) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/assignments");
+      const response = await axios.get(
+        `https://insurance-backend-hvk0.onrender.com/api/assignments`,
+        { params: { page, limit } }
+      );
       if (response.data.success) {
         setAssignments(response.data.data);
+        setTotalPages(response.data.totalPages || 1);
+        setTotal(response.data.total || 0);
+        setCurrentPage(response.data.currentPage || page);
       }
     } catch (error) {
       toast.error("Failed to fetch assignments");
       console.error("Error fetching assignments:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchAssignments(page);
     }
   };
 
@@ -54,12 +71,12 @@ const AssignmentList = () => {
                 toast.dismiss(t.id);
                 toast.promise(
                   axios.delete(
-                    `http://localhost:5000/api/assignments/${assignmentId}`
+                    `https://insurance-backend-hvk0.onrender.com/api/assignments/${assignmentId}`
                   ),
                   {
                     loading: "Deleting assignment...",
                     success: () => {
-                      fetchAssignments();
+                      fetchAssignments(currentPage);
                       return "Assignment deleted successfully!";
                     },
                     error: "Failed to delete assignment",
@@ -398,8 +415,7 @@ const AssignmentList = () => {
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
         <div className="flex justify-between items-center text-sm text-gray-600">
           <span>
-            Showing {filteredAssignments.length} of {assignments.length}{" "}
-            assignments
+            Showing {assignments.length} of {total} assignments
           </span>
           <div className="flex space-x-4">
             <span className="flex items-center">
@@ -420,6 +436,15 @@ const AssignmentList = () => {
           </div>
         </div>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        total={total}
+        limit={limit}
+        onPageChange={goToPage}
+      />
     </div>
   );
 };

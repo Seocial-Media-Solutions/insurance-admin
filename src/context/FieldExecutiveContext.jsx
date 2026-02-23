@@ -7,12 +7,19 @@ const FieldExecutiveContext = createContext();
 export function FieldExecutiveProvider({ children }) {
     const [executives, setExecutives] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
 
-    const loadExecutives = async () => {
+    const loadExecutives = async (page = currentPage) => {
         setLoading(true);
         try {
-            const resp = await fieldExecutiveService.getAll();
+            const resp = await fieldExecutiveService.getAll({ page, limit });
             setExecutives(resp.data || []);
+            setTotalPages(resp.totalPages || 1);
+            setTotal(resp.total || 0);
+            setCurrentPage(resp.currentPage || page);
         } catch (err) {
             console.error("Error loading Field Executives:", err);
             toast.error("Failed to load Field Executives");
@@ -21,11 +28,17 @@ export function FieldExecutiveProvider({ children }) {
         }
     };
 
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            loadExecutives(page);
+        }
+    };
+
     const addExecutive = async (data) => {
         try {
             await fieldExecutiveService.create(data);
             toast.success("Field Executive created successfully");
-            loadExecutives();
+            loadExecutives(1);
         } catch (err) {
             console.error(err);
             toast.error("Failed to create Field Executive");
@@ -55,13 +68,18 @@ export function FieldExecutiveProvider({ children }) {
     };
 
     useEffect(() => {
-        loadExecutives();
+        loadExecutives(1);
     }, []);
 
     const value = {
         executives,
         loading,
+        currentPage,
+        totalPages,
+        total,
+        limit,
         loadExecutives,
+        goToPage,
         addExecutive,
         updateExecutive,
         deleteExecutive

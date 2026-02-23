@@ -7,12 +7,19 @@ const FirmContext = createContext();
 export function FirmProvider({ children }) {
     const [firms, setFirms] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
 
-    const loadFirms = async () => {
+    const loadFirms = async (page = currentPage) => {
         setLoading(true);
         try {
-            const resp = await firmService.getAll();
+            const resp = await firmService.getAll({ page, limit });
             setFirms(resp.data || []);
+            setTotalPages(resp.totalPages || 1);
+            setTotal(resp.total || 0);
+            setCurrentPage(resp.currentPage || page);
         } catch (err) {
             console.error("Error loading firms:", err);
             toast.error("Failed to load firms");
@@ -21,11 +28,17 @@ export function FirmProvider({ children }) {
         }
     };
 
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            loadFirms(page);
+        }
+    };
+
     const addFirm = async (data) => {
         try {
             await firmService.create(data);
             toast.success("Firm created successfully");
-            loadFirms();
+            loadFirms(1);
             return true;
         } catch (err) {
             console.error(err);
@@ -61,13 +74,18 @@ export function FirmProvider({ children }) {
     };
 
     useEffect(() => {
-        loadFirms();
+        loadFirms(1);
     }, []);
 
     const value = {
         firms,
         loading,
+        currentPage,
+        totalPages,
+        total,
+        limit,
         loadFirms,
+        goToPage,
         addFirm,
         updateFirm,
         deleteFirm

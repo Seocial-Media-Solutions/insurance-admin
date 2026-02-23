@@ -6,36 +6,51 @@ import {
   Search,
   CheckCircle,
   XCircle,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
+import { fieldExecutiveService } from "../../services/fieldExecutiveService";
+import Pagination from "../../components/Ui/Pagination";
 
 export default function FieldExecutiveList() {
   const [fieldExecutives, setFieldExecutives] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10; // executives per page
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
   const navigate = useNavigate();
 
-  // === Fetch all field executives ===
-  const fetchExecutives = async () => {
+  // === Fetch page of field executives ===
+  const fetchExecutives = async (page = 1) => {
+    setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/field-executives");
-      const data = await res.json();
-      if (data.success) setFieldExecutives(data.data);
-      else toast.error("Failed to fetch executives");
+      const data = await fieldExecutiveService.getAll({ page, limit });
+      if (data.success) {
+        setFieldExecutives(data.data);
+        setTotalPages(data.totalPages || 1);
+        setTotal(data.total || 0);
+        setCurrentPage(data.currentPage || page);
+      } else {
+        toast.error("Failed to fetch executives");
+      }
     } catch (err) {
       toast.error("Error loading executives");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchExecutives();
+    fetchExecutives(1);
   }, []);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      fetchExecutives(page);
+    }
+  };
 
   // === Delete executive ===
   const handleDelete = async (id) => {
@@ -47,13 +62,13 @@ export default function FieldExecutiveList() {
             onClick={async () => {
               try {
                 const res = await fetch(
-                  `http://localhost:5000/api/field-executives/${id}`,
+                  `https://insurance-backend-hvk0.onrender.com/api/field-executives/${id}`,
                   { method: "DELETE" }
                 );
                 const result = await res.json();
                 if (result.success) {
                   toast.success("Executive deleted");
-                  fetchExecutives();
+                  fetchExecutives(currentPage);
                 } else {
                   toast.error(result.message || "Delete failed");
                 }
@@ -82,32 +97,15 @@ export default function FieldExecutiveList() {
     navigate(`/field-executives/edit/${exec._id}`);
   };
 
-  // === Filter (search) ===
+  // Client-side search filter on current page data
   const filteredExecutives = fieldExecutives.filter((e) => {
     const query = search.toLowerCase();
     return (
-      e.fullName.toLowerCase().includes(query) ||
-      e.username.toLowerCase().includes(query) ||
-      e.email.toLowerCase().includes(query)
+      e.fullName?.toLowerCase().includes(query) ||
+      e.username?.toLowerCase().includes(query) ||
+      e.email?.toLowerCase().includes(query)
     );
   });
-
-  // === Pagination logic ===
-  const totalPages = Math.ceil(filteredExecutives.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedExecutives = filteredExecutives.slice(startIndex, endIndex);
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  // Reset to page 1 when search changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search]);
 
   return (
     <div className="min-h-screen max-w-full mx-auto">
@@ -167,7 +165,13 @@ export default function FieldExecutiveList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {paginatedExecutives.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
+                    Loading...
+                  </td>
+                </tr>
+              ) : filteredExecutives.length === 0 ? (
                 <tr>
                   <td
                     colSpan="8"
@@ -177,7 +181,7 @@ export default function FieldExecutiveList() {
                   </td>
                 </tr>
               ) : (
-                paginatedExecutives.map((exec) => (
+                filteredExecutives.map((exec) => (
                   <tr
                     key={exec._id}
                     onClick={() => handleEdit(exec)}
@@ -224,48 +228,15 @@ export default function FieldExecutiveList() {
             </tbody>
           </table>
         </div>
-        {/* === Pagination === */}
 
-        <div className="px-2 sm:px-6 py-2 flex items-center justify-between border-t bg-white">
-          <div className="text-sm text-gray-600">
-            Showing {startIndex + 1} to{" "}
-            {Math.min(endIndex, filteredExecutives.length)} of{" "}
-            {filteredExecutives.length} results
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => goToPage(1)}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-gray-100"
-            >
-              <ChevronsLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => goToPage(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-gray-100"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-4 py-2 text-sm font-medium">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() => goToPage(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-gray-100"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => goToPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border transition-all disabled:opacity-30 hover:bg-gray-100"
-            >
-              <ChevronsRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
+        {/* === Pagination === */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          total={total}
+          limit={limit}
+          onPageChange={goToPage}
+        />
       </div>
     </div>
   );
