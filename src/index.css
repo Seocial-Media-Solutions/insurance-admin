@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+/* ======================= */
+/* 🌞 Light Theme Variables */
+/* ======================= */
+
+html{
+  transition: ease;
+}
+
+:root {
+  /* Background & Text */
+  --background: #ffffff;
+  --foreground: #000000; /* main text */
+  --muted-text: #6b7280; /* secondary text / captions */
+
+  /* Card */
+  --card: #f9fafb;
+  --card-text: #1f2937;
+  --card-border: #d1d5db;
+
+  /* Border & Radius */
+  --border-width: 1px;
+  --border-radius: 8px;
+  --border-style: solid;
+
+  --border-default: #b0a9a9;
+  --border-primary: #010914;
+  --border-secondary: #6b7280;
+
+  /* Primary (buttons, highlights) */
+  --primary: #010914;
+  --primary-foreground: #ffffff;
+  --primary-hover: #0a0c2b;
+
+  /* Secondary */
+  --secondary: #6b7280;
+  --secondary-foreground: #ffffff;
+  --secondary-hover: #4b5563;
+
+  /* Accent / Highlights */
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --accent-hover: #2563eb;
+
+  /* Icon colors */
+  --icon-primary: #000000;
+  --icon-secondary: #ffffff;
+  --icon-accent: #3b82f6;
+  --icon-muted: #ffffff;
+}
+
+/* ======================= */
+/* Base Styles & Utilities */
+/* ======================= */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Smooth theme transition */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Cards */
+.card {
+  background-color: var(--card);
+  color: var(--card-text);
+  border: var(--border-width) var(--border-style) var(--card-border);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+}
+
+/* Buttons */
+.button-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+.button-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.button-secondary {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+.button-secondary:hover {
+  background-color: var(--secondary-hover);
+}
+
+.button-accent {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+.button-accent:hover {
+  background-color: var(--accent-hover);
+}
+
+/* Borders */
+.border-default {
+  border: var(--border-width) var(--border-style) var(--border-default);
+  border-radius: var(--border-radius);
+}
+
+.border-primary {
+  border: var(--border-width) var(--border-style) var(--border-primary);
+  border-radius: var(--border-radius);
+}
+
+.border-secondary {
+  border: var(--border-width) var(--border-style) var(--border-secondary);
+  border-radius: var(--border-radius);
+}
+
+/* Inputs / Form fields */
+.input {
+  background-color: var(--card);
+  color: var(--card-text);
+  border: var(--border-width) var(--border-style) var(--border-default);
+  border-radius: var(--border-radius);
+  padding: 0.5rem 1rem;
+}
+.input::placeholder {
+  color: var(--muted-text);
+}
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Icon colors */
+.icon-primary { color: var(--icon-primary); }
+.icon-secondary { color: var(--icon-secondary); }
+.icon-accent { color: var(--icon-accent); }
+.icon-muted { color: var(--icon-muted); }
+
+/* Text Helpers */
+.text-muted { color: var(--muted-text); }
