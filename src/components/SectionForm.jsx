@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import DragDropUpload from "./Ui/DragDropUpload";
-
-const API_BASE = "https://insurance-backend-hvk0.onrender.com/api";
-
+import { API } from "../../utils/api";
+const API_BASE = API;
 /* ---------------------------------------------------
    HELPER: Format camelCase to Title Case
 --------------------------------------------------- */

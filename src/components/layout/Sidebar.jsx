@@ -29,7 +29,7 @@ export default function Sidebar({
     { label: "Field Executive", icon: Users, path: "/field-executives" },
     { label: "Case Assign", icon: ClipboardList, path: "/cases/assignments" },
     // { label: "Investigations", icon: BarChart3, path: "/investigations" },
-     { label: "Active case", icon: BarChart3, path: "/case" },
+    { label: "Active case", icon: BarChart3, path: "/case" },
   ];
 
   // Close sidebar on mobile when clicking a link
@@ -42,19 +42,16 @@ export default function Sidebar({
   return (
     <>
       <aside
-        className={`bg-white border-r border-gray-200 text-black flex-shrink-0 transition-all duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${
-          sidebarCollapsed ? "w-20" : "w-64"
-        } md:translate-x-0 fixed md:sticky top-0 h-screen z-50`}
+        className={`bg-white border-r border-gray-200 text-black flex-shrink-0 transition-all duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } ${sidebarCollapsed ? "w-20" : "w-64"
+          } md:translate-x-0 fixed md:sticky top-0 h-screen z-50`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="h-[75px] p-4 border-b border-gray-200">
             <div
-              className={`flex items-center ${
-                sidebarCollapsed ? "justify-center" : "justify-between"
-              }`}
+              className={`flex items-center ${sidebarCollapsed ? "justify-center" : "justify-between"
+                }`}
             >
               <Link
                 to="/"
@@ -81,21 +78,22 @@ export default function Sidebar({
             {navLinks.map((link) => {
               const IconComponent = link.icon;
               // Active if current pathname matches link.path
-              const active = location.pathname === link.path;
+              const active = link.path === "/"
+                ? location.pathname === "/"
+                : location.pathname === link.path || location.pathname.startsWith(link.path + "/");
 
               return (
                 <Link
                   to={link.path}
                   key={link.label}
                   onClick={() => {
-                    handleLinkClick;
+                    handleLinkClick();
                     setActiveMenu(link.label);
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
-                    active
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${active
                       ? "bg-black text-white shadow-sm"
                       : "hover:bg-gray-100 text-gray-800"
-                  } ${sidebarCollapsed ? "justify-center" : ""}`}
+                    } ${sidebarCollapsed ? "justify-center" : ""}`}
                   title={sidebarCollapsed ? link.label : ""}
                   aria-label={link.label}
                   aria-current={active ? "page" : undefined}
@@ -110,9 +108,8 @@ export default function Sidebar({
           {/* User Section */}
           <div className="p-4 border-t border-gray-200">
             <button
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-all duration-200 ${
-                sidebarCollapsed ? "justify-center" : ""
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-all duration-200 ${sidebarCollapsed ? "justify-center" : ""
+                }`}
               onClick={() => {
                 // Add logout logic here
                 console.log("Logout clicked");

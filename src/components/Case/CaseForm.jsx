@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FileText, Car, User, DollarSign } from "lucide-react";
-
+import { API } from "../../utils/api";
 // State to Cities mapping
 const STATE_CITY_MAP = {
   "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Ajmer", "Bikaner", "Alwar", "Bharatpur"],
@@ -61,6 +61,12 @@ export default function CaseForm({
   const [city, setCity] = useState("Jaipur");
   const [availableCities, setAvailableCities] = useState(STATE_CITY_MAP["Rajasthan"] || []);
 
+  // Extra state for caseRecVia "OTHER" textbox
+  const [caseRecViaOther, setCaseRecViaOther] = useState("");
+  // Extra state for policy period date pickers
+  const [policyPeriodStart, setPolicyPeriodStart] = useState("");
+  const [policyPeriodEnd, setPolicyPeriodEnd] = useState("");
+
   /* --------------------------
      MAIN FORM HANDLER
   -------------------------- */
@@ -101,7 +107,7 @@ export default function CaseForm({
   const fetchCaseFirmsList = async () => {
     try {
       const res = await fetch(
-        `https://insurance-backend-hvk0.onrender.com/api/casefirm/city/${city}`
+        `${API}/casefirm/city/${city}`
       );
       const data = await res.json();
 
@@ -126,7 +132,23 @@ export default function CaseForm({
     e.preventDefault();
     if (!form.caseType) return alert("Select case type");
     if (!form.ourFileNo) return alert("Select CaseFirm");
-    onSubmit(form);
+
+    // Compose policyPeriod as "startDate to endDate" string
+    const composedPolicyPeriod =
+      policyPeriodStart && policyPeriodEnd
+        ? `${policyPeriodStart} to ${policyPeriodEnd}`
+        : form.policyPeriod;
+
+    // If caseRecVia is OTHER, use the typed text
+    const finalCaseRecVia =
+      form.caseRecVia === "OTHER" ? caseRecViaOther : form.caseRecVia;
+
+    onSubmit({
+      ...form,
+      policyPeriod: composedPolicyPeriod,
+      caseRecVia: finalCaseRecVia,
+      contactNo: String(form.contactNo),
+    });
   };
   function generateNextFirmCode(firm) {
     if (!firm || !firm.code) return "";
@@ -250,42 +272,114 @@ export default function CaseForm({
               <div className="space-y-8">
                 <h3 className="text-lg font-bold">Case Information</h3>
 
-                {[
-                  "caseType",
-                  "dtOfCaseRec",
-                  "caseRecVia",
-                  "coClaimNo",
-                  "policyNo",
-                  "policyPeriod",
-                ].map((key) => (
-                  <div key={key}>
-                    <label className="block mb-1">{formatLabel(key)}</label>
+                {/* Case Type */}
+                <div>
+                  <label className="block mb-1">Case Type</label>
+                  <select
+                    name="caseType"
+                    value={form.caseType}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  >
+                    <option value="">Select Case Type</option>
+                    <option value="OD">OD (Own Damage)</option>
+                    <option value="THEFT">THEFT</option>
+                    <option value="TP">TP</option>
+                    <option value="FIRE">Fire</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                </div>
 
-                    {key === "caseType" ? (
-                      <select
-                        name="caseType"
-                        value={form.caseType}
-                        onChange={handleChange}
-                        className="w-full p-3 border rounded-md"
-                      >
-                        <option value="">Select Case Type</option>
-                        <option value="OD">OD (Own Damage)</option>
-                        <option value="THEFT">THEFT</option>
-                        <option value="TP">TP</option>
-                        <option value="FIRE">Fire</option>
-                        <option value="OTHER">Other</option>
-                      </select>
-                    ) : (
+                {/* Dt Of Case Rec */}
+                <div>
+                  <label className="block mb-1">Dt Of Case Rec</label>
+                  <input
+                    type="date"
+                    name="dtOfCaseRec"
+                    value={form.dtOfCaseRec}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  />
+                </div>
+
+                {/* Case Rec Via — Select with OTHER text box */}
+                <div>
+                  <label className="block mb-1">Case Rec Via</label>
+                  <select
+                    name="caseRecVia"
+                    value={form.caseRecVia}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  >
+                    <option value="">Select Option</option>
+                    <option value="BY EMAIL">By Email</option>
+                    <option value="BY HAND">By Hand</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  {form.caseRecVia === "OTHER" && (
+                    <input
+                      type="text"
+                      placeholder="Please specify..."
+                      value={caseRecViaOther}
+                      onChange={(e) => setCaseRecViaOther(e.target.value)}
+                      className="w-full p-3 border rounded-md mt-2"
+                    />
+                  )}
+                </div>
+
+                {/* Co Claim No */}
+                <div>
+                  <label className="block mb-1">Co Claim No</label>
+                  <input
+                    type="text"
+                    name="coClaimNo"
+                    value={form.coClaimNo}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  />
+                </div>
+
+                {/* Policy No */}
+                <div>
+                  <label className="block mb-1">Policy No</label>
+                  <input
+                    type="text"
+                    name="policyNo"
+                    value={form.policyNo}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  />
+                </div>
+
+                {/* Policy Period — Two Date Pickers */}
+                <div>
+                  <label className="block mb-1">Policy Period</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">Start Date</label>
                       <input
-                        type={dateFields.includes(key) ? "date" : "text"}
-                        name={key}
-                        value={form[key]}
-                        onChange={handleChange}
+                        type="date"
+                        value={policyPeriodStart}
+                        onChange={(e) => setPolicyPeriodStart(e.target.value)}
                         className="w-full p-3 border rounded-md"
                       />
-                    )}
+                    </div>
+                    <div>
+                      <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        value={policyPeriodEnd}
+                        onChange={(e) => setPolicyPeriodEnd(e.target.value)}
+                        className="w-full p-3 border rounded-md"
+                      />
+                    </div>
                   </div>
-                ))}
+                  {policyPeriodStart && policyPeriodEnd && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Will be saved as: <strong>{policyPeriodStart} to {policyPeriodEnd}</strong>
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* RIGHT SIDE */}
@@ -299,7 +393,6 @@ export default function CaseForm({
                   "dateOfLoss",
                   "nameOfInsured",
                   "addressOfInsured",
-                  "contactNo",
                 ].map((key) => (
                   <div key={key}>
                     <label className="block mb-1">{formatLabel(key)}</label>
@@ -312,6 +405,21 @@ export default function CaseForm({
                     />
                   </div>
                 ))}
+
+                {/* Contact No — input type number, passed as String */}
+                <div>
+                  <label className="block mb-1">Contact No</label>
+                  <input
+                    type="number"
+                    name="contactNo"
+                    value={form.contactNo}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, contactNo: e.target.value }))
+                    }
+                    className="w-full p-3 border rounded-md"
+                    placeholder="Enter Contact Number"
+                  />
+                </div>
               </div>
             </div>
 

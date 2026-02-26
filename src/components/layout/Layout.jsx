@@ -23,9 +23,10 @@ export default function Layout() {
     { label: "Active case", icon: BarChart3, path: "/case" },
   ];
 
-  // 🎯 Automatically set active menu based on the route
+  // 🎯 Automatically set active menu based on the route (longest path match first)
   useEffect(() => {
-    const current = navLinks.find(
+    const sorted = [...navLinks].sort((a, b) => b.path.length - a.path.length);
+    const current = sorted.find(
       (link) =>
         location.pathname === link.path ||
         location.pathname.startsWith(link.path + "/")
@@ -45,14 +46,6 @@ export default function Layout() {
         setActiveMenu={setActiveMenu}
         navLinks={navLinks} // 👈 pass navLinks to sidebar
       />
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">

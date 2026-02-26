@@ -4,17 +4,19 @@ import { useCases } from "../context/useCases";
 import CaseTable from "../components/Case/CaseTable";
 import Pagination from "../components/Ui/Pagination";
 import { Search, X, Plus, Download, Filter, Loader2 } from "lucide-react";
+import { useGlobalSearch } from "../context/SearchContext";
 
 export default function CaseManagement() {
   const { cases, loading, removeCase, currentPage, totalPages, total, limit, goToPage } = useCases();
-  const [searchQuery, setSearchQuery] = useState("");
+  const { globalSearch } = useGlobalSearch();
   const [statusFilter, setStatusFilter] = useState("all");
   const navigate = useNavigate();
 
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
-      const query = searchQuery.toLowerCase();
+      const query = globalSearch.toLowerCase();
       const match =
+        !query ||
         c.ourFileNo?.toLowerCase().includes(query) ||
         c.policyNo?.toLowerCase().includes(query) ||
         c.vehicleNo?.toLowerCase().includes(query) ||
@@ -22,7 +24,7 @@ export default function CaseManagement() {
       if (statusFilter === "all") return match;
       return match && c.status?.toLowerCase() === statusFilter;
     });
-  }, [cases, searchQuery, statusFilter]);
+  }, [cases, globalSearch, statusFilter]);
 
   if (loading) {
     return (
@@ -76,25 +78,8 @@ export default function CaseManagement() {
         </Link>
       </div>
 
-      {/* Search & Filter */}
+      {/* Filter & Export */}
       <div className="bg-white shadow rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search cases..."
-            className="pl-10 pr-10 py-2 border rounded-lg w-full"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
         <div className="flex items-center gap-2">
           <Filter size={18} className="text-gray-400" />
           <select

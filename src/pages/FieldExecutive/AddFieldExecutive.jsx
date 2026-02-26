@@ -2,12 +2,12 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import FieldExecutiveForm from "../../components/FieldExecutiveForm";
 import toast from "react-hot-toast";
-
+import { API } from "../../utils/api";
 export default function AddFieldExecutive() {
   const navigate = useNavigate();
 
   const handleSubmit = async (data) => {
-    const res = await fetch("https://insurance-backend-hvk0.onrender.com/api/field-executives", {
+    const res = await fetch(`${API}/field-executives`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

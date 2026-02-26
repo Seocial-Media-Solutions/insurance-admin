@@ -12,6 +12,7 @@ import { ODCaseProvider } from "./context/ODCaseContext";
 import { TheftCaseProvider } from "./context/TheftCaseContext";
 import { FieldExecutiveProvider } from "./context/FieldExecutiveContext";
 import { AssignmentProvider } from "./context/AssignmentContext";
+import { SearchProvider } from "./context/SearchContext";
 import { FirmProvider } from "./context/FirmContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -25,7 +26,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
                 <FieldExecutiveProvider>
                   <AssignmentProvider>
                     <FirmProvider>
-                      <Layout />
+                      <SearchProvider>
+                        <Layout />
+                      </SearchProvider>
                     </FirmProvider>
                   </AssignmentProvider>
                 </FieldExecutiveProvider>

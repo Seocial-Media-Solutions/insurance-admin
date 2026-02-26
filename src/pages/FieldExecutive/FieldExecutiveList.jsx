@@ -3,7 +3,6 @@ import {
   Users,
   UserPlus,
   Trash2,
-  Search,
   CheckCircle,
   XCircle,
 } from "lucide-react";
@@ -11,11 +10,13 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { fieldExecutiveService } from "../../services/fieldExecutiveService";
 import Pagination from "../../components/Ui/Pagination";
+import { API } from "../../utils/api";
+import { useGlobalSearch } from "../../context/SearchContext";
 
 export default function FieldExecutiveList() {
   const [fieldExecutives, setFieldExecutives] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const { globalSearch } = useGlobalSearch();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -61,10 +62,9 @@ export default function FieldExecutiveList() {
           <button
             onClick={async () => {
               try {
-                const res = await fetch(
-                  `https://insurance-backend-hvk0.onrender.com/api/field-executives/${id}`,
-                  { method: "DELETE" }
-                );
+                const res = await fetch(`${API}/field-executives/${id}`, {
+                  method: "DELETE",
+                });
                 const result = await res.json();
                 if (result.success) {
                   toast.success("Executive deleted");
@@ -99,7 +99,8 @@ export default function FieldExecutiveList() {
 
   // Client-side search filter on current page data
   const filteredExecutives = fieldExecutives.filter((e) => {
-    const query = search.toLowerCase();
+    if (!globalSearch) return true;
+    const query = globalSearch.toLowerCase();
     return (
       e.fullName?.toLowerCase().includes(query) ||
       e.username?.toLowerCase().includes(query) ||
@@ -130,17 +131,7 @@ export default function FieldExecutiveList() {
         </button>
       </div>
 
-      {/* === Search === */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 text-gray-400" size={18} />
-        <input
-          type="text"
-          placeholder="Search by name, username, or email"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-lg"
-        />
-      </div>
+
 
       {/* === Table === */}
       <div className="bg-card rounded-lg shadow-lg overflow-hidden">

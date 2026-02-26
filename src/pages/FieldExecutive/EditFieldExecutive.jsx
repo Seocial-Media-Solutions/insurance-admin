@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import FieldExecutiveForm from "../../components/FieldExecutiveForm";
 import toast from "react-hot-toast";
+import { API } from "../../utils/api";
 
 export default function EditFieldExecutive() {
   const { id } = useParams();
@@ -10,7 +11,7 @@ export default function EditFieldExecutive() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(`https://insurance-backend-hvk0.onrender.com/api/field-executives/${id}`);
+      const res = await fetch(`${API}/api/field-executives/${id}`);
       const data = await res.json();
       if (data.success) setInitialData(data.data);
     };
@@ -18,7 +19,7 @@ export default function EditFieldExecutive() {
   }, [id]);
 
   const handleSubmit = async (data) => {
-    const res = await fetch(`https://insurance-backend-hvk0.onrender.com/api/field-executives/${id}`, {
+    const res = await fetch(`${API}/api/field-executives/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),

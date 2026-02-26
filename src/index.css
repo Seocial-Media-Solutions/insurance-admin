@@ -48,6 +48,9 @@ html{
   --icon-secondary: #ffffff;
   --icon-accent: #3b82f6;
   --icon-muted: #ffffff;
+
+  /* Border color (used by Dashboard cards) */
+  --border: #e5e7eb;
 }
 
 /* ======================= */
@@ -59,8 +62,8 @@ body {
   font-family: 'Inter', sans-serif;
 }
 
-/* Smooth theme transition */
-* {
+/* Smooth theme transition — scoped to layout elements, not inputs/textareas */
+body, .card, nav, aside, header, main {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -138,3 +141,19 @@ body {
 
 /* Text Helpers */
 .text-muted { color: var(--muted-text); }
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

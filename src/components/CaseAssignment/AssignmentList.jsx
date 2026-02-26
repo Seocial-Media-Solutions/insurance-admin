@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import {
-  Search,
   Filter,
   Eye,
   Edit,
@@ -12,11 +11,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../Ui/Pagination";
+import { API } from "../../utils/api";
+import { useGlobalSearch } from "../../context/SearchContext";
+
 
 const AssignmentList = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const { globalSearch } = useGlobalSearch();
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortField, setSortField] = useState("assignedDate");
@@ -34,7 +36,7 @@ const AssignmentList = () => {
   const fetchAssignments = async (page = 1) => {
     try {
       const response = await axios.get(
-        `https://insurance-backend-hvk0.onrender.com/api/assignments`,
+        `${API}/assignments`,
         { params: { page, limit } }
       );
       if (response.data.success) {
@@ -71,7 +73,7 @@ const AssignmentList = () => {
                 toast.dismiss(t.id);
                 toast.promise(
                   axios.delete(
-                    `https://insurance-backend-hvk0.onrender.com/api/assignments/${assignmentId}`
+                    `${API}/api/assignments/${assignmentId}`
                   ),
                   {
                     loading: "Deleting assignment...",
@@ -134,18 +136,19 @@ const AssignmentList = () => {
   const filteredAssignments = assignments
     .filter((assignment) => {
       const matchesSearch =
+        !globalSearch ||
         assignment.caseId?.ourFileNo
           ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
+          .includes(globalSearch.toLowerCase()) ||
         assignment.caseId?.vehicleNo
           ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
+          .includes(globalSearch.toLowerCase()) ||
         assignment.caseId?.nameOfInsured
           ?.toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
+          .includes(globalSearch.toLowerCase()) ||
         assignment.fieldExecutiveId?.fullName
           ?.toLowerCase()
-          .includes(searchTerm.toLowerCase());
+          .includes(globalSearch.toLowerCase());
 
       const matchesStatus =
         statusFilter === "All" || assignment.status === statusFilter;
@@ -192,22 +195,9 @@ const AssignmentList = () => {
 
   return (
     <div className="bg-white shadow-lg rounded-lg overflow-hidden">
-      {/* Filters and Search */}
+      {/* Filters */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search by File No, Vehicle No, Insured Name, or Executive..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center space-x-2">
               <Filter className="h-4 w-4 text-gray-400" />

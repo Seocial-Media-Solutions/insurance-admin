@@ -5,7 +5,6 @@ import { investigationService } from "../../services/investigationService";
 import { assignmentService } from "../../services/assignmentService";
 import toast from "react-hot-toast";
 import {
-  Search,
   ChevronLeft,
   ChevronRight,
   Calendar,
@@ -13,6 +12,7 @@ import {
   ClipboardList,
   X,
 } from "lucide-react";
+import { useGlobalSearch } from "../../context/SearchContext";
 
 const ALL_COLUMNS = [
   { header: "File No", accessor: "caseId.ourFileNo" },
@@ -39,7 +39,7 @@ export default function CaseList() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
+  const { globalSearch } = useGlobalSearch();
   const [showAssignmentsModal, setShowAssignmentsModal] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
@@ -139,10 +139,10 @@ export default function CaseList() {
     }
   };
 
-  // Filter Data (Client-side simple search for now)
+  // Filter Data (Client-side simple search using global search)
   const filteredData = data.filter((item) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
+    if (!globalSearch) return true;
+    const q = globalSearch.toLowerCase();
 
     // Unified search
     const str = (v) => (v || "").toString().toLowerCase();
@@ -172,17 +172,7 @@ export default function CaseList() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border flex items-center gap-3">
-          <Search className="text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by Ref No, Vehicle No, or Insured Name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 outline-none text-gray-700 placeholder-gray-400"
-          />
-        </div>
+
 
         {/* Table Section */}
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">

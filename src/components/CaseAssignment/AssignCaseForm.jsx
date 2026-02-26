@@ -4,7 +4,8 @@ import toast from "react-hot-toast";
 import * as Icons from "lucide-react";   // ✅ dynamic icon loader
 import { getVisitRoutes } from "../../utils/visit";
 
-
+ import { API } from "../../utils/api";
+ const API_BASE = API;
 
 export default function AssignCaseForm({ onAssignmentCreated }) {
   const [step, setStep] = useState(0);
@@ -32,10 +33,10 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
   useEffect(() => {
     (async () => {
       try {
-        const caseRes = await axios.get("https://insurance-backend-hvk0.onrender.com/api/cases");
+        const caseRes = await axios.get(`${API}/cases`);
         if (caseRes.data.success) setCases(caseRes.data.data);
 
-        const execRes = await axios.get("https://insurance-backend-hvk0.onrender.com/api/field-executives");
+        const execRes = await axios.get(`${API}/field-executives`);
         if (execRes.data.success) setExecutives(execRes.data.data);
       } catch (err) {
         toast.error("Failed loading data");
@@ -159,7 +160,7 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
     setLoading(true);
 
     try {
-      const res = await axios.post("https://insurance-backend-hvk0.onrender.com/api/assignments", formData);
+      const res = await axios.post(`${API}/assignments`, formData);
 
       if (res.data.success) {
 

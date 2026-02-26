@@ -9,7 +9,7 @@ import { useODCase } from "../../hooks/useODCases";
 import { useODCaseDocx } from "../../hooks/useODCaseDocx";
 
 // API
-import { caseApi } from '../../services/api';
+import { caseApi, caseFirmApi } from '../../services/api';
 
 // Utils
 import { getNestedValue } from "../../utils/odCaseHelpers";
@@ -46,6 +46,15 @@ export default function OdCaseEditor() {
     staleTime: 5 * 60 * 1000,
   });
   const parentCaseData = parentCaseResponse?.data;
+
+  // Fetch CaseFirm details using caseFirmId from parentCaseData
+  const { data: caseFirmResponse } = useQuery({
+    queryKey: ['caseFirm', parentCaseData?.caseFirmId],
+    queryFn: () => caseFirmApi.getById(parentCaseData?.caseFirmId),
+    enabled: !!parentCaseData?.caseFirmId,
+    staleTime: 5 * 60 * 1000,
+  });
+  const caseFirmData = caseFirmResponse?.data;
 
   // DOCX Generation Hook
   const { generateDocx, isGenerating } = useODCaseDocx();
@@ -146,7 +155,7 @@ export default function OdCaseEditor() {
 
   const [form, setForm] = useState({
     letterDetails: {
-      date: "",
+      date: new Date().toISOString().split("T")[0],
       referenceNumber: "",
       recipientDesignation: "",
       recipientDepartment: "",
@@ -336,9 +345,7 @@ export default function OdCaseEditor() {
         const mergeDeepSection = (sectionKey) => {
           if (caseData[sectionKey] && newForm[sectionKey]) {
             Object.keys(newForm[sectionKey]).forEach(subKey => {
-              // If the sub-section (e.g., vehicleDetails) exists in backend data
               if (caseData[sectionKey][subKey]) {
-                // Merge it, preserving keys from newForm (initial state) that might be missing in backend data
                 newForm[sectionKey][subKey] = {
                   ...newForm[sectionKey][subKey],
                   ...caseData[sectionKey][subKey]
@@ -370,20 +377,83 @@ export default function OdCaseEditor() {
           newForm.odDetails.claimSummary.investigatorName = "Satyendra Kumar Garg";
         }
 
-        // Populate referenceNumber from ourFileNo (force update)
-        const fileNo = parentCaseData?.ourFileNo || caseData.ourFileNo || caseData.fileNo;
-        if (fileNo) {
-          // Ensure letterDetails exists before merging
+        // -----------------------------------------------
+        // AUTO-FILL FROM PARENT CASE DATA (common fields)
+        // -----------------------------------------------
+        if (parentCaseData) {
+          const pc = parentCaseData;
+
+          // Reference number → letterDetails
+          const fileNo = pc.ourFileNo || caseData.ourFileNo || caseData.fileNo;
+          if (fileNo) {
+            newForm.letterDetails = {
+              ...(newForm.letterDetails || {}),
+              referenceNumber: fileNo,
+            };
+          }
+
+          // Claim Summary — pre-fill from parent case common fields
+          if (newForm.odDetails?.claimSummary) {
+            const cs = newForm.odDetails.claimSummary;
+            if (!cs.vehicleNo && pc.vehicleNo) cs.vehicleNo = pc.vehicleNo;
+            if (!cs.policyNo && pc.policyNo) cs.policyNo = pc.policyNo;
+            if (!cs.policyDuration && pc.policyPeriod) cs.policyDuration = pc.policyPeriod;
+            if (!cs.insuredName && pc.nameOfInsured) cs.insuredName = pc.nameOfInsured;
+            if (!cs.insuredContactNo && pc.contactNo) cs.insuredContactNo = pc.contactNo;
+            if (!cs.chassisNo && pc.chassisNo) cs.chassisNo = pc.chassisNo;
+            if (!cs.engineNo && pc.engineNo) cs.engineNo = pc.engineNo;
+            if (!cs.claimNo && pc.coClaimNo) cs.claimNo = pc.coClaimNo;
+          }
+
+          // Vehicle Details — pre-fill from parent case
+          if (newForm.odDetails?.vehicleDetails) {
+            const vd = newForm.odDetails.vehicleDetails;
+            if (!vd.vehicleRegistrationNo && pc.vehicleNo) vd.vehicleRegistrationNo = pc.vehicleNo;
+            if (!vd.registeredOwnerName && pc.nameOfInsured) vd.registeredOwnerName = pc.nameOfInsured;
+            if (!vd.chassisNo && pc.chassisNo) vd.chassisNo = pc.chassisNo;
+            if (!vd.engineNo && pc.engineNo) vd.engineNo = pc.engineNo;
+          }
+
+          // Insured Details — pre-fill from parent case
+          if (newForm.odDetails?.insuredDetails) {
+            const id = newForm.odDetails.insuredDetails;
+            if (!id.nameOfInsured && pc.nameOfInsured) id.nameOfInsured = pc.nameOfInsured;
+            if (!id.addressAsPerRC && pc.addressOfInsured) id.addressAsPerRC = pc.addressOfInsured;
+          }
+
+          // Policy Break-In Details — pre-fill from parent case
+          if (newForm.policyBreakInDetails) {
+            const pb = newForm.policyBreakInDetails;
+            if (!pb.policyNo && pc.policyNo) pb.policyNo = pc.policyNo;
+            if (!pb.policyPeriod && pc.policyPeriod) pb.policyPeriod = pc.policyPeriod;
+          }
+
+          // Meeting Details — pre-fill dateOfLoss
+          if (newForm.meetingDetails) {
+            if (!newForm.meetingDetails.dateAndTimeOfLoss && pc.dateOfLoss) {
+              newForm.meetingDetails.dateAndTimeOfLoss = pc.dateOfLoss;
+            }
+          }
+        }
+
+        // -----------------------------------------------
+        // AUTO-FILL LETTER DETAILS FROM CASE FIRM DATA
+        // -----------------------------------------------
+        if (caseFirmData) {
+          const cf = caseFirmData;
           newForm.letterDetails = {
             ...(newForm.letterDetails || {}),
-            referenceNumber: fileNo
+            recipientDesignation: newForm.letterDetails?.recipientDesignation || cf.recipientDesignation || "",
+            recipientDepartment: newForm.letterDetails?.recipientDepartment || cf.recipientDepartment || "",
+            recipientCompany: newForm.letterDetails?.recipientCompany || cf.recipientCompany || "",
+            recipientAddress: newForm.letterDetails?.recipientAddress || cf.recipientAddress || "",
           };
         }
 
         return newForm;
       });
     }
-  }, [caseData, parentCaseData]);
+  }, [caseData, parentCaseData, caseFirmData]);
 
   /* ---------------------------------------------------
      SECTION CONFIG

@@ -15,7 +15,6 @@ import {
   ChevronsLeft,
   ChevronsRight,
   X,
-  Search,
   Filter,
   Download,
   FolderOpen,
@@ -26,12 +25,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useGlobalSearch } from "../../context/SearchContext";
 
 export default function CaseTable({ cases, onEdit, onDelete }) {
   const [viewingCase, setViewingCase] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
-  const [searchQuery, setSearchQuery] = useState("");
+  const { globalSearch } = useGlobalSearch();
   const [statusFilter, setStatusFilter] = useState("all");
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
@@ -41,7 +41,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
         <div className="bg-white text-gray-950 ">
           <p className="text-sm mb-2">
             Are you sure you want to delete <b>case {fileNo}</b>? <br />
-           
+
           </p>
 
           <div className="flex gap-2 mt-2">
@@ -79,12 +79,12 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       const matchesSearch =
-        !searchQuery ||
-        c.ourFileNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.policyNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.vehicleNo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.nameOfInsured?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.contactNo?.includes(searchQuery);
+        !globalSearch ||
+        c.ourFileNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.policyNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.vehicleNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.nameOfInsured?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.contactNo?.includes(globalSearch);
 
       const matchesStatus =
         statusFilter === "all" ||
@@ -92,7 +92,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
 
       return matchesSearch && matchesStatus;
     });
-  }, [cases, searchQuery, statusFilter]);
+  }, [cases, globalSearch, statusFilter]);
 
   // Sort cases
   const sortedCases = useMemo(() => {
@@ -101,13 +101,13 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
       sorted.sort((a, b) => {
         let aVal = a[sortConfig.key] || "";
         let bVal = b[sortConfig.key] || "";
-        
+
         // Handle date sorting
         if (sortConfig.key === "createdAt") {
           aVal = new Date(aVal).getTime() || 0;
           bVal = new Date(bVal).getTime() || 0;
         }
-        
+
         if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
         if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
         return 0;
@@ -124,7 +124,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
   // Reset to page 1 when filters change
   useMemo(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter]);
+  }, [globalSearch, statusFilter]);
 
   const handleSort = useCallback((key) => {
     setSortConfig((prev) => ({
@@ -171,9 +171,9 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
         style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
       >
         {/* Header with Stats */}
-      
 
-      
+
+
 
         {/* Table */}
         <div className="overflow-x-auto">
@@ -251,17 +251,17 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                         className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
                         style={{ backgroundColor: "var(--border)" }}
                       >
-                        {searchQuery || statusFilter !== "all" ? (
+                        {globalSearch || statusFilter !== "all" ? (
                           <AlertCircle className="w-8 h-8" style={{ color: "var(--secondary)" }} />
                         ) : (
                           <FolderOpen className="w-8 h-8" style={{ color: "var(--secondary)" }} />
                         )}
                       </div>
                       <p className="text-lg font-semibold mb-1" style={{ color: "var(--foreground)" }}>
-                        {searchQuery || statusFilter !== "all" ? "No matching cases" : "No cases found"}
+                        {globalSearch || statusFilter !== "all" ? "No matching cases" : "No cases found"}
                       </p>
                       <p className="text-sm" style={{ color: "var(--secondary)" }}>
-                        {searchQuery || statusFilter !== "all"
+                        {globalSearch || statusFilter !== "all"
                           ? "Try adjusting your search or filters"
                           : "Create your first case to get started"}
                       </p>
@@ -275,7 +275,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                     <tr
                       key={c._id}
                       className="border-b border-b-gray-200 hover:bg-black/5 transition-all duration-150"
-                     
+
                     >
                       <td className="px-3 sm:px-6 py-4" style={{ color: "var(--secondary)" }}>
                         {startIndex + index + 1}
