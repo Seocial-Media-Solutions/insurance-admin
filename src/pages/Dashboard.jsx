@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useCases } from "../context/useCases";
+import { caseService } from "../services/caseService";
 import {
   FileText,
   BarChart3,
@@ -17,11 +18,34 @@ import {
 function Dashboard() {
   const [time, setTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
-  const { cases, loading } = useCases();
+  const { loading: casesLoading } = useCases();
+  const [dashboardStats, setDashboardStats] = useState({
+    total: 0,
+    paid: 0,
+    pending: 0,
+    rejected: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     setMounted(true);
     const timer = setInterval(() => setTime(new Date()), 1000);
+
+    const fetchStats = async () => {
+      try {
+        setStatsLoading(true);
+        const response = await caseService.getStats();
+        if (response && response.success) {
+          setDashboardStats(response.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
+
     return () => clearInterval(timer);
   }, []);
 
@@ -45,19 +69,19 @@ function Dashboard() {
       title: "Analytics",
       description: "View detailed statistics and insights about your cases",
     },
-     {
+    {
       to: "/field-executives",
       icon: User,
       title: "Field Executive",
       description: "Manage field executives",
     },
-     {
+    {
       to: "/cases/assignments",
       icon: User,
       title: "Assignments",
       description: "Manage case assignments",
     },
-     {
+    {
       to: "/investigations",
       icon: User,
       title: "Investigations",
@@ -65,16 +89,11 @@ function Dashboard() {
     },
   ];
 
-  const totalCases = cases.length;
-  const paidCases = cases.filter((c) => c.status?.toLowerCase() === "paid").length;
-  const pendingCases = cases.filter((c) => c.status?.toLowerCase() !== "paid").length;
-  const rejectedCases = cases.filter((c) => c.status?.toLowerCase() === "rejected").length;
-
   const stats = [
-    { value: totalCases, label: "Total Cases", icon: TrendingUp },
-    { value: paidCases, label: "Paid Cases", icon: CheckCircle },
-    { value: pendingCases, label: "Pending Cases", icon: Clock },
-    { value: rejectedCases, label: "Rejected Cases", icon: XCircle },
+    { value: dashboardStats.total, label: "Total Cases", icon: TrendingUp },
+    { value: dashboardStats.paid, label: "Paid Cases", icon: CheckCircle },
+    { value: dashboardStats.pending, label: "Pending Cases", icon: Clock },
+    { value: dashboardStats.rejected, label: "Rejected Cases", icon: XCircle },
   ];
 
   return (
@@ -82,14 +101,13 @@ function Dashboard() {
       className="min-h-screen relative overflow-hidden"
       style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
     >
-      
+
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Header */}
         <div
-          className={`mb-12 transition-all duration-700 ${
-            mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
-          }`}
+          className={`mb-12 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
+            }`}
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
             <div>
@@ -157,7 +175,7 @@ function Dashboard() {
                       className="text-3xl font-bold transition-transform duration-300 group-hover:scale-110"
                       style={{ color: "var(--primary)" }}
                     >
-                      {loading ? (
+                      {statsLoading ? (
                         <div className="w-8 h-8 border-2 border-gray-300 rounded-full animate-spin"></div>
                       ) : (
                         stat.value

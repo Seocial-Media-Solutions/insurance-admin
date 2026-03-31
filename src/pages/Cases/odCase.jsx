@@ -132,7 +132,7 @@ export default function OdCaseEditor() {
       })(),
       {
         loading: 'Generating DOCX...',
-        success: 'Document generated successfully!',
+        success: false,
         error: (err) => {
           console.error("Error generating DOCX:", err);
           return "Failed to generate DOCX";

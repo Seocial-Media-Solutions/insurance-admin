@@ -100,17 +100,16 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
                     deletePromise(),
                     {
                         loading: 'Deleting asset...',
-                        success: () => {
-                            if (type === 'photo') {
-                                setExistingPhotos(prev => prev.filter(p => p.publicId !== idOrPublicId));
-                            } else {
-                                setExistingDocuments(prev => prev.filter(d => d._id !== idOrPublicId));
-                            }
-                            return "Asset deleted successfully";
-                        },
+                        success: false,
                         error: "Failed to delete asset"
                     }
-                );
+                ).then(() => {
+                    if (type === 'photo') {
+                        setExistingPhotos(prev => prev.filter(p => p.publicId !== idOrPublicId));
+                    } else {
+                        setExistingDocuments(prev => prev.filter(d => d._id !== idOrPublicId));
+                    }
+                });
             }
         );
     };
@@ -173,11 +172,7 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
             submitPromise(),
             {
                 loading: editingId ? 'Updating witness...' : 'Adding witness...',
-                success: (data) => {
-                    onUpdate(data.data); // This updates the parent state
-                    if (resetForm) resetForm();
-                    return editingId ? "Witness updated successfully" : "Witness added successfully";
-                },
+                success: false,
                 error: (err) => {
                     console.error("Error submitting witness:", err);
                     const msg = err.response?.data?.message || err.message || "Failed to save witness";
@@ -187,7 +182,10 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
                     return msg;
                 }
             }
-        );
+        ).then((data) => {
+            onUpdate(data.data); // This updates the parent state
+            if (resetForm) resetForm();
+        });
     };
 
     const handleEdit = (witness) => {
@@ -224,13 +222,12 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
                     deletePromise(),
                     {
                         loading: 'Deleting witness...',
-                        success: () => {
-                            onUpdate(witnessArray.filter(w => w._id !== witnessId));
-                            return "Witness deleted successfully";
-                        },
+                        success: false,
                         error: (err) => err.message || "Failed to delete witness"
                     }
-                );
+                ).then(() => {
+                    onUpdate(witnessArray.filter(w => w._id !== witnessId));
+                });
             }
         );
     };

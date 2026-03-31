@@ -17,7 +17,7 @@ const AssignmentManagement = () => {
         assignmentPromise,
         {
           loading: "Creating assignment...",
-          success: "Assignment created successfully!",
+          success: false,
           error: (err) => err?.message || "Failed to create assignment",
         },
         {

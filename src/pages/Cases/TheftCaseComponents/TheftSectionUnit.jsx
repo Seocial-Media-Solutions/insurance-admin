@@ -112,7 +112,7 @@ function SectionUnit({
             }),
             {
                 loading: "Saving...",
-                success: (data) => data.message || "Section saved successfully!",
+                success: false,
                 error: (err) => err.response?.data?.message || err.message || "Save failed",
             }
         );

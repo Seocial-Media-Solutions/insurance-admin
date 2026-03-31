@@ -1,48 +1,68 @@
+import toast from 'react-hot-toast';
 import apiClient from './apiClient';
 
 export const theftCaseService = {
     // Get single theft case
     getById: async (caseId) => {
-        const { data } = await apiClient.get(`/theft-cases/${caseId}`);
-        return data;
+        return toast.promise(apiClient.get(`/theft-cases/${caseId}`).then(res => res.data), {
+            loading: 'Fetching theft case details...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch theft case',
+        });
     },
 
     // Get paginated theft cases
     getAll: async ({ page = 1, limit = 20 } = {}) => {
-        const { data } = await apiClient.get('/theft-cases', {
-            params: { page, limit },
+        return toast.promise(apiClient.get('/theft-cases', { params: { page, limit } }).then(res => res.data), {
+            loading: 'Fetching theft cases...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch theft cases',
         });
-        return data;
     },
 
     // Update specific section
     updateSection: async ({ caseId, sectionPath, formData }) => {
-        const { data } = await apiClient.patch(
-            `/theft-cases/${caseId}/${sectionPath}`,
-            formData,
+        return toast.promise(
+            apiClient.patch(
+                `/theft-cases/${caseId}/${sectionPath}`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': formData instanceof FormData ? 'multipart/form-data' : 'application/json',
+                    },
+                }
+            ).then(res => res.data),
             {
-                headers: {
-                    'Content-Type': formData instanceof FormData ? 'multipart/form-data' : 'application/json',
-                },
+                loading: 'Saving section...',
+                success: false,
+                error: (err) => err?.response?.data?.message || err?.message || 'Failed to update section',
             }
         );
-        return data;
     },
 
     // Delete image from section
     deleteImage: async ({ caseId, sectionPath, fieldName, publicId }) => {
-        const { data } = await apiClient.delete(
-            `/theft-cases/${caseId}/${sectionPath}/images`,
+        return toast.promise(
+            apiClient.delete(
+                `/theft-cases/${caseId}/${sectionPath}/images`,
+                {
+                    data: { fieldName, publicId }
+                }
+            ).then(res => res.data),
             {
-                data: { fieldName, publicId }
+                loading: 'Deleting image...',
+                success: false,
+                error: (err) => err?.response?.data?.message || err?.message || 'Failed to delete image',
             }
         );
-        return data;
     },
 
     // Delete theft case
     delete: async (caseId) => {
-        const { data } = await apiClient.delete(`/theft-cases/${caseId}`);
-        return data;
+        return toast.promise(apiClient.delete(`/theft-cases/${caseId}`).then(res => res.data), {
+            loading: 'Deleting theft case...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to delete theft case',
+        });
     },
 };

@@ -74,13 +74,10 @@ const AssignmentList = () => {
                 toast.promise(
                   axios.delete(
                     `${API}/api/assignments/${assignmentId}`
-                  ),
+                  ).then(() => fetchAssignments(currentPage)),
                   {
                     loading: "Deleting assignment...",
-                    success: () => {
-                      fetchAssignments(currentPage);
-                      return "Assignment deleted successfully!";
-                    },
+                    success: false,
                     error: "Failed to delete assignment",
                   }
                 );

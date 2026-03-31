@@ -1,39 +1,58 @@
+import toast from 'react-hot-toast';
 import apiClient from './apiClient';
 
 export const fieldExecutiveService = {
     // Get all field executives
     getAll: async ({ page = 1, limit = 10 } = {}) => {
-        const { data } = await apiClient.get('/field-executives', { params: { page, limit } });
-        return data;
+        return toast.promise(apiClient.get('/field-executives', { params: { page, limit } }).then(res => res.data), {
+            loading: 'Fetching executives...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch executives',
+        });
     },
 
     // Get single field executive
     getById: async (id) => {
-        const { data } = await apiClient.get(`/field-executives/${id}`);
-        return data;
+        return toast.promise(apiClient.get(`/field-executives/${id}`).then(res => res.data), {
+            loading: 'Fetching executive details...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch executive',
+        });
     },
 
     // Create field executive
     create: async (executiveData) => {
-        const { data } = await apiClient.post('/field-executives', executiveData);
-        return data;
+        return toast.promise(apiClient.post('/field-executives', executiveData).then(res => res.data), {
+            loading: 'Creating executive...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to create executive',
+        });
     },
 
     // Update field executive
     update: async ({ id, executiveData }) => {
-        const { data } = await apiClient.put(`/field-executives/${id}`, executiveData);
-        return data;
+        return toast.promise(apiClient.put(`/field-executives/${id}`, executiveData).then(res => res.data), {
+            loading: 'Updating executive...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to update executive',
+        });
     },
 
     // Delete field executive
     delete: async (id) => {
-        const { data } = await apiClient.delete(`/field-executives/${id}`);
-        return data;
+        return toast.promise(apiClient.delete(`/field-executives/${id}`).then(res => res.data), {
+            loading: 'Deleting executive...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Failed to delete executive',
+        });
     },
 
     // Login
     login: async (credentials) => {
-        const { data } = await apiClient.post('/field-executives/login', credentials);
-        return data;
+        return toast.promise(apiClient.post('/field-executives/login', credentials).then(res => res.data), {
+            loading: 'Logging in...',
+            success: false,
+            error: (err) => err?.response?.data?.message || err?.message || 'Login failed',
+        });
     },
 };
