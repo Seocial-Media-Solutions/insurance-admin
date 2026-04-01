@@ -80,7 +80,8 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
     return cases.filter((c) => {
       const matchesSearch =
         !globalSearch ||
-        c.recordNumber?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.ourFileNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.recordNumber?.toString().includes(globalSearch) ||
         c.policyNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
         c.vehicleNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
         c.nameOfInsured?.toLowerCase().includes(globalSearch.toLowerCase()) ||
@@ -193,7 +194,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                   className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
-                    Record No <SortIcon column="recordNumber" />
+                    File No <SortIcon column="ourFileNo" />
                   </div>
                 </th>
                 <th
@@ -281,10 +282,9 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                         {startIndex + index + 1}
                       </td>
                       <td
-                        className="px-3 sm:px-6 py-4 font-semibold"
-                        style={{ color: "var(--primary)" }}
+                        className="px-3 sm:px-6 py-4 font-mono text-sm font-bold tracking-tight text-blue-700"
                       >
-                        {c.recordNumber || "-"}
+                        {c.ourFileNo || c.recordNumber || "-"}
                       </td>
                       <td className="hidden md:table-cell px-3 sm:px-6 py-4" style={{ color: "var(--foreground)" }}>
                         {c.policyNo || "-"}

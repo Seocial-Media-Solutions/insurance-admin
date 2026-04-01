@@ -37,7 +37,7 @@ export default function CaseManagement() {
 
   const handleExport = () => {
     const headers = [
-      "Our File No",
+      "File No",
       "Policy No",
       "Vehicle No",
       "Name of Insured",
@@ -47,7 +47,7 @@ export default function CaseManagement() {
       "Date of Loss",
     ];
     const rows = filteredCases.map((c) => [
-      c.ourFileNo,
+      c.ourFileNo || c.recordNumber,
       c.policyNo,
       c.vehicleNo,
       c.nameOfInsured,
