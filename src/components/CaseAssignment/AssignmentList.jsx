@@ -15,6 +15,49 @@ import { useNavigate } from "react-router-dom";
 import Pagination from "../Ui/Pagination";
 import { API } from "../../utils/api";
 import { useGlobalSearch } from "../../context/SearchContext";
+import { useFirms } from "../../context/FirmContext";
+
+const FirmCodeCell = ({ caseId }) => {
+  const { getFirmSync } = useFirms();
+  const [caseFirm, setCaseFirm] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCaseDetails = async () => {
+      try {
+        const res = await axios.get(`${API}/cases/${caseId}`);
+        const firmId = res.data?.data?.caseFirmId;
+        if (isMounted && firmId) {
+          // If firmId is an object, use it; otherwise lookup in context
+          const firm = (typeof firmId === 'object' && firmId !== null) ? firmId : getFirmSync(firmId);
+          setCaseFirm(firm);
+        }
+      } catch (err) {
+        console.error("Error fetching firm for assignment:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (caseId) fetchCaseDetails();
+    return () => { isMounted = false; };
+  }, [caseId, getFirmSync]);
+
+  if (loading) return <div className="w-12 h-4 bg-gray-100 animate-pulse rounded"></div>;
+  if (!caseFirm) return <span className="text-gray-400 text-xs">--</span>;
+
+  return (
+    <div className="flex flex-col">
+      <span className="text-xs font-bold text-blue-600 font-mono tracking-tighter uppercase whitespace-nowrap">
+        {caseFirm.code || "--"}
+      </span>
+      <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
+        {caseFirm.name}
+      </span>
+    </div>
+  );
+};
 
 
 const AssignmentList = () => {
@@ -116,7 +159,7 @@ const AssignmentList = () => {
                 toast.dismiss(t.id);
                 toast.promise(
                   axios.delete(
-                    `${API}/api/assignments/${assignmentId}`
+                    `${API}/assignments/${assignmentId}`
                   ).then(() => fetchAssignments(currentPage)),
                   {
                     loading: "Deleting assignment...",
@@ -277,6 +320,9 @@ const AssignmentList = () => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Firm
+              </th>
               <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => handleSort("caseId")}
@@ -341,7 +387,10 @@ const AssignmentList = () => {
               </tr>
             ) : (
               filteredAssignments.map((assignment) => (
-                <tr key={assignment._id} className="hover:bg-gray-50">
+                <tr key={assignment._id} className="hover:bg-gray-50 border-b border-gray-100 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <FirmCodeCell caseId={assignment.caseId?._id} />
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {assignment.caseId?.recordNumber}

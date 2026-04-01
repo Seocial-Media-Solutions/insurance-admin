@@ -6,6 +6,7 @@ const FirmContext = createContext();
 
 export function FirmProvider({ children }) {
     const [firms, setFirms] = useState([]);
+    const [allFirms, setAllFirms] = useState([]); // Cache for all firms (no pagination)
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -21,13 +22,31 @@ export function FirmProvider({ children }) {
             setTotalPages(resp.totalPages || 1);
             setTotal(resp.total || 0);
             setCurrentPage(resp.currentPage || page);
+
+            // Also fetch a "Lookup" version for all IDs if the list is small or just use the current data to build the cache
+            setAllFirms(prev => {
+                const newAll = [...prev];
+                (resp.data || []).forEach(f => {
+                    if (!newAll.some(ef => ef._id === f._id)) newAll.push(f);
+                });
+                return newAll;
+            });
         } catch (err) {
             console.error("Error loading firms:", err);
-            toast.error("Failed to load firms");
         } finally {
             setLoading(false);
         }
     }, [currentPage, limit]);
+
+    // Initial load for all firms to enable instant lookups
+    const fetchAllFirms = useCallback(async () => {
+        try {
+            const resp = await firmService.getAll({ limit: 1000 }); // Large limit for full cache
+            setAllFirms(resp.data || []);
+        } catch (err) {
+            console.error("Error fetching all firms for cache:", err);
+        }
+    }, []);
 
     const goToPage = useCallback((page) => {
         if (page >= 1 && page <= totalPages) {
@@ -103,12 +122,19 @@ export function FirmProvider({ children }) {
     // Fast sync lookup
     const getFirmSync = useCallback((id) => {
         if (!id) return null;
-        return firms.find(firm => firm._id === id) || null;
-    }, [firms]);
+        return allFirms.find(firm => firm._id === id) || null;
+    }, [allFirms]);
+
+    const getFirmCode = useCallback((id) => {
+        if (!id) return "--";
+        const firm = allFirms.find(f => f._id === id);
+        return firm ? firm.code : "--";
+    }, [allFirms]);
 
     useEffect(() => {
+        fetchAllFirms();
         loadFirms(1);
-    }, []);
+    }, [fetchAllFirms]);
 
     const value = useMemo(() => ({
         firms,
@@ -123,10 +149,12 @@ export function FirmProvider({ children }) {
         updateFirm,
         deleteFirm,
         getFirmById,
-        getFirmSync
+        getFirmSync,
+        getFirmCode,
+        allFirms
     }), [
-        firms, loading, currentPage, totalPages, total, limit, 
-        loadFirms, goToPage, addFirm, updateFirm, deleteFirm, getFirmById, getFirmSync
+        firms, allFirms, loading, currentPage, totalPages, total, limit, 
+        loadFirms, goToPage, addFirm, updateFirm, deleteFirm, getFirmById, getFirmSync, getFirmCode
     ]);
 
     return (
