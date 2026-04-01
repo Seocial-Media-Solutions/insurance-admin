@@ -18,10 +18,10 @@ const CaseEdit = lazy(() => import("./pages/CaseManagement/CaseEdit"));
 const CaseFirmPage = lazy(() => import("./pages/CaseFirm"));
 const CaseList = lazy(() => import("./pages/Cases/CaseManagement"));
 
-const CreateTheftCaseFull = lazy(() => import("./pages/Cases/theftCase"));
-const CreateOdCaseFull = lazy(() => import("./pages/Cases/odCase"));
-const ODCaseView = lazy(() => import("./pages/Cases/ODCaseView"));
-const TheftCaseView = lazy(() => import("./pages/Cases/TheftCaseView"));
+const CreateTheftCaseFull = lazy(() => import("./pages/Cases/TheftCase/TheftCaseEditor"));
+const CreateOdCaseFull = lazy(() => import("./pages/Cases/ODCase/ODCaseEditor"));
+const ODCaseView = lazy(() => import("./pages/Cases/ODCase/ODCaseView"));
+const TheftCaseView = lazy(() => import("./pages/Cases/TheftCase/TheftCaseView"));
 
 /* --------------------------
    Optimized Loader

@@ -1,5 +1,5 @@
 import React from "react";
-import { formatLabel, getNestedValue } from "../../../utils/odCaseHelpers";
+import { formatLabel, getNestedValue } from "../../../../utils/odCaseHelpers";
 import { PanelRight } from "lucide-react";
 
 const ProgressTracker = ({ sections, activeSection, onSectionClick, form, onToggle }) => {

@@ -8,7 +8,7 @@ import {
   CASE_FIRM_FIELDS,
   firmToFormData,
 } from "../utils/caseFirmForm.utils";
-
+ 
 function CaseFirmPage() {
   const {
     firms,

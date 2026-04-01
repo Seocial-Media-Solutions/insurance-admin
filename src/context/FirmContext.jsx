@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { firmService } from '../services/firmService';
 
@@ -12,7 +12,8 @@ export function FirmProvider({ children }) {
     const [total, setTotal] = useState(0);
     const limit = 10;
 
-    const loadFirms = async (page = currentPage) => {
+    // Fetch firms list (paginated)
+    const loadFirms = useCallback(async (page = currentPage) => {
         setLoading(true);
         try {
             const resp = await firmService.getAll({ page, limit });
@@ -26,15 +27,15 @@ export function FirmProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentPage, limit]);
 
-    const goToPage = (page) => {
+    const goToPage = useCallback((page) => {
         if (page >= 1 && page <= totalPages) {
             loadFirms(page);
         }
-    };
+    }, [loadFirms, totalPages]);
 
-    const addFirm = async (data) => {
+    const addFirm = useCallback(async (data) => {
         try {
             await firmService.create(data);
             toast.success("Firm created successfully");
@@ -45,9 +46,9 @@ export function FirmProvider({ children }) {
             toast.error("Failed to create firm");
             return false;
         }
-    };
+    }, [loadFirms]);
 
-    const updateFirm = async (id, data) => {
+    const updateFirm = useCallback(async (id, data) => {
         try {
             await firmService.update({ id, firmData: data });
             toast.success("Firm updated successfully");
@@ -58,9 +59,9 @@ export function FirmProvider({ children }) {
             toast.error("Failed to update firm");
             return false;
         }
-    };
+    }, [loadFirms]);
 
-    const deleteFirm = async (id) => {
+    const deleteFirm = useCallback(async (id) => {
         try {
             await firmService.delete(id);
             toast.success("Firm deleted successfully");
@@ -71,13 +72,45 @@ export function FirmProvider({ children }) {
             toast.error("Failed to delete firm");
             return false;
         }
-    };
+    }, [loadFirms]);
+
+    const getFirmById = useCallback(async (id) => {
+        if (!id) return null;
+        
+        // 1. try from existing firms
+        const existingFirm = firms.find(firm => firm._id === id);
+        if (existingFirm) return existingFirm;
+
+        // 2. fetch only if not found
+        try {
+            const resp = await firmService.getById(id);
+            const firm = resp.data || null;
+
+            // Cache it in firms list
+            if (firm) {
+                setFirms(prev => {
+                    const exists = prev.some(f => f._id === firm._id);
+                    return exists ? prev : [...prev, firm];
+                });
+            }
+            return firm;
+        } catch (err) {
+            console.error("Error loading firm:", err);
+            return null;
+        }
+    }, [firms]);
+
+    // Fast sync lookup
+    const getFirmSync = useCallback((id) => {
+        if (!id) return null;
+        return firms.find(firm => firm._id === id) || null;
+    }, [firms]);
 
     useEffect(() => {
         loadFirms(1);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         firms,
         loading,
         currentPage,
@@ -88,8 +121,13 @@ export function FirmProvider({ children }) {
         goToPage,
         addFirm,
         updateFirm,
-        deleteFirm
-    };
+        deleteFirm,
+        getFirmById,
+        getFirmSync
+    }), [
+        firms, loading, currentPage, totalPages, total, limit, 
+        loadFirms, goToPage, addFirm, updateFirm, deleteFirm, getFirmById, getFirmSync
+    ]);
 
     return (
         <FirmContext.Provider value={value}>

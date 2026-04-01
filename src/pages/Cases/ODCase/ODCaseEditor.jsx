@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { ArrowLeft, Loader2, FileText, PanelRight } from "lucide-react";
 
 // Hooks
 import { useQuery } from '@tanstack/react-query';
-import { useODCase } from "../../hooks/useODCases";
-import { useODCaseDocx } from "../../hooks/useODCaseDocx";
+import { useODCase } from "../../../hooks/useODCases";
+import { useODCaseDocx } from "../../../hooks/useODCaseDocx";
 
 // API
-import { caseApi, caseFirmApi } from '../../services/api';
+import { caseApi, caseFirmApi } from '../../../services/api';
 
 // Utils
-import { getNestedValue } from "../../utils/odCaseHelpers";
+import { getNestedValue } from "../../../utils/odCaseHelpers";
 
 // Components
-import WitnessManager from "../../components/WitnessManager";
-import SectionUnit from "./ODCaseComponents/SectionUnit";
-import ProgressTracker from "./ODCaseComponents/ProgressTracker";
-import DocxPreviewModal from "./ODCaseComponents/DocxPreviewModal";
+import WitnessManager from "../../../components/WitnessManager";
+import SectionUnit from "./components/SectionUnit";
+import ProgressTracker from "./components/ProgressTracker";
+import DocxPreviewModal from "./components/DocxPreviewModal";
 
 
 /* ---------------------------------------------------
@@ -26,6 +26,11 @@ import DocxPreviewModal from "./ODCaseComponents/DocxPreviewModal";
 --------------------------------------------------- */
 export default function OdCaseEditor() {
   const { caseId } = useParams();
+  
+  const location = useLocation();
+
+  // 1. Check navigation state for parentCaseData
+  const stateParentCase = location.state?.parentCaseData;
 
   // Default to the first section
   const [activeSection, setActiveSection] = useState("letterDetails");
@@ -38,23 +43,66 @@ export default function OdCaseEditor() {
   const { data: caseResponse, isLoading, isError, error, refetch } = useODCase(caseId);
   const caseData = caseResponse?.data;
 
-  // Fetch Parent Case Data for Reference Number (ourFileNo)
+  // Use state data or fetch fallback
   const { data: parentCaseResponse } = useQuery({
     queryKey: ['case', caseData?.caseId],
     queryFn: () => caseApi.getById(caseData?.caseId),
-    enabled: !!caseData?.caseId,
+    enabled: !!caseData?.caseId && !stateParentCase, // Skip if state exists
     staleTime: 5 * 60 * 1000,
   });
-  const parentCaseData = parentCaseResponse?.data;
+  
+  const parentCaseData = stateParentCase || parentCaseResponse?.data;
 
-  // Fetch CaseFirm details using caseFirmId from parentCaseData
+  // 2. Firm Data (Look in populated parentCaseData or fetch)
+  const isFirmPopulated = typeof parentCaseData?.caseFirmId === 'object' && parentCaseData.caseFirmId !== null;
+  
   const { data: caseFirmResponse } = useQuery({
-    queryKey: ['caseFirm', parentCaseData?.caseFirmId],
-    queryFn: () => caseFirmApi.getById(parentCaseData?.caseFirmId),
-    enabled: !!parentCaseData?.caseFirmId,
+    queryKey: ['caseFirm', typeof parentCaseData?.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData?.caseFirmId?._id],
+    queryFn: () => caseFirmApi.getById(typeof parentCaseData.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData.caseFirmId._id),
+    enabled: !!parentCaseData?.caseFirmId && !isFirmPopulated, // Skip if already populated object
     staleTime: 5 * 60 * 1000,
   });
-  const caseFirmData = caseFirmResponse?.data;
+
+  const caseFirmData = isFirmPopulated ? parentCaseData.caseFirmId : caseFirmResponse?.data;
+
+  // 3. Auto-fill Form Details from Parent Case & Firm
+  useEffect(() => {
+    if (!caseData || !parentCaseData) return;
+
+    setForm(prev => ({
+      ...prev,
+      ...caseData,
+
+      // Force refresh Letter Details from Firm (Overwrites saved/old details for these specific fields)
+      letterDetails: {
+        ...prev.letterDetails,
+        ...caseData.letterDetails,
+        referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || "",
+        recipientDesignation: caseFirmData?.recipientDesignation || caseData.letterDetails?.recipientDesignation || "",
+        recipientDepartment: caseFirmData?.recipientDepartment || caseData.letterDetails?.recipientDepartment || "",
+        recipientCompany: caseFirmData?.recipientCompany || caseData.letterDetails?.recipientCompany || "",
+        recipientAddress: caseFirmData?.recipientAddress || caseData.letterDetails?.recipientAddress || "",
+      },
+
+      // Sync Claim Summary from Parent Case
+      odDetails: {
+        ...prev.odDetails,
+        ...caseData.odDetails,
+        claimSummary: {
+          ...prev.odDetails?.claimSummary,
+          ...caseData.odDetails?.claimSummary,
+          vehicleNo: caseData.odDetails?.claimSummary?.vehicleNo || parentCaseData.vehicleNo || "",
+          claimNo: caseData.odDetails?.claimSummary?.claimNo || parentCaseData.coClaimNo || "",
+          policyNo: caseData.odDetails?.claimSummary?.policyNo || parentCaseData.policyNo || "",
+          policyDuration: caseData.odDetails?.claimSummary?.policyDuration || parentCaseData.policyPeriod || "",
+          insuredName: caseData.odDetails?.claimSummary?.insuredName || parentCaseData.nameOfInsured || "",
+          insuredContactNo: caseData.odDetails?.claimSummary?.insuredContactNo || parentCaseData.contactNo || "",
+          chassisNo: caseData.odDetails?.claimSummary?.chassisNo || parentCaseData.chassisNo || "",
+          engineNo: caseData.odDetails?.claimSummary?.engineNo || parentCaseData.engineNo || "",
+        }
+      }
+    }));
+  }, [caseData, parentCaseData, caseFirmData]);
 
   // DOCX Generation Hook
   const { generateDocx, isGenerating } = useODCaseDocx();
@@ -75,7 +123,6 @@ export default function OdCaseEditor() {
         label: "Letter Details",
         fields: {
           date: true,
-          referenceNumber: caseData?.ourFileNo,
           recipientDesignation: true,
           recipientDepartment: true,
           recipientCompany: true,
@@ -156,11 +203,11 @@ export default function OdCaseEditor() {
   const [form, setForm] = useState({
     letterDetails: {
       date: new Date().toISOString().split("T")[0],
-      referenceNumber: "",
-      recipientDesignation: "",
-      recipientDepartment: "",
-      recipientCompany: "",
-      recipientAddress: "",
+      referenceNumber: caseFirmData?.code,
+      recipientDesignation: caseFirmData?.recipientDesignation,
+      recipientDepartment: caseFirmData?.recipientDepartment,
+      recipientCompany: caseFirmData?.recipientCompany,
+      recipientAddress: caseFirmData?.recipientAddress,
     },
     odDetails: {
       claimSummary: {
@@ -659,6 +706,7 @@ export default function OdCaseEditor() {
                   fileFields={activeSectionConfig.files || {}}
                   form={form}
                   setForm={setForm}
+                  firmData={caseFirmData}
                   defaultFieldValues={activeSectionConfig.key === 'letterDetails' ? { referenceNumber: parentCaseData?.ourFileNo || caseData?.ourFileNo || caseData?.fileNo || "" } : {}}
                   isExpanded={true} // Always expanded in Tab view
                   onToggle={() => { }} // No toggle needed

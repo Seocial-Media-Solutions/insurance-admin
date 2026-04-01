@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useTheftCases } from "../../context/TheftCaseContext";
+import { useTheftCases } from "../../../context/TheftCaseContext";
 import {
     FileText, Camera, Edit
 } from "lucide-react";

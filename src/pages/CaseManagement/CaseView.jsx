@@ -49,7 +49,7 @@ export default function CaseView() {
       <h1 className="text-2xl font-bold mb-4">Case Details</h1>
 
       <div className="grid grid-cols-2 gap-4">
-        <div><strong>Our File No:</strong> {caseData.ourFileNo}</div>
+        <div><strong>Record Number:</strong> {caseData.recordNumber}</div>
         <div><strong>Policy No:</strong> {caseData.policyNo}</div>
         <div><strong>Vehicle No:</strong> {caseData.vehicleNo}</div>
         <div><strong>Name of Insured:</strong> {caseData.nameOfInsured}</div>

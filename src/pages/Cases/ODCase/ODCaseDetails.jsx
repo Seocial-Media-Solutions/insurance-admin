@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useODCase } from "../../hooks/useODCases";
+import { useODCase } from "../../../hooks/useODCases";
 import {
     ArrowLeft,
     Calendar,

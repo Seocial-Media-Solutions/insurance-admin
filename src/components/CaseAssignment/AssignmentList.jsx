@@ -8,6 +8,8 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
+  UserCog,
+  X
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Pagination from "../Ui/Pagination";
@@ -26,12 +28,27 @@ const AssignmentList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [executives, setExecutives] = useState([]);
+  const [reassignModal, setReassignModal] = useState({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
+  const [isUpdating, setIsUpdating] = useState(false);
   const limit = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignments(1);
+    fetchExecutives();
   }, []);
+
+  const fetchExecutives = async () => {
+    try {
+      const response = await axios.get(`${API}/field-executives`);
+      if (response.data.success) {
+        setExecutives(response.data.data);
+      }
+    } catch (err) {
+      console.error("Failed to fetch executives", err);
+    }
+  };
 
   const fetchAssignments = async (page = 1) => {
     try {
@@ -56,6 +73,32 @@ const AssignmentList = () => {
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       fetchAssignments(page);
+    }
+  };
+
+  const handleReassign = async () => {
+    if (!reassignModal.newExecutiveId) {
+      toast.error("Please select an executive");
+      return;
+    }
+
+    setIsUpdating(true);
+    const toastId = toast.loading("Reassigning case...");
+
+    try {
+      const response = await axios.put(`${API}/assignments/${reassignModal.assignmentId}`, {
+        fieldExecutiveId: reassignModal.newExecutiveId
+      });
+
+      if (response.data.success) {
+        toast.success("Case reassigned successfully", { id: toastId });
+        setReassignModal({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
+        fetchAssignments(currentPage);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reassign case", { id: toastId });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -134,7 +177,7 @@ const AssignmentList = () => {
     .filter((assignment) => {
       const matchesSearch =
         !globalSearch ||
-        assignment.caseId?.ourFileNo
+        assignment.caseId?.recordNumber
           ?.toLowerCase()
           .includes(globalSearch.toLowerCase()) ||
         assignment.caseId?.vehicleNo
@@ -159,8 +202,8 @@ const AssignmentList = () => {
       let bValue = b[sortField];
 
       if (sortField === "caseId") {
-        aValue = a.caseId?.ourFileNo;
-        bValue = b.caseId?.ourFileNo;
+        aValue = a.caseId?.recordNumber;
+        bValue = b.caseId?.recordNumber;
       } else if (sortField === "fieldExecutiveId") {
         aValue = a.fieldExecutiveId?.fullName;
         bValue = b.fieldExecutiveId?.fullName;
@@ -301,7 +344,7 @@ const AssignmentList = () => {
                 <tr key={assignment._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {assignment.caseId?.ourFileNo}
+                      {assignment.caseId?.recordNumber}
                     </div>
                     <div className="text-sm text-gray-500">
                       {assignment.caseId?.vehicleNo}
@@ -383,6 +426,19 @@ const AssignmentList = () => {
                       </button> */}
 
                       <button
+                        onClick={() => setReassignModal({
+                          open: true,
+                          assignmentId: assignment._id,
+                          currentExecutiveId: assignment.fieldExecutiveId?._id,
+                          newExecutiveId: ""
+                        })}
+                        className="text-orange-600 hover:text-orange-900 p-1 flex items-center gap-2 rounded hover:bg-orange-50"
+                        title="Reassign Case"
+                      >
+                        Reassign <UserCog className="h-4 w-4" />
+                      </button>
+
+                      <button
                         onClick={() => handleDelete(assignment._id)}
                         className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                         title="Delete"
@@ -397,6 +453,65 @@ const AssignmentList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Reassign Modal */}
+      {reassignModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent backdrop-blur-sm bg-opacity-50 p-4" onClick={() => setReassignModal({ ...reassignModal, open: false })} >
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Reassign Case</h3>
+              <button
+                onClick={() => setReassignModal({ ...reassignModal, open: false })}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-sm text-gray-600 mb-4">
+                Select a new field executive to take over this investigation.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Field Executive
+                  </label>
+                  <select
+                    value={reassignModal.newExecutiveId}
+                    onChange={(e) => setReassignModal({ ...reassignModal, newExecutiveId: e.target.value })}
+                    className="w-full p-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">-- Choose New Executive --</option>
+                    {executives
+                      .filter(ex => ex._id !== reassignModal.currentExecutiveId)
+                      .map((exec) => (
+                        <option key={exec._id} value={exec._id}>
+                          {exec.fullName} - {exec.contactNumber}
+                        </option>
+                      )
+                      )}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end p-4 border-t bg-gray-50 space-x-3">
+              <button
+                onClick={() => setReassignModal({ ...reassignModal, open: false })}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReassign}
+                disabled={isUpdating || !reassignModal.newExecutiveId}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50"
+              >
+                {isUpdating ? "Reassigning..." : "Confirm Reassign"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary */}
       <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">

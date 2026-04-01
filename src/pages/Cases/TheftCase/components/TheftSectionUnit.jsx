@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { useUpdateTheftCaseSection } from "../../../hooks/useTheftCases"; // Use correct hook
-import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../utils/odCaseHelpers";
+import { useUpdateTheftCaseSection } from "../../../../hooks/useTheftCases"; // Use correct hook
+import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../../utils/odCaseHelpers";
 import TheftImageGallery from "./TheftImageGallery";
-import DocumentUpload from "../ODCaseComponents/DocumentUpload";
-import DragDropUpload from "../../../components/Ui/DragDropUpload";
+import DocumentUpload from "../../ODCase/components/DocumentUpload";
+import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -16,9 +16,10 @@ function SectionUnit({
     form,
     setForm,
     fileFields = {},
+    defaultFieldValues = {},
     isExpanded,
     onToggle,
-
+    firmData,
 }) {
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
@@ -29,6 +30,26 @@ function SectionUnit({
             setFileMetadata({}); // Clear metadata on success
         },
     });
+
+    const handleRefreshFromFirm = () => {
+        if (!firmData) {
+            toast.error("No firm data available to refresh.");
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            letterDetails: {
+                ...prev.letterDetails,
+                referenceNumber: firmData.code || "",
+                recipientDesignation: firmData.recipientDesignation || "",
+                recipientDepartment: firmData.recipientDepartment || "",
+                recipientCompany: firmData.recipientCompany || "",
+                recipientAddress: firmData.recipientAddress || "",
+            }
+        }));
+        toast.success("Letter details updated from firm data.");
+    };
 
     const updateField = (field, value) => {
         setForm((prev) => {
@@ -129,15 +150,34 @@ function SectionUnit({
                 onClick={onToggle}
                 className="w-full flex justify-between items-center p-6 hover:bg-gray-50 transition-colors rounded-t-xl"
             >
-                <div className="flex items-center gap-3">
-                    {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
-                    ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                        )}
+                        <span className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            {formatLabel(sectionKey)}
+                        </span>
+                    </div>
+
+                    {/* Refresh Button for Letter Details */}
+                    {sectionKey === "letterDetails" && isExpanded && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRefreshFromFirm();
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-xs font-bold transition-all border border-blue-200 uppercase tracking-wider"
+                            title="Re-fill from Firm Data"
+                        >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                            Sync From Firm
+                        </button>
                     )}
-                    <h2 className="text-xl font-bold text-gray-800 text-left">
-                        {apiPath.replace(/-/g, " ").toUpperCase()}
-                    </h2>
                 </div>
                 <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-500 uppercase tracking-wide">
                     {sectionKey}
@@ -272,7 +312,7 @@ function SectionUnit({
                                                 type={type}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"
                                                     }`}
-                                                value={currentSection[field] || ""}
+                                                value={currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || ""}
                                                 onChange={(e) => updateField(field, e.target.value)}
                                                 placeholder={type === 'date' ? '' : `Enter ${formatLabel(field)}`}
                                             />

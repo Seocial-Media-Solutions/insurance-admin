@@ -32,9 +32,10 @@ export default function CaseForm({
 }) {
   const initialForm = {
     caseType: "",
+    recordNumber: 0,
     ourFileNo: "",
     ourFileNoId: "",
-    dtOfCaseRec: "",
+    dtOfCaseRec: new Date().toISOString().split('T')[0],
     caseRecVia: "",
     coClaimNo: "",
     policyNo: "",
@@ -94,7 +95,7 @@ export default function CaseForm({
   -------------------------- */
   useEffect(() => {
     fetchCaseFirmsList();
-  }, [city]);
+  }, [state]);
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
@@ -107,17 +108,17 @@ export default function CaseForm({
   const fetchCaseFirmsList = async () => {
     try {
       const res = await fetch(
-        `${API}/casefirm/city/${city}`
+        `${API}/casefirm/state/${state.toUpperCase()}`
       );
       const data = await res.json();
 
       // Handle both successful and error responses
       if (data.success && data.data) {
         setCaseFirmOptions(data.data);
-        console.log("Fetched CaseFirms:", data.data);
+        console.log("Fetched CaseFirms by state:", data.data);
       } else {
         setCaseFirmOptions([]);
-        console.log(`No case firms found for ${city}`);
+        console.log(`No case firms found for state ${state}`);
       }
     } catch (err) {
       console.error("Error fetching case firms:", err);
@@ -131,7 +132,7 @@ export default function CaseForm({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.caseType) return alert("Select case type");
-    if (!form.ourFileNo) return alert("Select CaseFirm");
+    if (!form.recordNumber) return alert("Select CaseFirm");
 
     // Compose policyPeriod as "startDate to endDate" string
     const composedPolicyPeriod =
@@ -154,10 +155,11 @@ export default function CaseForm({
     if (!firm || !firm.code) return "";
 
     const nextRecordNumber = (firm.recordNumber || 0) + 1;
+    const year = form.dtOfCaseRec ? new Date(form.dtOfCaseRec).getFullYear() : new Date().getFullYear();
 
-    const baseCode = firm.code.replace(/\/\d+$/, ""); // remove last number
+    const baseCode = firm.code.replace(/\/\d+$/, ""); // remove last number if any
 
-    return `${baseCode}/${String(nextRecordNumber).padStart(3, "0")}`;
+    return `${baseCode}/${String(nextRecordNumber).padStart(3, "0")}/${year}`;
   }
   /* --------------------------
      DATE FIELDS
@@ -240,7 +242,7 @@ export default function CaseForm({
 
             {/* CaseFirm Dropdown */}
             <label className="block text-sm font-bold mb-2.5">
-              Select CaseFirm (Auto-fill File No)
+              Select CaseFirm (Auto-fill Record Number)
             </label>
             <select
               onChange={(e) => {
@@ -251,6 +253,7 @@ export default function CaseForm({
                 if (firm) {
                   setForm((prev) => ({
                     ...prev,
+                    recordNumber: (firm.recordNumber || 0) + 1,
                     ourFileNo: generateNextFirmCode(firm),
                     ourFileNoId: firm._id,
                   }));

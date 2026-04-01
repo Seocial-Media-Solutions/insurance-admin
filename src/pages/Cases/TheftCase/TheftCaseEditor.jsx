@@ -1,25 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
+import { useQuery } from '@tanstack/react-query';
+import { caseApi, caseFirmApi } from '../../../services/api';
 import { toast } from "react-hot-toast";
 import { ArrowLeft, Loader2, FileText } from "lucide-react";
 
 // Hooks
-import { useTheftCase } from "../../hooks/useTheftCases";
-import { useTheftCaseDocx } from "../../hooks/useTheftCaseDocx";
+import { useTheftCase } from "../../../hooks/useTheftCases";
+import { useTheftCaseDocx } from "../../../hooks/useTheftCaseDocx";
 
 // Utils
-import { getNestedValue } from "../../utils/odCaseHelpers";
+import { getNestedValue } from "../../../utils/odCaseHelpers";
 
 // Components
-import WitnessManager from "../../components/WitnessManager";
-import TheftSectionUnit from "./TheftCaseComponents/TheftSectionUnit";
-import ProgressTracker from "./ODCaseComponents/ProgressTracker";
+import WitnessManager from "../../../components/WitnessManager";
+import TheftSectionUnit from "./components/TheftSectionUnit";
+import ProgressTracker from "../ODCase/components/ProgressTracker";
 
 /* ---------------------------------------------------
    MAIN THEFT CASE EDITOR
 --------------------------------------------------- */
 export default function TheftCaseEditor() {
   const { caseId } = useParams();
+  const location = useLocation();
+
+  const stateParentCase = location.state?.parentCaseData;
 
   // Default to the first section
   const [activeSection, setActiveSection] = useState("summaryOfTheClaim");
@@ -31,6 +36,25 @@ export default function TheftCaseEditor() {
   // Fetch case data
   const { data: caseResponse, isLoading, isError, error, refetch } = useTheftCase(caseId);
   const caseData = caseResponse?.data;
+
+  // Parents
+  const { data: parentCaseResponse } = useQuery({
+    queryKey: ['case', caseData?.caseId],
+    queryFn: () => caseApi.getById(caseData?.caseId),
+    enabled: !!caseData?.caseId && !stateParentCase,
+    staleTime: 5 * 60 * 1000,
+  });
+  const parentCaseData = stateParentCase || parentCaseResponse?.data;
+
+  const isFirmPopulated = typeof parentCaseData?.caseFirmId === 'object' && parentCaseData.caseFirmId !== null;
+  const { data: caseFirmResponse } = useQuery({
+    queryKey: ['caseFirm', typeof parentCaseData?.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData?.caseFirmId?._id],
+    queryFn: () => caseFirmApi.getById(typeof parentCaseData.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData.caseFirmId._id),
+    enabled: !!parentCaseData?.caseFirmId && !isFirmPopulated,
+    staleTime: 5 * 60 * 1000,
+  });
+  const caseFirmData = isFirmPopulated ? parentCaseData.caseFirmId : caseFirmResponse?.data;
+
   const { generateDocx, isGenerating: isDocGenerating } = useTheftCaseDocx();
 
   /* ---------------------------------------------------
@@ -220,21 +244,48 @@ export default function TheftCaseEditor() {
   });
 
   /* ---------------------------------------------------
-     DATA POPULATION
+     DATA POPULATION (Auto-fill from Parent Case & Firm)
   --------------------------------------------------- */
   useEffect(() => {
-    if (caseData) {
-      setForm(prev => {
-        const newForm = { ...prev };
-        Object.keys(newForm).forEach(key => {
-          if (caseData[key]) {
-            newForm[key] = caseData[key];
-          }
-        });
-        return newForm;
-      });
-    }
-  }, [caseData]);
+    if (!caseData || !parentCaseData) return;
+
+    setForm(prev => ({
+      ...prev,
+      // Sync with Case Data from API
+      ...caseData,
+
+      // Force refresh Letter Details from Firm (Overwrites saved/old details for these specific fields)
+      letterDetails: {
+        ...prev.letterDetails,
+        ...caseData.letterDetails,
+        referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || "",
+        recipientDesignation: caseFirmData?.recipientDesignation || caseData.letterDetails?.recipientDesignation || "",
+        recipientDepartment: caseFirmData?.recipientDepartment || caseData.letterDetails?.recipientDepartment || "",
+        recipientCompany: caseFirmData?.recipientCompany || caseData.letterDetails?.recipientCompany || "",
+        recipientAddress: caseFirmData?.recipientAddress || caseData.letterDetails?.recipientAddress || "",
+      },
+
+      // Sync Claim Summary from Parent Case
+      summaryOfTheClaim: {
+        ...prev.summaryOfTheClaim,
+        ...caseData.summaryOfTheClaim,
+        claimNo: caseData.summaryOfTheClaim?.claimNo || parentCaseData.coClaimNo || "",
+        policyNo: caseData.summaryOfTheClaim?.policyNo || parentCaseData.policyNo || "",
+      },
+
+      // Sync Policy Details
+      policyAndIncidentDetails: {
+        ...prev.policyAndIncidentDetails,
+        ...caseData.policyAndIncidentDetails,
+        insuredName: caseData.policyAndIncidentDetails?.insuredName || parentCaseData.nameOfInsured || "",
+        insuredContactNo: caseData.policyAndIncidentDetails?.insuredContactNo || parentCaseData.contactNo || "",
+        policyNo: caseData.policyAndIncidentDetails?.policyNo || parentCaseData.policyNo || "",
+        vehicleRegistrationNumber: caseData.policyAndIncidentDetails?.vehicleRegistrationNumber || parentCaseData.vehicleNo || "",
+        engineNo: caseData.policyAndIncidentDetails?.engineNo || parentCaseData.engineNo || "",
+        chassisNo: caseData.policyAndIncidentDetails?.chassisNo || parentCaseData.chassisNo || "",
+      }
+    }));
+  }, [caseData, parentCaseData, caseFirmData]);
 
   /* ---------------------------------------------------
      SECTION CONFIG
@@ -422,6 +473,8 @@ export default function TheftCaseEditor() {
                   fileFields={activeSectionConfig.files || {}}
                   form={form}
                   setForm={setForm}
+                  firmData={caseFirmData}
+                  defaultFieldValues={activeSectionConfig.key === 'letterDetails' ? { referenceNumber: caseData?.ourFileNo || caseData?.fileNo || "" } : {}}
                   isExpanded={true}
                   onToggle={() => { }}
                   caseType="theft"

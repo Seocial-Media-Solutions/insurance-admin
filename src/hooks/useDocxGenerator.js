@@ -15,6 +15,7 @@ import {
   AlignmentType,
   HeadingLevel,
   Footer,
+  Header,
   PageNumber,
 } from "https://esm.sh/docx@8.5.0";
 import saveAs from "https://esm.sh/file-saver@2.0.5";
@@ -121,51 +122,128 @@ export const useDocxGenerator = () => {
 
       let docChildren = [];
 
-      // --- HEADER SECTION ---
-      const letterheadTable = new Table({
+      // --- HEADER SECTION (New implementation matching image) ---
+      const headerTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: "single", size: 15, color: "888888" },
+          bottom: { style: "none" },
+          left: { style: "none" },
+          right: { style: "none" },
+          insideHorizontal: { style: "none" },
+          insideVertical: { style: "none" },
+        },
         rows: [
           new TableRow({
             children: [
               new TableCell({
+                width: { size: 55, type: WidthType.PERCENTAGE },
                 children: [
                   new Paragraph({
                     children: [
                       new TextRun({
-                        text: "The New India Assurance Co. Ltd",
+                        text: "Satyendra Kumar Garg",
+                        size: 32,
                         bold: true,
-                        size: 28,
+                        font: "Times New Roman",
+                        color: "333333",
                       }),
                     ],
-                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 200 },
                   }),
                   new Paragraph({
                     children: [
                       new TextRun({
-                        text: "Claim Tie-up Hub (NON-SUIT)",
-                        size: 22,
-                      }),
-                    ],
-                    alignment: AlignmentType.CENTER,
-                  }),
-                  new Paragraph({
-                    children: [
-                      new TextRun({
-                        text: "C-18, Vaishali Marg, Near Sogani Jewellers, Vaishali Nagar, Jaipur, Rajasthan - 302021",
+                        text: "(Insurance Claim Investigation Service)",
                         size: 20,
+                        font: "Times New Roman",
+                        color: "555555",
                       }),
                     ],
-                    alignment: AlignmentType.CENTER,
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: `Contact: +91 9610339955`,
+                        size: 20,
+                        font: "Times New Roman",
+                        color: "555555",
+                      }),
+                    ],
                   }),
                 ],
-                borders: { bottom: { style: "single", size: 8, color: "000000" } },
+                borders: {
+                  top: { style: "none" },
+                  bottom: { style: "none" },
+                  left: { style: "none" },
+                  right: { style: "none" },
+                },
+              }),
+              new TableCell({
+                width: { size: 45, type: WidthType.PERCENTAGE },
+                children: [
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: "Flat No. H-207, Hanging Gardens,",
+                        size: 19,
+                        font: "Times New Roman",
+                        color: "333333",
+                      }),
+                    ],
+                    spacing: { before: 200 },
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: "Jaisinghpura Road, Bhankrota,",
+                        size: 19,
+                        font: "Times New Roman",
+                        color: "333333",
+                      }),
+                    ],
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: "Jaipur – 302026. (Raj)",
+                        size: 19,
+                        font: "Times New Roman",
+                        color: "333333",
+                      }),
+                    ],
+                  }),
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: "Email: ",
+                        size: 19,
+                        font: "Times New Roman",
+                        color: "333333",
+                      }),
+                      new TextRun({
+                        text: "invthirdeye@gmail.com",
+                        size: 19,
+                        font: "Times New Roman",
+                        color: "0000FF",
+                        underline: { type: "single", color: "0000FF" },
+                      }),
+                    ],
+                  }),
+                ],
+                borders: {
+                  top: { style: "none" },
+                  bottom: { style: "none" },
+                  left: { style: "none" },
+                  right: { style: "none" },
+                },
               }),
             ],
           }),
         ],
       });
 
-      docChildren.push(letterheadTable);
+      // No longer pushing letterheadTable to docChildren because it will be in the Header
       docChildren.push(new Paragraph({ text: "" }));
 
       // Date and Reference
@@ -838,19 +916,75 @@ const vehicleDetailsRows = [
                   right: 1000,
                   bottom: 1000,
                   left: 1000,
+                  header: 500,
+                  footer: 500,
                 },
               },
+            },
+            headers: {
+              default: new Header({
+                children: [headerTable],
+              }),
             },
             footers: {
               default: new Footer({
                 children: [
-                  new Paragraph({
-                    alignment: AlignmentType.CENTER,
-                    children: [
-                      new TextRun("Page "),
-                      new TextRun({ children: [PageNumber.CURRENT] }),
-                      new TextRun(" of "),
-                      new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
+                  new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    borders: {
+                      top: { style: "single", size: 4, color: "CCCCCC" },
+                      bottom: { style: "none" },
+                      left: { style: "none" },
+                      right: { style: "none" },
+                      insideHorizontal: { style: "none" },
+                      insideVertical: { style: "none" },
+                    },
+                    rows: [
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            children: [
+                              new Paragraph({
+                                children: [
+                                  new TextRun({
+                                    children: [PageNumber.CURRENT],
+                                    color: "70a1d7", // Light blue color for page number
+                                    size: 24,
+                                    bold: true,
+                                  }),
+                                  new TextRun({
+                                    text: " |",
+                                    color: "AAAAAA",
+                                    size: 24,
+                                  }),
+                                ],
+                                spacing: { before: 100, after: 100 },
+                              }),
+                            ],
+                            borders: {
+                              top: { style: "none" },
+                              bottom: { style: "none" },
+                              left: { style: "none" },
+                              right: { style: "none" },
+                            },
+                          }),
+                        ],
+                      }),
+                      new TableRow({
+                        children: [
+                          new TableCell({
+                            shading: { fill: "e3f2f1" }, // Matches the light base bar color
+                            children: [new Paragraph({ text: "" })],
+                            height: { value: 150, rule: "atLeast" },
+                            borders: {
+                              top: { style: "none" },
+                              bottom: { style: "none" },
+                              left: { style: "none" },
+                              right: { style: "none" },
+                            },
+                          }),
+                        ],
+                      }),
                     ],
                   }),
                 ],

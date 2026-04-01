@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import DragDropUpload from "../../../components/Ui/DragDropUpload";
+import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 
 const DocumentUpload = ({
     field,

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Loader2, Trash2, ExternalLink } from "lucide-react";
-import { useDeleteODCaseImage } from "../../../hooks/useODCases";
-import { confirmToast } from "../../../components/Ui/ConfirmToast";
+import { useDeleteTheftCaseImage } from "../../../../hooks/useTheftCases";
+import { confirmToast } from "../../../../components/Ui/ConfirmToast";
 
-const ImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
+const TheftImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
     const [deletingId, setDeletingId] = useState(null);
-    const { mutate: deleteImage, isLoading: isDeleting } = useDeleteODCaseImage();
+    const { mutate: deleteImage, isLoading: isDeleting } = useDeleteTheftCaseImage();
 
     if (!images || (Array.isArray(images) && images.length === 0)) {
         return null;
@@ -94,4 +94,4 @@ const ImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
     );
 };
 
-export default ImageGallery;
+export default TheftImageGallery;

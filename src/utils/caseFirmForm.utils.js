@@ -24,7 +24,7 @@ export const CASE_FIRM_INITIAL_STATE = {
 // ----------------------------------------------------------
 export const firmToFormData = (firm) => ({
     recipientCompany: firm.recipientCompany || "",
-    city: firm.city || "",
+    city: firm.city || " ",
     regionalOffice: firm.regionalOffice || "",
     operationType: firm.operationType || "",
     financialYear: firm.financialYear || "",
@@ -53,7 +53,7 @@ export const CASE_FIRM_FIELDS = [
         label: "Recipient Company",
         type: "text",
         placeholder: "Enter Recipient Company",
-        required: false,
+        required: true,
     },
     {
         key: "city",
@@ -89,14 +89,14 @@ export const CASE_FIRM_FIELDS = [
         label: "Recipient Designation",
         type: "text",
         placeholder: "Enter Recipient Designation",
-        required: false,
+        required: true,
     },
     {
         key: "recipientDepartment",
         label: "Recipient Department",
         type: "text",
         placeholder: "Enter Recipient Department",
-        required: false,
+        required: true,
     },
 
     {
@@ -104,7 +104,7 @@ export const CASE_FIRM_FIELDS = [
         label: "Recipient Address",
         type: "textarea",
         placeholder: "Enter Recipient Address",
-        required: false,
+        required: true,
         rows: 3,
     },
 ];

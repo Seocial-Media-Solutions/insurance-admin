@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Camera, Edit, FileText, Printer } from "lucide-react";
-import { useODCases } from "../../context/ODCaseContext";
-import { useODCaseDocx } from "../../hooks/useODCaseDocx";
-import { useODCasePdf } from "../../hooks/useODCasePdf";
+import { useODCases } from "../../../context/ODCaseContext";
+import { useODCaseDocx } from "../../../hooks/useODCaseDocx";
+import { useODCasePdf } from "../../../hooks/useODCasePdf";
 import saveAs from "https://esm.sh/file-saver@2.0.5";
 import { toast } from "react-hot-toast";
 
@@ -836,7 +836,39 @@ const Thumbnail = ({ src, label }) => (
 );
 
 /* ==================================================================================
-   3. MAIN COMPONENT
+   3. DOCUMENT-LIKE HEADER & FOOTER (Visual Preview)
+   ================================================================================== */
+
+const DocumentHeader = () => (
+  <div className="max-w-5xl mx-auto mb-4 border-t-4 border-gray-400 pt-4 flex justify-between items-start font-serif">
+    <div className="w-[55%]">
+      <h1 className="text-2xl font-bold text-gray-800 leading-tight">Satyendra Kumar Garg</h1>
+      <p className="text-base text-gray-600 font-bold">(Insurance Claim Investigation Service)</p>
+      <p className="text-base text-gray-600">Contact: +91 9610339955</p>
+    </div>
+    <div className="w-[45%] text-left pl-4 space-y-0.5 text-sm text-gray-700">
+      <p>Flat No. H-207, Hanging Gardens,</p>
+      <p>Jaisinghpura Road, Bhankrota,</p>
+      <p>Jaipur – 302026. (Raj)</p>
+      <p>
+        Email: <span className="text-blue-600 underline">invthirdeye@gmail.com</span>
+      </p>
+    </div>
+  </div>
+);
+
+const DocumentFooter = () => (
+  <div className="max-w-5xl mx-auto mt-8 border-t border-gray-300 pt-2 flex flex-col">
+    <div className="flex items-center gap-1 text-blue-400 font-bold text-sm">
+      <span>1</span>
+      <span className="text-gray-300"> |</span>
+    </div>
+    <div className="mt-4 h-4 w-full bg-[#e3f2f1] rounded-sm"></div>
+  </div>
+);
+
+/* ==================================================================================
+   4. MAIN COMPONENT
    ================================================================================== */
 
 export default function ODCaseView() {
@@ -965,7 +997,10 @@ export default function ODCaseView() {
         </div>
 
         {/* --- REPORT CONTENT --- */}
-        <div className="bg-white p-0 md:p-8 shadow-md print:shadow-none print:p-0 rounded-lg">
+        <div className="bg-white p-4 md:p-8 shadow-md print:shadow-none print:p-0 rounded-lg">
+          {/* Header Mockup */}
+          <DocumentHeader />
+
           {/* 1. Letter / General Details */}
           <GeneralDetails
             letterData={data.letterDetails}
@@ -1026,6 +1061,9 @@ export default function ODCaseView() {
               insuredWithStatementPhoto: true,
             }}
           />
+
+          {/* Footer Mockup */}
+          <DocumentFooter />
         </div>
       </div>
     </div>

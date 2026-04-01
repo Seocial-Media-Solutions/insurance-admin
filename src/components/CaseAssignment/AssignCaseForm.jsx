@@ -30,18 +30,23 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
   /* ---------------------------------------------------------
      FETCH CASES + EXECUTIVES
   --------------------------------------------------------- */
-  useEffect(() => {
-    (async () => {
-      try {
-        const caseRes = await axios.get(`${API}/cases`);
-        if (caseRes.data.success) setCases(caseRes.data.data);
+  /* ---------------------------------------------------------
+     FETCH CASES + EXECUTIVES
+  --------------------------------------------------------- */
+  const fetchAllData = async () => {
+    try {
+      const caseRes = await axios.get(`${API}/cases`);
+      if (caseRes.data.success) setCases(caseRes.data.data);
 
-        const execRes = await axios.get(`${API}/field-executives`);
-        if (execRes.data.success) setExecutives(execRes.data.data);
-      } catch (err) {
-        toast.error("Failed loading data");
-      }
-    })();
+      const execRes = await axios.get(`${API}/field-executives`);
+      if (execRes.data.success) setExecutives(execRes.data.data);
+    } catch (err) {
+      toast.error("Failed loading data");
+    }
+  };
+
+  useEffect(() => {
+    fetchAllData();
   }, []);
 
   /* ---------------------------------------------------------
@@ -177,6 +182,7 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
         });
 
         setStep(0);
+        fetchAllData(); // Refetch after assignment
         onAssignmentCreated?.();
       }
     } catch (err) {
@@ -269,16 +275,12 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
             </label>
 
             <div className="flex flex-wrap gap-3">
-              {VISITS.map((v) => {
-                // Check if visit is already assigned (handle object structure from DB)
-                const isAssigned = alreadyVisits.some((av) => (av.visitKey || av) === v.key);
-
+              {VISITS.filter((v) => !alreadyVisits.some((av) => (av.visitKey || av) === v.key)).map((v) => {
                 return (
                   <ToggleButton
                     key={v.key}
                     label={v.label}
                     icon={v.icon}
-                    disabled={isAssigned}
                     active={formData.investigationVisits.some(
                       (sel) => sel.visitKey === v.key
                     )}

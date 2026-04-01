@@ -3,6 +3,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { investigationService } from "../../services/investigationService";
 import { assignmentService } from "../../services/assignmentService";
+import { useFirms } from "../../context/FirmContext";
+
 import toast from "react-hot-toast";
 import {
   ChevronLeft,
@@ -13,12 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { useGlobalSearch } from "../../context/SearchContext";
-
 const ALL_COLUMNS = [
-  { header: "File No", accessor: "caseId.ourFileNo" },
   { header: "Vehicle No", accessor: "caseId.vehicleNo" },
   { header: "Insured Name", accessor: "caseId.nameOfInsured" },
-  { header: "Status", accessor: "status" },
   { header: "Case Status", accessor: "caseId.status" },
   { header: "Date", accessor: "createdAt", isDate: true },
 ];
@@ -28,6 +27,36 @@ const ALL_COLUMNS = [
 ------------------------------------------------- */
 const getNestedValue = (obj, path) => {
   return path.split(".").reduce((acc, part) => acc && acc[part], obj);
+};
+
+/* -------------------------------------------------
+   Firm Display Cell (Handles populated or fetching)
+------------------------------------------------- */
+const FirmCell = ({ firmId, firmData }) => {
+  const { getFirmSync } = useFirms();
+
+  // 1. If we have populated data from backend
+  if (firmData && typeof firmData === "object") {
+    return (
+      <div className="flex flex-col">
+        <span className="text-gray-900 font-semibold">{firmData.name}</span>
+        <span className="text-xs text-gray-500 font-mono">{firmData.code}</span>
+      </div>
+    );
+  }
+
+  // 2. Fallback to context sync lookup
+  const cachedFirm = getFirmSync(firmId);
+  if (cachedFirm) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-gray-900 font-semibold">{cachedFirm.name}</span>
+        <span className="text-xs text-gray-500 font-mono">{cachedFirm.code}</span>
+      </div>
+    );
+  }
+
+  return <span className="text-gray-400 font-mono text-xs">{firmId || "--"}</span>;
 };
 
 /* -------------------------------------------------
@@ -44,7 +73,10 @@ export default function CaseList() {
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState(null);
-
+  const { getFirmById } = useFirms();
+ 
+  
+  
   const columns = ALL_COLUMNS;
 
   // Fetch Data
@@ -185,8 +217,9 @@ export default function CaseList() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-semibold tracking-wider">
-                    <th className="px-6 py-4">S.No</th>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] uppercase text-gray-500 font-bold tracking-widest">
+                    <th className="px-6 py-4 w-16">S.No</th>
+                    <th className="px-6 py-4">Case Firm</th>
                     {columns.map((col, idx) => (
                       <th key={idx} className={`px-6 py-4 ${col.width || ""}`}>
                         {col.header}
@@ -211,35 +244,47 @@ export default function CaseList() {
                           const route = "OD" === item.caseType
                             ? `od-case/edit/${item.caseTypeId}`
                             : `theft-case/edit/${item.caseTypeId}`;
-                          navigate(route);
+                          navigate(route, { state: { parentCaseData: item.caseId } });
                         }}
                       >
-                        <td className="px-6 py-4 text-gray-400 font-mono text-xs">{(page - 1) * 15 + idx + 1}</td>
+                        <td className="px-6 py-4 text-gray-400 font-mono text-[10px] w-16">
+                           {(page - 1) * 15 + idx + 1}
+                        </td>
+                        <td className="px-6 py-4 min-w-[150px]">
+                           <FirmCell 
+                             firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
+                             firmData={item?.caseId?.caseFirmId}
+                           />
+                        </td>
                         {columns.map((col, colIdx) => (
                           <td key={colIdx} className="px-6 py-4">
                             {col.isDate ? (
-                              <span className="flex items-center gap-1.5 text-gray-500">
+                              <span className="flex items-center gap-1.5 text-gray-500 text-xs">
                                 <Calendar className="w-3.5 h-3.5" />
-                                {new Date(getNestedValue(item, col.accessor)).toLocaleDateString()}
+                                {new Date(getNestedValue(item, col.accessor)).toLocaleDateString('en-GB', {
+                                  day: '2-digit', month: 'short', year: 'numeric'
+                                })}
                               </span>
                             ) : col.accessor === "status" ? (
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === "Draft" ? "bg-yellow-100 text-yellow-700" :
-                                item.status === "Submitted" ? "bg-blue-100 text-blue-700" :
-                                  item.status === "Approved" ? "bg-green-100 text-green-700" :
-                                    item.status === "Rejected" ? "bg-red-100 text-red-700" :
-                                      "bg-gray-100 text-gray-700"
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
+                                  item.status === "Draft" ? "bg-amber-100 text-amber-700 ring-1 ring-amber-600/20" :
+                                  item.status === "Submitted" ? "bg-blue-100 text-blue-700 ring-1 ring-blue-600/20" :
+                                  item.status === "Approved" ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-600/20" :
+                                  item.status === "Rejected" ? "bg-rose-100 text-rose-700 ring-1 ring-rose-600/20" :
+                                  "bg-gray-100 text-gray-700 ring-1 ring-gray-600/20"
                                 }`}>
                                 {item.status || "--"}
                               </span>
-                            ) : col.accessor === "caseType" ? (
-                              <span className={`px-2 py-1 rounded-full text-xs font-semibold ${item.caseType === "OD" ? "bg-purple-100 text-purple-700" :
-                                item.caseType === "THEFT" ? "bg-orange-100 text-orange-700" :
-                                  "bg-gray-100 text-gray-700"
+                            ) : col.accessor === "caseId.status" ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  item.caseId?.status === "Pending" ? "bg-orange-50 text-orange-600 border-orange-100" :
+                                  item.caseId?.status === "Completed" ? "bg-green-50 text-green-600 border-green-100" :
+                                  "bg-gray-50 text-gray-600 border-gray-100"
                                 }`}>
-                                {item.caseType || "--"}
+                                {item.caseId?.status || "--"}
                               </span>
                             ) : (
-                              <span className={col.header === "Case ID" || col.header === "Investigation ID" ? "font-mono text-xs text-gray-400" : "font-medium text-gray-900"}>
+                              <span className={col.header === "Vehicle No" ? "font-mono text-xs font-bold text-gray-700" : "font-medium text-gray-900"}>
                                 {getNestedValue(item, col.accessor) || "--"}
                               </span>
                             )}

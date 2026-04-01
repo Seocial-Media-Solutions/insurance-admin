@@ -36,11 +36,11 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
   const [itemsPerPage, setItemsPerPage] = useState(15);
 
   const handleDelete = useCallback(
-    (id, fileNo) => {
+    (id, recordNumber) => {
       toast((t) => (
         <div className="bg-white text-gray-950 ">
           <p className="text-sm mb-2">
-            Are you sure you want to delete <b>case {fileNo}</b>? <br />
+            Are you sure you want to delete <b>case {recordNumber}</b>? <br />
 
           </p>
 
@@ -49,9 +49,9 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
               onClick={async () => {
                 try {
                   await onDelete(id);
-                  toast.success(`Case ${fileNo} deleted successfully`);
+                  toast.success(`Case ${recordNumber} deleted successfully`);
                 } catch (err) {
-                  toast.error(`Failed to delete case ${fileNo}`);
+                  toast.error(`Failed to delete case ${recordNumber}`);
                   console.error(err);
                 } finally {
                   toast.dismiss(t.id);
@@ -80,7 +80,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
     return cases.filter((c) => {
       const matchesSearch =
         !globalSearch ||
-        c.ourFileNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        c.recordNumber?.toLowerCase().includes(globalSearch.toLowerCase()) ||
         c.policyNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
         c.vehicleNo?.toLowerCase().includes(globalSearch.toLowerCase()) ||
         c.nameOfInsured?.toLowerCase().includes(globalSearch.toLowerCase()) ||
@@ -189,11 +189,11 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                   #
                 </th>
                 <th
-                  onClick={() => handleSort("ourFileNo")}
+                  onClick={() => handleSort("recordNumber")}
                   className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
-                    File No <SortIcon column="ourFileNo" />
+                    Record No <SortIcon column="recordNumber" />
                   </div>
                 </th>
                 <th
@@ -284,7 +284,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                         className="px-3 sm:px-6 py-4 font-semibold"
                         style={{ color: "var(--primary)" }}
                       >
-                        {c.ourFileNo || "-"}
+                        {c.recordNumber || "-"}
                       </td>
                       <td className="hidden md:table-cell px-3 sm:px-6 py-4" style={{ color: "var(--foreground)" }}>
                         {c.policyNo || "-"}
@@ -333,7 +333,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                             <Edit className="w-4 h-4" />
                           </Link>
                           <button
-                            onClick={() => handleDelete(c._id, c.ourFileNo)}
+                            onClick={() => handleDelete(c._id, c.recordNumber)}
                             className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
                             style={{ backgroundColor: "#ef4444" }}
                             title="Delete case"
@@ -424,7 +424,7 @@ function ViewCaseModal({ caseData, onClose, onEdit }) {
           style={{ backgroundColor: "var(--primary)", color: "white" }}
         >
           <div>
-            <h2 className="text-xl font-bold">{caseData.ourFileNo}</h2>
+            <h2 className="text-xl font-bold">{caseData.recordNumber}</h2>
             <p className="text-sm opacity-75 mt-0.5">Case Details</p>
           </div>
           <button

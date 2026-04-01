@@ -12,6 +12,7 @@ import {
     AlignmentType,
     HeadingLevel,
     Footer,
+    Header,
     PageNumber,
     PageBreak,
     BorderStyle,
@@ -77,6 +78,127 @@ export const useODCaseDocx = () => {
             const odDetails = data.odDetails || {};
             const claimSummary = odDetails.claimSummary || {};
             const insuredDetails = odDetails.insuredDetails || {};
+
+            // --- NEW HEADER SECTION (Matching design) ---
+            const headerTable = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: { style: BorderStyle.SINGLE, size: 15, color: "888888" },
+                    bottom: { style: BorderStyle.NONE },
+                    left: { style: BorderStyle.NONE },
+                    right: { style: BorderStyle.NONE },
+                    insideHorizontal: { style: BorderStyle.NONE },
+                    insideVertical: { style: BorderStyle.NONE },
+                },
+                rows: [
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                width: { size: 55, type: WidthType.PERCENTAGE },
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "Satyendra Kumar Garg",
+                                                size: 32,
+                                                bold: true,
+                                                font: "Times New Roman",
+                                                color: "333333",
+                                            }),
+                                        ],
+                                        spacing: { before: 200 },
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "(Insurance Claim Investigation Service)",
+                                                size: 20,
+                                                font: "Times New Roman",
+                                                color: "555555",
+                                            }),
+                                        ],
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: `Contact: +91 9610339955`,
+                                                size: 20,
+                                                font: "Times New Roman",
+                                                color: "555555",
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                                borders: {
+                                    top: { style: BorderStyle.NONE },
+                                    bottom: { style: BorderStyle.NONE },
+                                    left: { style: BorderStyle.NONE },
+                                    right: { style: BorderStyle.NONE },
+                                },
+                            }),
+                            new TableCell({
+                                width: { size: 45, type: WidthType.PERCENTAGE },
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "Flat No. H-207, Hanging Gardens,",
+                                                size: 19,
+                                                font: "Times New Roman",
+                                                color: "333333",
+                                            }),
+                                        ],
+                                        spacing: { before: 200 },
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "Jaisinghpura Road, Bhankrota,",
+                                                size: 19,
+                                                font: "Times New Roman",
+                                                color: "333333",
+                                            }),
+                                        ],
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "Jaipur – 302026. (Raj)",
+                                                size: 19,
+                                                font: "Times New Roman",
+                                                color: "333333",
+                                            }),
+                                        ],
+                                    }),
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                text: "Email: ",
+                                                size: 19,
+                                                font: "Times New Roman",
+                                                color: "333333",
+                                            }),
+                                            new TextRun({
+                                                text: "invthirdeye@gmail.com",
+                                                size: 19,
+                                                font: "Times New Roman",
+                                                color: "0000FF",
+                                                underline: { type: "single", color: "0000FF" },
+                                            }),
+                                        ],
+                                    }),
+                                ],
+                                borders: {
+                                    top: { style: BorderStyle.NONE },
+                                    bottom: { style: BorderStyle.NONE },
+                                    left: { style: BorderStyle.NONE },
+                                    right: { style: BorderStyle.NONE },
+                                },
+                            }),
+                        ],
+                    }),
+                ],
+            });
 
             // Date (Top Right)
             children.push(
@@ -1698,19 +1820,72 @@ export const useODCaseDocx = () => {
 
             // Sections details removed as per request (Statements & Evidence Photos is the last section)
 
-            // Footer with page numbers
-            const footer = new Footer({
-                children: [
-                    new Paragraph({
-                        alignment: AlignmentType.CENTER,
+            // New Footer Design
+            const footerTable = new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                    top: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
+                    bottom: { style: BorderStyle.NONE },
+                    left: { style: BorderStyle.NONE },
+                    right: { style: BorderStyle.NONE },
+                    insideHorizontal: { style: BorderStyle.NONE },
+                    insideVertical: { style: BorderStyle.NONE },
+                },
+                rows: [
+                    new TableRow({
                         children: [
-                            new TextRun("Page "),
-                            new TextRun({ children: [PageNumber.CURRENT] }),
-                            new TextRun(" of "),
-                            new TextRun({ children: [PageNumber.TOTAL_PAGES] }),
+                            new TableCell({
+                                children: [
+                                    new Paragraph({
+                                        children: [
+                                            new TextRun({
+                                                children: [PageNumber.CURRENT],
+                                                color: "70a1d7",
+                                                size: 24,
+                                                bold: true,
+                                            }),
+                                            new TextRun({
+                                                text: " |",
+                                                color: "AAAAAA",
+                                                size: 24,
+                                            }),
+                                        ],
+                                        spacing: { before: 100, after: 100 },
+                                    }),
+                                ],
+                                borders: {
+                                    top: { style: BorderStyle.NONE },
+                                    bottom: { style: BorderStyle.NONE },
+                                    left: { style: BorderStyle.NONE },
+                                    right: { style: BorderStyle.NONE },
+                                },
+                            }),
+                        ],
+                    }),
+                    new TableRow({
+                        children: [
+                            new TableCell({
+                                shading: { fill: "e3f2f1" },
+                                children: [new Paragraph({ text: "" })],
+                                height: { value: 150, rule: "atLeast" },
+                                borders: {
+                                    top: { style: BorderStyle.NONE },
+                                    bottom: { style: BorderStyle.NONE },
+                                    left: { style: BorderStyle.NONE },
+                                    right: { style: BorderStyle.NONE },
+                                },
+                            }),
                         ],
                     }),
                 ],
+            });
+
+            const footer = new Footer({
+                children: [footerTable],
+            });
+
+            const header = new Header({
+                children: [headerTable],
             });
 
 
@@ -1728,6 +1903,14 @@ export const useODCaseDocx = () => {
                     {
                         properties: {
                             page: {
+                                margin: {
+                                    top: 1000,
+                                    bottom: 1000,
+                                    left: 1000,
+                                    right: 1000,
+                                    header: 500, // Explicitly set distance
+                                    footer: 500, // Explicitly set distance
+                                },
                                 size: {
                                     width: 11906, // A4 Width in TWIPs
                                     height: 16838, // A4 Height in TWIPs
@@ -1735,13 +1918,16 @@ export const useODCaseDocx = () => {
                                 },
                                 watermark: {
                                     text: "invthirdeye@gmail.com",
-                                    color: "000000",
+                                    color: "D3D3D3",
                                     type: "diagonal",
                                     size: 540,
                                 }
                             }
                         },
                         children: children,
+                        headers: {
+                            default: header
+                        },
                         footers: {
                             default: footer
                         }

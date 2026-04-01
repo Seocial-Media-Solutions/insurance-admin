@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { useUpdateODCaseSection } from "../../../hooks/useODCases";
-import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../utils/odCaseHelpers";
+import { useUpdateODCaseSection } from "../../../../hooks/useODCases";
+import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../../utils/odCaseHelpers";
 import ImageGallery from "./ImageGallery";
 import DocumentUpload from "./DocumentUpload";
-import DragDropUpload from "../../../components/Ui/DragDropUpload";
+import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
-import { INDIAN_STATES, STATE_CITIES } from "../../../utils/indianStates";
+import { INDIAN_STATES, STATE_CITIES } from "../../../../utils/indianStates";
 
 function SectionUnit({
     id,
@@ -20,6 +20,7 @@ function SectionUnit({
     defaultFieldValues = {},
     isExpanded,
     onToggle,
+    firmData,
 }) {
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
@@ -33,6 +34,26 @@ function SectionUnit({
             // Suppress default error toast, handled by toast.promise
         }
     });
+
+    const handleRefreshFromFirm = () => {
+        if (!firmData) {
+            toast.error("No firm data available to refresh.");
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            letterDetails: {
+                ...prev.letterDetails,
+                referenceNumber: firmData.code || "",
+                recipientDesignation: firmData.recipientDesignation || "",
+                recipientDepartment: firmData.recipientDepartment || "",
+                recipientCompany: firmData.recipientCompany || "",
+                recipientAddress: firmData.recipientAddress || "",
+            }
+        }));
+        toast.success("Letter details updated from firm data.");
+    };
 
     const updateField = (field, value) => {
         setForm((prev) => {
@@ -394,15 +415,34 @@ function SectionUnit({
                 onClick={onToggle}
                 className="w-full flex justify-between items-center p-6 hover:bg-gray-50 transition-colors rounded-t-xl"
             >
-                <div className="flex items-center gap-3">
-                    {isExpanded ? (
-                        <ChevronUp className="w-5 h-5 text-gray-400" />
-                    ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                            <ChevronUp className="w-5 h-5 text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-5 h-5 text-gray-400" />
+                        )}
+                        <h2 className="text-xl font-bold text-gray-800 text-left">
+                            {apiPath.replace(/-/g, " ").toUpperCase()}
+                        </h2>
+                    </div>
+
+                    {/* Refresh Button for Letter Details */}
+                    {sectionKey === "letterDetails" && isExpanded && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleRefreshFromFirm();
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md text-xs font-bold transition-all border border-blue-200 uppercase tracking-wider"
+                            title="Re-fill from Firm Data"
+                        >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                            </svg>
+                            Sync From Firm
+                        </button>
                     )}
-                    <h2 className="text-xl font-bold text-gray-800 text-left">
-                        {apiPath.replace(/-/g, " ").toUpperCase()}
-                    </h2>
                 </div>
                 <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-500 uppercase tracking-wide">
                     {sectionKey}
@@ -1861,22 +1901,6 @@ function SectionUnit({
                             }
 
 
-                            if (field === "referenceNumber") {
-                                return (
-                                    <div key={field} className="col-span-1">
-                                        <label className="block">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-semibold text-gray-700">
-                                                    {uiLabel}
-                                                </span>
-                                            </div>
-                                            <div className="w-full border px-3 py-2 rounded-lg bg-gray-100 text-gray-700 border-gray-300 min-h-[42px] flex items-center">
-                                                {defaultFieldValues?.referenceNumber || currentSection[field] || "Not Available"}
-                                            </div>
-                                        </label>
-                                    </div>
-                                );
-                            }
 
                             if (field === "policyDuration") {
                                 const [startDateStr, endDateStr] = (currentSection[field] || "").split(" to ");
@@ -2057,16 +2081,14 @@ function SectionUnit({
                                                 step={type === 'number' ? "any" : undefined}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all 
                                                     ${error ? "border-red-500 bg-red-50" : "border-gray-300"}
-                                                    ${field === 'referenceNumber' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''}
                                                 `}
                                                 value={
-                                                    field === 'referenceNumber' && defaultFieldValues?.referenceNumber
-                                                        ? defaultFieldValues.referenceNumber
-                                                        : (type === 'datetime-local' && currentSection[field] ? currentSection[field].slice(0, 16) : (currentSection[field] || ""))
+                                                    (type === 'datetime-local' && currentSection[field]) 
+                                                        ? currentSection[field].slice(0, 16) 
+                                                        : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")
                                                 }
                                                 onChange={(e) => updateField(field, e.target.value)}
                                                 placeholder={type === 'date' ? '' : `Enter ${uiLabel}`}
-                                                disabled={field === 'referenceNumber'}
                                             />
                                         )}
 
