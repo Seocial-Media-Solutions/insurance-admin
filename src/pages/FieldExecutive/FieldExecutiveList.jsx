@@ -60,23 +60,18 @@ export default function FieldExecutiveList() {
         <p className="text-sm mb-2">Are you sure you want to delete?</p>
         <div className="flex gap-2">
           <button
-            onClick={async () => {
-              try {
-                const res = await fetch(`${API}/field-executives/${id}`, {
-                  method: "DELETE",
-                });
-                const result = await res.json();
-                if (result.success) {
-                  toast.success("Executive deleted");
-                  fetchExecutives(currentPage);
-                } else {
-                  toast.error(result.message || "Delete failed");
-                }
-              } catch {
-                toast.error("Server error while deleting");
-              }
-              toast.dismiss(t.id);
-            }}
+    onClick={async () => {
+      try {
+        const result = await fieldExecutiveService.delete(id);
+        if (result.success) {
+          fetchExecutives(currentPage);
+        }
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
+      toast.dismiss(t.id);
+    }}
+
             className="bg-red-600 text-white px-3 py-1 rounded-md text-xs"
           >
             Confirm

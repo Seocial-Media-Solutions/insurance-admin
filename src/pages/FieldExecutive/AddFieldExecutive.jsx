@@ -2,22 +2,21 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import FieldExecutiveForm from "../../components/FieldExecutiveForm";
 import toast from "react-hot-toast";
-import { API } from "../../utils/api";
+import { fieldExecutiveService } from "../../services/fieldExecutiveService";
+
 export default function AddFieldExecutive() {
   const navigate = useNavigate();
 
-  const handleSubmit = async (data) => {
-    const res = await fetch(`${API}/field-executives`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (result.success) {
-      toast.success("Field Executive created successfully!");
-      navigate("/field-executives");
-    } else {
-      toast.error(result.message || "Error creating field executive");
+  const handleSubmit = async (formData) => {
+    try {
+      const result = await fieldExecutiveService.create(formData);
+      if (result.success) {
+        // toast.success handled by service toast.promise
+        navigate("/field-executives");
+      }
+    } catch (err) {
+      console.error("Error creating executive:", err);
+      // toast.error handled by service toast.promise
     }
   };
 
@@ -27,3 +26,4 @@ export default function AddFieldExecutive() {
     </div>
   );
 }
+
