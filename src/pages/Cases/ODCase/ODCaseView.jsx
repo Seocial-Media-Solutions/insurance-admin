@@ -197,8 +197,6 @@ const ClaimSummary = ({ data }) => {
           <tbody>
             <TableRow label="Vehicle No." value={data.vehicleNo} />
             <TableRow label="Claim No." value={data.claimNo} />
-            <TableRow label="Policy No." value={data.policyNo} />
-            <TableRow label="Policy Duration" value={data.policyDuration} />
             <TableRow label="Close Proximity" value={data.closeProximity} />
             <TableRow label="Insured Name" value={data.insuredName} />
             <TableRow
@@ -531,7 +529,7 @@ const GarageVisitDetails = ({ data }) => {
                   if (Array.isArray(parsed)) vendors = parsed;
                   else if (typeof parsed === 'object') vendors = [parsed]; // Handle potential single object case safety
                 }
-              } catch (e) {
+              } catch (_e) {
                 // If parse fails and it's a non-empty string, show it as legacy text
                 if (typeof data.towingVendorDetails === "string" && data.towingVendorDetails.trim() !== "") {
                   return <TableRow label="Towing vendor details" value={data.towingVendorDetails} />;

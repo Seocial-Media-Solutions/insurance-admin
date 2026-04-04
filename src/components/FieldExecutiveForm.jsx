@@ -4,6 +4,55 @@ import {
   Eye, EyeOff, User, Mail, Phone, CreditCard, FileText,
   MapPin, Shield, CheckCircle, AlertCircle, Briefcase, Lock
 } from "lucide-react";
+import useDebounce from "../hooks/useDebounce";
+
+// Helper component for input fields
+const InputField = ({ label, name, type = "text", icon: IconComponent, placeholder, registerProps, error, required = true, maxLength, currentValue, isBoxed = false }) => (
+  <div className="space-y-1.5">
+    <label className="text-sm font-medium text-gray-700 flex items-center gap-1 w-full">
+      {label}
+      {required && <span className="text-red-500 font-bold">*</span>}
+      
+      {/* Counter and Errors */}
+      <div className="ml-auto flex items-center gap-2">
+        {maxLength && (
+          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors ${currentValue?.length === maxLength ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
+            {currentValue?.length || 0}/{maxLength}
+          </span>
+        )}
+        {error && <span className="text-red-500 text-xs font-normal flex items-center gap-1"><AlertCircle size={12} /> {error.message}</span>}
+      </div>
+    </label>
+    <div className="relative group">
+      <div className="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-blue-600 transition-colors z-10">
+        <IconComponent size={18} />
+      </div>
+      <input
+        type={type}
+        {...registerProps}
+        onInput={(e) => {
+          if (type === "tel") {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          } else if (name === "fullName") {
+            e.target.value = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+          } else if (name === "username") {
+            e.target.value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+          } else if (name === "drivingLicenseNumber") {
+            e.target.value = e.target.value.replace(/[^a-zA-Z0-9-\s]/g, '').toUpperCase();
+          }
+        }}
+        placeholder={placeholder}
+        style={isBoxed ? {
+          letterSpacing: '0.85em',
+          paddingLeft: '3.2rem',
+          fontFamily: 'monospace',
+          fontWeight: 'bold'
+        } : {}}
+        className={`w-full ${isBoxed ? 'pr-0' : 'pl-10 pr-4'} py-2.5 bg-gray-50 border ${error ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200'} rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-200 placeholder:text-gray-400 placeholder:tracking-normal`}
+      />
+    </div>
+  </div>
+);
 
 export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,9 +61,12 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    setValue,
+    formState: { errors, dirtyFields },
     watch
   } = useForm({
+    mode: "onBlur",
+    reValidateMode: "onChange",
     defaultValues: {
       username: "",
       password: "",
@@ -28,9 +80,40 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     },
   });
 
+  const passwordVal = watch("password");
+  const debouncedPassword = useDebounce(passwordVal, 400);
+
+  // Auto-generate username from fullName + contactNumber
+  const fullNameVal = watch("fullName");
+  const contactVal = watch("contactNumber");
+  
+  useEffect(() => {
+    // Only auto-fill if in 'add' mode and the username field hasn't been manually touched by user
+    if (mode === 'add' && !dirtyFields.username) {
+      const namePart = fullNameVal
+        ? fullNameVal.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+        : '';
+      
+      const phonePart = contactVal ? contactVal.replace(/[^0-9]/g, '').slice(-4) : '';
+      
+      let sanitized = "";
+      if (namePart && phonePart) sanitized = `${namePart}_${phonePart}`;
+      else if (namePart) sanitized = namePart;
+      else if (phonePart) sanitized = `user_${phonePart}`;
+
+      if (sanitized) {
+        setValue("username", sanitized, { shouldValidate: true });
+      }
+    }
+  }, [fullNameVal, contactVal, mode, dirtyFields.username, setValue]);
+
+  // Watch for counters
+  const watchedValues = watch(["contactNumber", "aadharNumber", "drivingLicenseNumber"]);
+  const [contactLen, aadharLen, dlLen] = watchedValues;
+
   useEffect(() => {
     if (initialData) {
-      const { password, ...rest } = initialData;
+      const { password: _, ...rest } = initialData;
       reset(rest);
     }
   }, [initialData, reset]);
@@ -43,64 +126,62 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
   };
 
   const validationRules = {
-    fullName: { required: "Full Name is required" },
+    fullName: { 
+      required: "Full Name is required",
+      pattern: {
+        value: /^[a-zA-Z\s]+$/,
+        message: "Only letters and spaces"
+      }
+    },
     username: {
       required: "Username is required",
-      minLength: { value: 3, message: "Min 3 chars required" }
+      minLength: { value: 3, message: "Min 3 chars required" },
+      pattern: {
+        value: /^[a-zA-Z0-9_]+$/,
+        message: "Letters, numbers & underscore only"
+      }
     },
     password: {
       required: mode === 'add' ? "Password is required" : false,
       minLength: { value: 8, message: "Min 8 chars required" },
       pattern: {
         value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
-        message: "Weak password"
+        message: "Weak password (Need A-Z, a-z, 0-9, #@$)"
       }
     },
     email: {
       required: "Email is required",
       pattern: {
-        value: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        message: "Invalid email"
+        value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+        message: "Invalid email format"
       }
     },
     contactNumber: {
       required: "Contact Number is required",
       pattern: {
-        value: /^\d{10}$/,
-        message: "Must be 10 digits"
+        value: /^[6-9]\d{9}$/,
+        message: "Must be a valid 10-digit number"
       }
     },
     aadharNumber: {
       required: "Aadhar Number is required",
       pattern: {
         value: /^\d{12}$/,
-        message: "Must be 12 digits"
+        message: "Must be exactly 12 digits"
       }
     },
-    drivingLicenseNumber: { required: "Driving License is required" },
-    address: { required: false },
+    drivingLicenseNumber: { 
+      required: "Driving License is required",
+      pattern: {
+        value: /^[A-Z0-9-\s]+$/i,
+        message: "Invalid DL format"
+      }
+    },
+    address: { 
+      required: "Address is required",
+      minLength: { value: 10, message: "Please provide full address (min 10 chars)" }
+    },
   };
-
-  // Helper component for input fields
-  const InputField = ({ label, name, type = "text", icon: Icon, placeholder, registerProps, error }) => (
-    <div className="space-y-1.5">
-      <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-        {label}
-        {error && <span className="text-red-500 text-xs font-normal ml-auto flex items-center gap-1"><AlertCircle size={12} /> {error.message}</span>}
-      </label>
-      <div className="relative group">
-        <div className="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-blue-600 transition-colors">
-          <Icon size={18} />
-        </div>
-        <input
-          type={type}
-          {...registerProps}
-          placeholder={placeholder}
-          className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${error ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200'} rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all duration-200 placeholder:text-gray-400`}
-        />
-      </div>
-    </div>
-  );
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -133,10 +214,18 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
             <InputField
               label="Contact Number"
               name="contactNumber"
+              type="tel"
               icon={Phone}
               placeholder="e.g. 9876543210"
-              registerProps={register("contactNumber", validationRules.contactNumber)}
+              registerProps={register("contactNumber", {
+                ...validationRules.contactNumber,
+                minLength: { value: 10, message: "Exactly 10 digits required" },
+                maxLength: { value: 10, message: "Exactly 10 digits required" }
+              })}
               error={errors.contactNumber}
+              maxLength={10}
+              currentValue={contactLen}
+              isBoxed={true}
             />
             <InputField
               label="Email Address"
@@ -170,18 +259,32 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
             <InputField
               label="Aadhar Number"
               name="aadharNumber"
+              type="tel"
               icon={CreditCard}
               placeholder="12-digit UIDAI number"
-              registerProps={register("aadharNumber", validationRules.aadharNumber)}
+              registerProps={register("aadharNumber", {
+                ...validationRules.aadharNumber,
+                minLength: { value: 12, message: "Exactly 12 digits required" },
+                maxLength: { value: 12, message: "Exactly 12 digits required" }
+              })}
               error={errors.aadharNumber}
+              maxLength={12}
+              currentValue={aadharLen}
+              isBoxed={true}
             />
             <InputField
               label="Driving License Number"
               name="drivingLicenseNumber"
               icon={CreditCard}
               placeholder="Valid driving license number"
-              registerProps={register("drivingLicenseNumber", validationRules.drivingLicenseNumber)}
+              registerProps={register("drivingLicenseNumber", {
+                ...validationRules.drivingLicenseNumber,
+                minLength: { value: 16, message: "Exactly 16 characters required" },
+                maxLength: { value: 16, message: "Exactly 16 characters required" }
+              })}
               error={errors.drivingLicenseNumber}
+              maxLength={16}
+              currentValue={dlLen}
             />
           </div>
         </div>
@@ -204,8 +307,8 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
             />
 
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                Password {mode === 'edit' && <span className="text-gray-400 font-normal text-xs">(Optional)</span>}
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                Password {mode === 'edit' ? <span className="text-gray-400 font-normal text-xs">(Optional)</span> : <span className="text-red-500 font-bold">*</span>}
                 {errors.password && <span className="text-red-500 text-xs font-normal ml-auto flex items-center gap-1"><AlertCircle size={12} /> {errors.password.message}</span>}
               </label>
               <div className="relative group">
@@ -228,16 +331,16 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
               </div>
 
               {/* Password Strength/Requirement Tracker */}
-              {(mode === 'add' || watch('password')?.length > 0) && (
+              {(mode === 'add' || debouncedPassword?.length > 0) && (
                 <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Security Requirements</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
-                      { check: watch('password')?.length >= 8, label: "8+ Characters" },
-                      { check: /[A-Z]/.test(watch('password') || ""), label: "UpperCase (A-Z)" },
-                      { check: /[a-z]/.test(watch('password') || ""), label: "LowerCase (a-z)" },
-                      { check: /\d/.test(watch('password') || ""), label: "Number (0-9)" },
-                      { check: /[\W_]/.test(watch('password') || ""), label: "Special Char (!@#)" },
+                      { check: debouncedPassword?.length >= 8, label: "8+ Characters" },
+                      { check: /[A-Z]/.test(debouncedPassword || ""), label: "UpperCase (A-Z)" },
+                      { check: /[a-z]/.test(debouncedPassword || ""), label: "LowerCase (a-z)" },
+                      { check: /\d/.test(debouncedPassword || ""), label: "Number (0-9)" },
+                      { check: /[\W_]/.test(debouncedPassword || ""), label: "Special Char (!@#)" },
                     ].map((req, idx) => (
                       <div key={idx} className={`flex items-center gap-2 text-xs transition-colors duration-300 ${req.check ? "text-green-700 font-medium" : "text-gray-400"}`}>
                         <div className={`w-4 h-4 rounded-full flex items-center justify-center border ${req.check ? "bg-green-500 border-green-500 text-white" : "border-gray-300"}`}>

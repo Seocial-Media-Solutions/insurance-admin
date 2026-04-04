@@ -6,10 +6,11 @@ const AssignmentContext = createContext();
 
 export function AssignmentProvider({ children }) {
     const [assignments, setAssignments] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [initialized, setInitialized] = useState(false);
     const limit = 10;
 
     const loadAssignments = async (page = currentPage) => {
@@ -25,6 +26,7 @@ export function AssignmentProvider({ children }) {
             toast.error("Failed to load assignments");
         } finally {
             setLoading(false);
+            setInitialized(true);
         }
     };
 
@@ -68,7 +70,7 @@ export function AssignmentProvider({ children }) {
     };
 
     useEffect(() => {
-        loadAssignments(1);
+        // Fetch is now lazy-loaded via the hook
     }, []);
 
     const getAssignmentsByCaseId = async (caseId) => {
@@ -106,7 +108,8 @@ export function AssignmentProvider({ children }) {
         updateAssignment,
         deleteAssignment,
         getAssignmentsByCaseId,
-        getAssignmentById
+        getAssignmentById,
+        initialized
     };
 
     return (
@@ -121,5 +124,13 @@ export function useAssignments() {
     if (!context) {
         throw new Error('useAssignments must be used within an AssignmentProvider');
     }
+
+    // Lazy load when hook is used
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadAssignments(1);
+        }
+    }, [context]);
+
     return context;
 }

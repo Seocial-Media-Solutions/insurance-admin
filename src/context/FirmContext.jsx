@@ -7,10 +7,11 @@ const FirmContext = createContext();
 export function FirmProvider({ children }) {
     const [firms, setFirms] = useState([]);
     const [allFirms, setAllFirms] = useState([]); // Cache for all firms (no pagination)
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [initialized, setInitialized] = useState(false);
     const limit = 10;
 
     // Fetch firms list (paginated)
@@ -35,6 +36,7 @@ export function FirmProvider({ children }) {
             console.error("Error loading firms:", err);
         } finally {
             setLoading(false);
+            setInitialized(true);
         }
     }, [currentPage, limit]);
 
@@ -132,9 +134,9 @@ export function FirmProvider({ children }) {
     }, [allFirms]);
 
     useEffect(() => {
-        fetchAllFirms();
-        loadFirms(1);
-    }, [fetchAllFirms]);
+        // Initial fetch removed to avoid bulk loading at once.
+        // It's now handled lazily by useFirms hook
+    }, []);
 
     const value = useMemo(() => ({
         firms,
@@ -151,10 +153,12 @@ export function FirmProvider({ children }) {
         getFirmById,
         getFirmSync,
         getFirmCode,
-        allFirms
+        allFirms,
+        fetchAllFirms,
+        initialized
     }), [
         firms, allFirms, loading, currentPage, totalPages, total, limit, 
-        loadFirms, goToPage, addFirm, updateFirm, deleteFirm, getFirmById, getFirmSync, getFirmCode
+        loadFirms, goToPage, addFirm, updateFirm, deleteFirm, getFirmById, getFirmSync, getFirmCode, fetchAllFirms, initialized
     ]);
 
     return (
@@ -169,5 +173,14 @@ export function useFirms() {
     if (!context) {
         throw new Error('useFirms must be used within a FirmProvider');
     }
+
+    // Lazy load: Trigger fetch only when a component actually uses this hook
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadFirms(1);
+            context.fetchAllFirms();
+        }
+    }, [context]);
+
     return context;
 }

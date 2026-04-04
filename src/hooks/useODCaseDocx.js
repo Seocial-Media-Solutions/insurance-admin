@@ -16,16 +16,33 @@ import {
     PageNumber,
     PageBreak,
     BorderStyle,
+    VerticalAlign,
 } from "https://esm.sh/docx@8.5.0";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
 import { useCallback, useState } from "react";
-import { convertImageToBase64, getCurrentDate } from "../utils/helper";
+import { convertImageToBase64, getCurrentDate, formatDate, formatDateTime } from "../utils/helper";
 import { toast } from "react-hot-toast";
 import { AlignCenter } from "lucide-react";
 
 // Helper for consistent table rows
 const createStandardRow = (label, value, labelPercent = 40, align = AlignmentType.LEFT) => {
     const valuePercent = 100 - labelPercent;
+    
+    // Safety check for objects
+    let displayValue = value;
+    if (typeof value === 'object' && value !== null) {
+        if (value.$date) {
+            displayValue = formatDate(value);
+        } else if (Object.keys(value).every(k => !isNaN(k))) {
+            // Case where a string was accidentally spread into an object
+            displayValue = Object.values(value).join('');
+        } else {
+            // Check for potential nested values or arrays
+            displayValue = String(value);
+        }
+    } else if (value === undefined || value === null) {
+        displayValue = "-";
+    }
+
     return new TableRow({
         children: [
             new TableCell({
@@ -41,7 +58,7 @@ const createStandardRow = (label, value, labelPercent = 40, align = AlignmentTyp
             new TableCell({
                 children: [
                     new Paragraph({
-                        children: [new TextRun({ text: String(value || "-"), size: 24, color: "000000" })],
+                        children: [new TextRun({ text: String(displayValue || "-"), size: 24, color: "000000" })],
                         alignment: align,
                     })
                 ],
@@ -60,7 +77,7 @@ const createStandardRow = (label, value, labelPercent = 40, align = AlignmentTyp
 export const useODCaseDocx = () => {
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const generateDocx = useCallback(async (data, sectionsConfig) => {
+    const generateDocx = useCallback(async (data) => {
         if (!data) {
             toast.error("No data available to generate document");
             return;
@@ -84,11 +101,11 @@ export const useODCaseDocx = () => {
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 borders: {
                     top: { style: BorderStyle.SINGLE, size: 15, color: "888888" },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                    insideHorizontal: { style: BorderStyle.NONE },
-                    insideVertical: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.NIL },
+                    left: { style: BorderStyle.NIL },
+                    right: { style: BorderStyle.NIL },
+                    insideHorizontal: { style: BorderStyle.NIL },
+                    insideVertical: { style: BorderStyle.NIL },
                 },
                 rows: [
                     new TableRow({
@@ -130,10 +147,10 @@ export const useODCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                             new TableCell({
@@ -189,10 +206,10 @@ export const useODCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],
@@ -200,10 +217,12 @@ export const useODCaseDocx = () => {
                 ],
             });
 
+            children.push(new Paragraph({})); // Spacer
+
             // Date (Top Right)
             children.push(
                 new Paragraph({
-                    text: letterData.date ? new Date(letterData.date).toLocaleDateString('en-GB') : getCurrentDate(),
+                    children: [new TextRun({ text: letterData.date ? formatDate(letterData.date) : getCurrentDate() })],
                     alignment: AlignmentType.RIGHT,
                     spacing: { after: 200 },
                 })
@@ -225,26 +244,28 @@ export const useODCaseDocx = () => {
             // Recipient Details
             children.push(
                 new Paragraph({
-                    text: "To,",
+                    children: [new TextRun({ text: "To," })],
                     spacing: { after: 50 },
                 }),
                 new Paragraph({
-                    text: letterData.recipientDesignation || "Manager,",
+                    children: [new TextRun({ text: String(letterData.recipientDesignation || "Manager,") })],
                     spacing: { after: 50 },
                 }),
                 new Paragraph({
-                    text: letterData.recipientDepartment || "Claim Tie-up Hub (NON-SUIT),",
+                    children: [new TextRun({ text: String(letterData.recipientDepartment || "Claim Tie-up Hub (NON-SUIT),") })],
                     spacing: { after: 50 },
                 }),
                 new Paragraph({
-                    text: letterData.recipientCompany || "The New India Assurance Co. Ltd,",
+                    children: [new TextRun({ text: String(letterData.recipientCompany || "The New India Assurance Co. Ltd,") })],
                     spacing: { after: 50 },
                 }),
                 new Paragraph({
-                    text: letterData.recipientAddress || "Address",
+                    children: [new TextRun({ text: String(letterData.recipientAddress || "Address") })],
                     spacing: { after: 300 },
                 })
             );
+
+            children.push(new Paragraph({ spacing: { after: 200 } })); // Spacer instead of PageBreak
 
             // Subject Line
             const vehicleNo = claimSummary.vehicleNo || referenceData.vehicleNumber || "N/A";
@@ -256,7 +277,7 @@ export const useODCaseDocx = () => {
                         new TextRun({
                             text: `Ref: OD Investigation Report for claim of - ${insuredName} (${vehicleNo})`,
                             bold: true,
-                            underline: {},
+                            underline: { type: "single" },
                         }),
                     ],
                     spacing: { after: 200 },
@@ -264,7 +285,6 @@ export const useODCaseDocx = () => {
             );
 
             // Opening Paragraph
-            const claimNo = claimSummary.claimNo || "N/A";
             const appointmentDate = referenceData.investigatorAppointmentDate || claimSummary.dateOfClaimIntimated || getCurrentDate();
 
             children.push(
@@ -283,7 +303,7 @@ export const useODCaseDocx = () => {
             if (odDetails && claimSummary && Object.keys(claimSummary).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Claim Summary",
+                        children: [new TextRun({ text: "Claim Summary" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -291,7 +311,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -322,16 +342,35 @@ export const useODCaseDocx = () => {
                     accidentSummary: "Summary of accident as per claim form:",
                 };
 
+                const policyData = data.policyBreakInDetails || {};
+                const meetingData = data.meetingDetails || {};
+                const policeData = data.policeRecordDetails || {};
+
                 for (const [key, label] of Object.entries(claimFields)) {
-                    claimSummaryRows.push(createStandardRow(label, claimSummary[key]));
+                    let value = claimSummary[key];
+
+                    // Policy details now pulled from special section
+                    if (key === 'policyNo') {
+                        value = policyData.policyNo || "-";
+                    } else if (key === 'policyDuration') {
+                        value = policyData.policyPeriod || "-";
+                    } else if (key === 'dateOfLossAndTime') {
+                        value = formatDateTime(meetingData.dateAndTimeOfLoss || claimSummary.dateOfLossAndTime);
+                    } else if (key === 'firDetailsDate') {
+                        value = formatDate(policeData.firDateAndTime);
+                    }
+
+                    claimSummaryRows.push(createStandardRow(label, value));
                 }
 
-                children.push(
-                    new Table({
-                        rows: claimSummaryRows,
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                    })
-                );
+                if (claimSummaryRows.length > 0) {
+                    children.push(
+                        new Table({
+                            rows: claimSummaryRows,
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                        })
+                    );
+                }
 
                 // Add accident summary paragraph if exists
                 if (claimSummary.accidentSummary) {
@@ -358,11 +397,10 @@ export const useODCaseDocx = () => {
                 }
             }
 
-            // Special Section: Insured Details Table
             if (odDetails && insuredDetails && Object.keys(insuredDetails).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Insured cum driver Details",
+                        children: [new TextRun({ text: "Insured cum driver Details" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -370,7 +408,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -435,7 +473,7 @@ export const useODCaseDocx = () => {
             if (vehicleDetails && Object.keys(vehicleDetails).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Vehicle Details",
+                        children: [new TextRun({ text: "Vehicle Details" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -443,7 +481,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -490,7 +528,7 @@ export const useODCaseDocx = () => {
             if (Array.isArray(dlParticulars) && dlParticulars.length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "DL Particulars",
+                        children: [new TextRun({ text: "DL Particulars" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -498,7 +536,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -540,7 +578,7 @@ export const useODCaseDocx = () => {
             if (meetingData && Object.keys(meetingData).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Details of meeting with Insured",
+                        children: [new TextRun({ text: "Details of meeting with Insured" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -548,7 +586,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -568,7 +606,10 @@ export const useODCaseDocx = () => {
                 };
 
                 for (const [key, label] of Object.entries(basicMeetingFields)) {
-                    const value = meetingData[key] || "";
+                    let value = meetingData[key] || "";
+                    if (key === 'dateAndTimeOfLoss') {
+                        value = formatDateTime(value);
+                    }
 
                     meetingRows.push(
                         new TableRow({
@@ -709,8 +750,8 @@ export const useODCaseDocx = () => {
                 // Add Witness Statements
                 const witnessDetails = data.witnessDetails || [];
                 if (Array.isArray(witnessDetails) && witnessDetails.length > 0) {
-                    witnessDetails.forEach((witness, index) => {
-                        if (witness.witnessStatement) {
+                    witnessDetails.forEach((witness) => {
+                        if (witness && witness.witnessStatement) {
                             // Header Row
                             meetingRows.push(
                                 new TableRow({
@@ -789,7 +830,7 @@ export const useODCaseDocx = () => {
             if (policyData && Object.keys(policyData).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Policy & Break in Details",
+                        children: [new TextRun({ text: "Policy & Break in Details" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -797,7 +838,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -891,7 +932,7 @@ export const useODCaseDocx = () => {
                                         })
                                     ],
                                     width: { size: 60, type: WidthType.PERCENTAGE },
-                                    verticalAlign: "center",
+                                    verticalAlign: VerticalAlign.CENTER,
                                     borders: {
                                         top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
                                         bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
@@ -1012,7 +1053,7 @@ export const useODCaseDocx = () => {
             if (garageData && Object.keys(garageData).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Garage Visit",
+                        children: [new TextRun({ text: "Garage Visit" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -1020,7 +1061,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -1038,8 +1079,8 @@ export const useODCaseDocx = () => {
                 garageRows.push(createStandardRow("Inspection of vehicle to find traces of blood/ hair/any other body parts", garageData.bloodOrBodyTraceInspection, 50));
                 garageRows.push(createStandardRow("Vehicle status if the difference between garage entry and date of loss is more than 24 hrs.", String(garageData.vehicleStatusAfter24Hrs?.availability || "No"), 50));
                 if (String(garageData.vehicleStatusAfter24Hrs?.availability).toLowerCase() === "yes") {
-                    garageRows.push(createStandardRow("  - Check-in Date & Time", garageData.vehicleStatusAfter24Hrs.checkInDateTime, 50));
-                    garageRows.push(createStandardRow("  - Check-out Date & Time", garageData.vehicleStatusAfter24Hrs.checkOutDateTime, 50));
+                    garageRows.push(createStandardRow("  - Check-in Date & Time", formatDateTime(garageData.vehicleStatusAfter24Hrs.checkInDateTime), 50));
+                    garageRows.push(createStandardRow("  - Check-out Date & Time", formatDateTime(garageData.vehicleStatusAfter24Hrs.checkOutDateTime), 50));
                 }
 
                 children.push(new Table({ rows: garageRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
@@ -1072,6 +1113,7 @@ export const useODCaseDocx = () => {
                     ];
 
                     garageData.towingVendorDetails.forEach(t => {
+                        if (!t) return; // Skip null/undefined elements
                         towingRows.push(
                             new TableRow({
                                 children: [
@@ -1132,7 +1174,7 @@ export const useODCaseDocx = () => {
             if (policeData && Object.keys(policeData).length > 0) {
                 children.push(
                     new Paragraph({
-                        text: "Police record details",
+                        children: [new TextRun({ text: "Police record details" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -1140,7 +1182,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -1169,6 +1211,11 @@ export const useODCaseDocx = () => {
                         value = value.filter(v => v).join('\n');
                     }
 
+                    // Handle dates specifically
+                    if (key === 'firDateAndTime') {
+                        value = formatDate(value);
+                    }
+
                     value = value || "Detail not available";
                     policeRows.push(createStandardRow(label, value));
                 }
@@ -1186,9 +1233,9 @@ export const useODCaseDocx = () => {
                     : "Observation and Finding";
 
                 children.push(
-                    new PageBreak(), // Force new page
+                    new Paragraph({ children: [new PageBreak()] }), // PageBreak must be inside a Paragraph
                     new Paragraph({
-                        text: headerTitle,
+                        children: [new TextRun({ text: headerTitle })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -1196,7 +1243,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -1259,9 +1306,9 @@ export const useODCaseDocx = () => {
             if (opinionData.claimAdmissibilityOpinion || enclosuresList.length > 0) {
 
                 children.push(
-                    new PageBreak(), // Force new page
+                    new Paragraph({ children: [new PageBreak()] }), // PageBreak must be inside a Paragraph
                     new Paragraph({
-                        text: "Opinion",
+                        children: [new TextRun({ text: "Opinion" })],
                         heading: HeadingLevel.HEADING_2,
                         alignment: AlignmentType.CENTER,
                         spacing: { before: 400, after: 200 },
@@ -1269,7 +1316,7 @@ export const useODCaseDocx = () => {
                             bottom: {
                                 color: "000000",
                                 space: 1,
-                                value: "single",
+                                style: BorderStyle.SINGLE,
                                 size: 6,
                             },
                         },
@@ -1296,7 +1343,7 @@ export const useODCaseDocx = () => {
                 if (enclosuresList.length > 0) {
                     children.push(
                         new Paragraph({
-                            text: "Enclosures",
+                            children: [new TextRun({ text: "Enclosures" })],
                             heading: HeadingLevel.HEADING_3,
                             spacing: { before: 200, after: 150 },
                         })
@@ -1310,7 +1357,9 @@ export const useODCaseDocx = () => {
                         }
                     });
 
-                    children.push(new Table({ rows: enclosureRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                    if (enclosureRows.length > 0) {
+                        children.push(new Table({ rows: enclosureRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                    }
                 }
 
                 // Signature section
@@ -1329,335 +1378,58 @@ export const useODCaseDocx = () => {
                 );
             }
 
-            // Special Section: Witness Documents & Photos
-            const witnessDetails = data.witnessDetails || [];
-            const hasWitnessDocs = witnessDetails.some(w => w.witnessDocument && w.witnessDocument.length > 0);
-            const hasWitnessPhotos = witnessDetails.some(w => w.witnessPhoto && w.witnessPhoto.length > 0);
+            // Photo Sections Consolidated into allPhotoSections loop for better memory management and structure
 
-            if (hasWitnessDocs || hasWitnessPhotos) {
-                children.push(
-                    new PageBreak(), // Explicit page break before Witness section
-                    new Paragraph({
-                        text: "Witness Documents & Photos",
-                        heading: HeadingLevel.HEADING_2,
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 400, after: 200 },
-                        border: {
-                            bottom: {
-                                color: "000000",
-                                space: 1,
-                                value: "single",
-                                size: 6,
-                            },
-                        },
-                    })
-                );
-
-                // 1. Process All Witness Documents First
-                const witnessesWithDocs = witnessDetails.filter(w => w.witnessDocument && w.witnessDocument.length > 0);
-                if (witnessesWithDocs.length > 0) {
-                    children.push(
-                        new Paragraph({
-                            text: "Witness Documents",
-                            heading: HeadingLevel.HEADING_3,
-                            spacing: { before: 200, after: 100 },
-                        })
-                    );
-
-                    for (const witness of witnessesWithDocs) {
-                        // Witness Name for Docs
-                        children.push(
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `Witness: ${witness.witnessName || "Unknown"}`,
-                                        bold: true,
-                                        size: 22,
-                                    }),
-                                ],
-                                spacing: { before: 100, after: 100 },
-                            })
-                        );
-
-                        for (const doc of witness.witnessDocument) {
-                            const title = doc.title || "Document";
-                            const frontUrl = typeof doc.front === 'string' ? doc.front : doc.front?.imageUrl || doc.front?.url;
-                            const backUrl = typeof doc.back === 'string' ? doc.back : doc.back?.imageUrl || doc.back?.url;
-
-                            const docImages = [];
-
-                            if (frontUrl) {
-                                try {
-                                    const base64 = await convertImageToBase64(frontUrl);
-                                    if (base64) docImages.push({ base64, label: `${title} (Front)` });
-                                } catch (e) {
-                                    console.error("Error processing witness doc front image", e);
-                                }
-                            }
-                            if (backUrl) {
-                                try {
-                                    const base64 = await convertImageToBase64(backUrl);
-                                    if (base64) docImages.push({ base64, label: `${title} (Back)` });
-                                } catch (e) {
-                                    console.error("Error processing witness doc back image", e);
-                                }
-                            }
-
-                            if (docImages.length > 0) {
-                                const cells = [];
-
-                                for (const img of docImages) {
-                                    cells.push(new TableCell({
-                                        children: [
-                                            new Paragraph({
-                                                children: [
-                                                    new ImageRun({
-                                                        data: Uint8Array.from(atob(img.base64), c => c.charCodeAt(0)),
-                                                        transformation: { width: 240, height: 180 },
-                                                    }),
-                                                ],
-                                                alignment: AlignmentType.CENTER,
-                                                spacing: { after: 100 },
-                                            }),
-                                            new Paragraph({
-                                                children: [
-                                                    new TextRun({
-                                                        text: img.label,
-                                                        size: 18,
-                                                        italics: true,
-                                                        color: "000000",
-                                                    }),
-                                                ],
-                                                alignment: AlignmentType.CENTER,
-                                                spacing: { after: 200 },
-                                            })
-                                        ],
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                    }));
-                                }
-
-                                // Fill remaining cells if less than 2
-                                while (cells.length < 2) {
-                                    cells.push(new TableCell({
-                                        children: [],
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                    }));
-                                }
-
-                                children.push(new Table({
-                                    rows: [new TableRow({ children: cells })],
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                }));
-                            }
-                        }
-                    }
-                }
-
-                // 2. Process All Witness Photos Second
-                const witnessesWithPhotos = witnessDetails.filter(w => w.witnessPhoto && w.witnessPhoto.length > 0);
-                if (witnessesWithPhotos.length > 0) {
-                    children.push(
-                        new Paragraph({
-                            text: "Witness Photos",
-                            heading: HeadingLevel.HEADING_3,
-                            spacing: { before: 300, after: 100 },
-                        })
-                    );
-
-                    for (const witness of witnessesWithPhotos) {
-                        // Witness Name for Photos
-                        children.push(
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: `Witness: ${witness.witnessName || "Unknown"}`,
-                                        bold: true,
-                                        size: 22,
-                                    }),
-                                ],
-                                spacing: { before: 100, after: 100 },
-                            })
-                        );
-
-                        const witnessPhotos = [];
-
-                        for (let idx = 0; idx < witness.witnessPhoto.length; idx++) {
-                            const photo = witness.witnessPhoto[idx];
-                            const photoUrl = typeof photo === 'string' ? photo : photo?.imageUrl || photo?.url;
-                            const photoTitle = photo.title || `Witness Photo ${idx + 1}`;
-
-                            if (photoUrl) {
-                                try {
-                                    const base64 = await convertImageToBase64(photoUrl);
-                                    if (base64) witnessPhotos.push({ base64, label: photoTitle });
-                                } catch (e) {
-                                    console.error("Error processing witness photo", e);
-                                }
-                            }
-                        }
-
-                        // Add Witness Documents (ID Proofs etc)
-                        if (Array.isArray(witness.witnessDocument)) {
-                            // Use standard for loop for clarity and async compatibility
-                            for (let idx = 0; idx < witness.witnessDocument.length; idx++) {
-                                const doc = witness.witnessDocument[idx];
-                                const docTitle = doc.title || "Document";
-
-                                // Front Image
-                                const frontImg = doc.front && (typeof doc.front === 'string' ? doc.front : (doc.front.imageUrl || doc.front.url));
-                                if (frontImg) {
-                                    try {
-                                        const base64 = await convertImageToBase64(frontImg);
-                                        if (base64) witnessPhotos.push({ base64, label: `${docTitle} (Front)` });
-                                    } catch (e) {
-                                        console.error("Error processing witness doc front", e);
-                                    }
-                                }
-
-                                // Back Image
-                                const backImg = doc.back && (typeof doc.back === 'string' ? doc.back : (doc.back.imageUrl || doc.back.url));
-                                if (backImg) {
-                                    try {
-                                        const base64 = await convertImageToBase64(backImg);
-                                        if (base64) witnessPhotos.push({ base64, label: `${docTitle} (Back)` });
-                                    } catch (e) {
-                                        console.error("Error processing witness doc back", e);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (witnessPhotos.length > 0) {
-                            const tableRows = [];
-                            for (let i = 0; i < witnessPhotos.length; i += 2) {
-                                const img1 = witnessPhotos[i];
-                                const img2 = witnessPhotos[i + 1];
-                                const cells = [];
-
-                                // Cell 1
-                                cells.push(new TableCell({
-                                    children: [
-                                        new Paragraph({
-                                            children: [
-                                                new ImageRun({
-                                                    data: Uint8Array.from(atob(img1.base64), c => c.charCodeAt(0)),
-                                                    transformation: { width: 240, height: 180 },
-                                                }),
-                                            ],
-                                            alignment: AlignmentType.CENTER,
-                                            spacing: { after: 100 },
-                                        }),
-                                        new Paragraph({
-                                            children: [
-                                                new TextRun({
-                                                    text: img1.label,
-                                                    size: 18,
-                                                    italics: true,
-                                                    color: "000000",
-                                                }),
-                                            ],
-                                            alignment: AlignmentType.CENTER,
-                                            spacing: { after: 200 },
-                                        })
-                                    ],
-                                    width: { size: 50, type: WidthType.PERCENTAGE },
-                                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                }));
-
-                                // Cell 2
-                                if (img2) {
-                                    cells.push(new TableCell({
-                                        children: [
-                                            new Paragraph({
-                                                children: [
-                                                    new ImageRun({
-                                                        data: Uint8Array.from(atob(img2.base64), c => c.charCodeAt(0)),
-                                                        transformation: { width: 240, height: 180 },
-                                                    }),
-                                                ],
-                                                alignment: AlignmentType.CENTER,
-                                                spacing: { after: 100 },
-                                            }),
-                                            new Paragraph({
-                                                children: [
-                                                    new TextRun({
-                                                        text: img2.label,
-                                                        size: 18,
-                                                        italics: true,
-                                                        color: "000000",
-                                                    }),
-                                                ],
-                                                alignment: AlignmentType.CENTER,
-                                                spacing: { after: 200 },
-                                            })
-                                        ],
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                    }));
-                                } else {
-                                    // Filler
-                                    cells.push(new TableCell({
-                                        children: [],
-                                        width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                                    }));
-                                }
-
-                                tableRows.push(new TableRow({ children: cells }));
-                            }
-
-                            children.push(new Table({
-                                rows: tableRows,
-                                width: { size: 100, type: WidthType.PERCENTAGE },
-                                borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
-                            }));
-                        }
-                    }
-                }
-            }
-
-            // Photo sections configuration
-            const photosDocsData = data.photosAndDocuments || {};
-            const dlDocsData = data.dlDocuments || {};
-            const evidenceData = data.photosAndEvidence || {};
-
+            // Photo sections configuration updated to match current data structure
             const allPhotoSections = [
                 {
-                    title: "RC & Identity Documents", data: photosDocsData, fields: {
+                    title: "Insured Documents", 
+                    data: data.insuredDocuments || {}, 
+                    fields: {
                         rcPhoto: "RC Photo",
+                        rcverification: "RC Verification",
+                        dlPhoto: "DL Photo",
+                        dlverification: "DL Verification",
                         insuredPanCardPhoto: "Insured PAN Card Photo",
-                        driverAadharCardPhoto: "Driver Aadhar Card Photo",
-                        occupantAadharCardPhoto: "Occupant Aadhar Card Photo",
+                        insuredAadharCardPhoto: "Insured Aadhar Card Photo",
                     }
                 },
                 {
-                    title: "Driving License Documents", data: dlDocsData, fields: {
-                        driverDlPhoto: "Driver DL Photo",
-                        driverDlOnlineVerificationReport: "Driver DL Online Verification Report",
-                        occupantDlPhoto: "Occupant DL Photo",
-                        occupantDlOnlineVerificationReport: "Occupant DL Online Verification Report",
+                    title: "Spot Visit Photos", 
+                    data: data.spotVisit || {}, 
+                    fields: {
+                        spotImages: "Spot Photos",
                     }
                 },
                 {
-                    title: "Statements & Evidence Photos", data: evidenceData, fields: {
-                        insuredWithStatementPhoto: "Insured with Statement Photo",
-                        insuredIdPhoto: "Insured ID Photo",
-                        driverWithStatementPhoto: "Driver with Statement Photo",
-                        occupantWithStatementPhoto: "Occupant with Statement Photo",
-                        repairOrderHistory: "Repair Order History",
-                        garageGateEntryRegisterPhoto: "Garage Gate Entry Register Photo",
-                        ivPhotosAtGarage: "IV Photos at Garage",
-                        spotPhotos: "Spot Photos",
-                        gpsTimelineInsured: "GPS Timeline - Insured",
-                        gpsTimelineDriver: "GPS Timeline - Driver",
-                        gpsTimelineOccupant: "GPS Timeline - Occupant",
-                        photosRetrievedFromDriverMobile: "Photos Retrieved from Driver Mobile",
-                        craneBillVerification: "Crane Bill Verification",
+                    title: "GPS Timeline", 
+                    data: data.gpsTimelineDriver || {}, 
+                    fields: {
+                        type: "GPS Timeline Images",
                     }
                 },
+                {
+                    title: "Garage Visit Photos",
+                    data: data.garageVisit || {},
+                    fields: {
+                        garageImages: "Garage Photos",
+                    }
+                },
+                {
+                    title: "Witness Photos & Documents", 
+                    data: data.witnessDetails ? { 
+                        allWitnessItems: data.witnessDetails.flatMap(w => [
+                            ...(w.witnessPhoto || []),
+                            ...(w.witnessDocument || []).flatMap(doc => [
+                                { imageUrl: typeof doc.front === 'string' ? doc.front : doc.front?.imageUrl, title: `${doc.title || 'Document'} (Front)` },
+                                { imageUrl: typeof doc.back === 'string' ? doc.back : doc.back?.imageUrl, title: `${doc.title || 'Document'} (Back)` }
+                            ])
+                        ])
+                    } : {}, 
+                    fields: {
+                        allWitnessItems: "Witness Evidence",
+                    }
+                }
             ];
 
             for (const section of allPhotoSections) {
@@ -1669,10 +1441,12 @@ export const useODCaseDocx = () => {
                 );
 
                 if (hasPhotos) {
+                    // PageBreak must be wrapped in a Paragraph
+                    children.push(new Paragraph({ children: [new PageBreak()] })); 
+
                     children.push(
-                        new PageBreak(), // Explicit page break before each Photo section
                         new Paragraph({
-                            text: section.title,
+                            children: [new TextRun({ text: section.title })],
                             heading: HeadingLevel.HEADING_2,
                             alignment: AlignmentType.CENTER,
                             spacing: { before: 400, after: 200 },
@@ -1680,7 +1454,7 @@ export const useODCaseDocx = () => {
                                 bottom: {
                                     color: "000000",
                                     space: 1,
-                                    value: "single",
+                                    style: BorderStyle.SINGLE,
                                     size: 6,
                                 },
                             },
@@ -1719,7 +1493,7 @@ export const useODCaseDocx = () => {
                                 if (base64Data) {
                                     validImages.push({
                                         base64: base64Data,
-                                        label: Array.isArray(fieldValue) ? `${fieldLabel} ${idx + 1}` : fieldLabel
+                                        label: Array.isArray(fieldValue) ? (imgItem.title || `${fieldLabel} ${idx + 1}`) : (imgItem.title || fieldLabel)
                                     });
                                 }
                             } catch (e) {
@@ -1763,7 +1537,7 @@ export const useODCaseDocx = () => {
                                         })
                                     ],
                                     width: { size: 50, type: WidthType.PERCENTAGE },
-                                    borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
+                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                                 }));
 
                                 // Column 2
@@ -1794,14 +1568,14 @@ export const useODCaseDocx = () => {
                                             })
                                         ],
                                         width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
+                                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                                     }));
                                 } else {
                                     // Empty filler cell
                                     cells.push(new TableCell({
-                                        children: [],
+                                        children: [new Paragraph({})],
                                         width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
+                                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                                     }));
                                 }
 
@@ -1811,7 +1585,7 @@ export const useODCaseDocx = () => {
                             children.push(new Table({
                                 rows: tableRows,
                                 width: { size: 100, type: WidthType.PERCENTAGE },
-                                borders: { top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE } }
+                                borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                             }));
                         }
                     }
@@ -1825,11 +1599,11 @@ export const useODCaseDocx = () => {
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 borders: {
                     top: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                    insideHorizontal: { style: BorderStyle.NONE },
-                    insideVertical: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.NIL },
+                    left: { style: BorderStyle.NIL },
+                    right: { style: BorderStyle.NIL },
+                    insideHorizontal: { style: BorderStyle.NIL },
+                    insideVertical: { style: BorderStyle.NIL },
                 },
                 rows: [
                     new TableRow({
@@ -1839,7 +1613,7 @@ export const useODCaseDocx = () => {
                                     new Paragraph({
                                         children: [
                                             new TextRun({
-                                                children: [PageNumber.CURRENT],
+                                                children: ["Page ", PageNumber.CURRENT],
                                                 color: "70a1d7",
                                                 size: 24,
                                                 bold: true,
@@ -1854,10 +1628,10 @@ export const useODCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],
@@ -1866,13 +1640,12 @@ export const useODCaseDocx = () => {
                         children: [
                             new TableCell({
                                 shading: { fill: "e3f2f1" },
-                                children: [new Paragraph({ text: "" })],
-                                height: { value: 150, rule: "atLeast" },
+                                children: [new Paragraph({})],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],
@@ -1908,20 +1681,12 @@ export const useODCaseDocx = () => {
                                     bottom: 1000,
                                     left: 1000,
                                     right: 1000,
-                                    header: 500, // Explicitly set distance
-                                    footer: 500, // Explicitly set distance
+                                    header: 500,
+                                    footer: 500,
                                 },
                                 size: {
-                                    width: 11906, // A4 Width in TWIPs
-                                    height: 16838, // A4 Height in TWIPs
                                     orientation: "portrait",
                                 },
-                                watermark: {
-                                    text: "invthirdeye@gmail.com",
-                                    color: "D3D3D3",
-                                    type: "diagonal",
-                                    size: 540,
-                                }
                             }
                         },
                         children: children,

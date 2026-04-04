@@ -24,6 +24,8 @@ export const useODCase = (caseId, options = {}) => {
         queryFn: () => odCaseApi.getById(caseId),
         enabled: !!caseId,
         staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false, // Prevent refetch on focus to reduce calls
+        retry: 1, // Only retry once to avoid spamming if server is down
         ...options,
     });
 };

@@ -11,7 +11,6 @@ import {
   UserCog,
   X
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Pagination from "../Ui/Pagination";
 import { API } from "../../utils/api";
 import { useGlobalSearch } from "../../context/SearchContext";
@@ -75,7 +74,6 @@ const AssignmentList = () => {
   const [reassignModal, setReassignModal] = useState({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
   const [isUpdating, setIsUpdating] = useState(false);
   const limit = 10;
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAssignments(1);
@@ -167,7 +165,7 @@ const AssignmentList = () => {
                     error: "Failed to delete assignment",
                   }
                 );
-              } catch (err) {
+              } catch (_err) {
                 toast.error("Something went wrong");
               }
             }}

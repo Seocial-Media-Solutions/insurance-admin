@@ -5,7 +5,7 @@ import ImageGallery from "./ImageGallery";
 import DocumentUpload from "./DocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 import { toast } from "react-hot-toast";
-import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2, CreditCard, FileText, Shield } from "lucide-react";
 import { INDIAN_STATES, STATE_CITIES } from "../../../../utils/indianStates";
 
 function SectionUnit({
@@ -357,6 +357,13 @@ function SectionUnit({
                                         className="flex-1 border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         value={point}
                                         onChange={(e) => updatePoint(idx, e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                e.preventDefault();
+                                                addPoint();
+                                            }
+                                        }}
+                                        autoFocus={idx > 0 && idx === points.length - 1}
                                         placeholder={`Enter Point ${idx + 1}`}
                                     />
                                     <button
@@ -423,7 +430,24 @@ function SectionUnit({
                             <ChevronDown className="w-5 h-5 text-gray-400" />
                         )}
                         <h2 className="text-xl font-bold text-gray-800 text-left">
-                            {apiPath.replace(/-/g, " ").toUpperCase()}
+                            {(() => {
+                                const sectionTitleMap = {
+                                    'letter-details': 'LETTER DETAILS',
+                                    'od-details/claim-summary': 'CLAIM SUMMARY',
+                                    'od-details/insured-details': 'INSURED DETAILS',
+                                    'od-details/vehicle-details': 'VEHICLE DETAILS',
+                                    'meeting-details': 'MEETING DETAILS',
+                                    'policy-break-in-details': 'POLICY DETAILS',
+                                    'spot-visit': 'SPOT VISIT',
+                                    'garage-visit': 'GARAGE VISIT',
+                                    'police-record-details': 'POLICE RECORD DETAILS',
+                                    'observation-findings-conclusion': 'OBSERVATION / FINDINGS',
+                                    'opinion': 'OPINION',
+                                    'insured-documents': 'INSURED DOCUMENTS',
+                                    'gps-timeline-driver': 'GPS TIMELINE DRIVER',
+                                };
+                                return sectionTitleMap[apiPath] || apiPath.replace(/-/g, ' ').toUpperCase();
+                            })()}
                         </h2>
                     </div>
 
@@ -1236,6 +1260,13 @@ function SectionUnit({
                                                             type="text"
                                                             value={detail}
                                                             onChange={(e) => updateRtiDetail(idx, e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    addRtiDetail();
+                                                                }
+                                                            }}
+                                                            autoFocus={idx === rtiList.length - 1 && idx !== 0}
                                                             className="flex-1 border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                                             placeholder={`Enter RTI detail...`}
                                                         />
@@ -1475,7 +1506,83 @@ function SectionUnit({
                                     );
                                 }
 
-                                if (field === "policyNo" || field === "policyPeriod") {
+                                if (field === "policyNo" || field === "policyPeriod" || field === "previousPolicyPeriod") {
+                                    if (field === "policyPeriod" || field === "previousPolicyPeriod") {
+                                        const [startDateStr, endDateStr] = (currentSection[field] || "").split(" to ");
+
+                                        // HH.mm.ss is not needed, user asked according to DD.MM.YYYY
+                                        const toInputDate = (dateStr) => {
+                                            if (!dateStr) return "";
+                                            const parts = dateStr.split(".");
+                                            if (parts.length !== 3) return "";
+                                            const [day, month, year] = parts;
+                                            return `${year}-${month}-${day}`;
+                                        };
+
+                                        const toStorageDate = (dateStr) => {
+                                            if (!dateStr) return "";
+                                            const [year, month, day] = dateStr.split("-");
+                                            return `${day}.${month}.${year}`;
+                                        };
+
+                                        const calculateEndDate = (inputDate) => {
+                                            if (!inputDate) return "";
+                                            const [year, month, day] = inputDate.split("-");
+                                            const date = new Date(year, month - 1, day);
+                                            date.setFullYear(date.getFullYear() + 1);
+                                            date.setDate(date.getDate() - 1);
+                                            const endDay = String(date.getDate()).padStart(2, '0');
+                                            const endMonth = String(date.getMonth() + 1).padStart(2, '0');
+                                            const endYear = date.getFullYear();
+                                            return `${endDay}.${endMonth}.${endYear}`;
+                                        };
+
+                                        return (
+                                            <div key={field} className="col-span-1 md:col-span-2">
+                                                <label className="block">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <span className="text-sm font-semibold text-gray-700">
+                                                            {uiLabel} {(field === "policyPeriod" || field === "policyNo") && <span className="text-red-500">*</span>}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex gap-4 items-center">
+                                                        <div className="flex-1">
+                                                            <input
+                                                                type="date"
+                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                                value={toInputDate(startDateStr)}
+                                                                onChange={(e) => {
+                                                                    const inputVal = e.target.value;
+                                                                    const newStart = toStorageDate(inputVal);
+                                                                    const newEnd = calculateEndDate(inputVal);
+                                                                    updateField(field, `${newStart} to ${newEnd}`);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-gray-500 font-medium">to</span>
+                                                        <div className="flex-1">
+                                                            <input
+                                                                type="date"
+                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                                value={toInputDate(endDateStr)}
+                                                                onChange={(e) => {
+                                                                    const start = startDateStr || "";
+                                                                    const newEnd = toStorageDate(e.target.value);
+                                                                    updateField(field, `${start} to ${newEnd}`);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    {error && (
+                                                        <span className="text-xs text-red-500 mt-1 block font-medium">
+                                                            {error}
+                                                        </span>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        );
+                                    }
+
                                     return (
                                         <div key={field} className={type === "textarea" ? "col-span-1 md:col-span-2 lg:col-span-3" : "col-span-1"}>
                                             <label className="block">
@@ -1551,11 +1658,13 @@ function SectionUnit({
                                 const rawValue = currentSection[field];
 
                                 if (Array.isArray(rawValue)) {
-                                    vendors = rawValue;
+                                    vendors = rawValue.filter(v => v !== null && v !== undefined);
                                 } else if (typeof rawValue === 'string') {
                                     try {
                                         const parsed = JSON.parse(rawValue);
-                                        if (Array.isArray(parsed)) vendors = parsed;
+                                        if (Array.isArray(parsed)) {
+                                            vendors = parsed.filter(v => v !== null && v !== undefined);
+                                        }
                                     } catch (e) {
                                         // Legacy string or empty
                                     }
@@ -1631,100 +1740,96 @@ function SectionUnit({
                                             )}
                                         </div>
 
-                                        {isAvailable && vendors.map((vendor, index) => (
-                                            <div key={index} className="mb-6 last:mb-0 p-4 bg-white rounded border relative">
-                                                <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">
-                                                    Vendor #{index + 1}
-                                                </h4>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {/* Vendor Name */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Vendor Name</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.towingVendorName || ""}
-                                                            onChange={(e) => updateVendor(index, "towingVendorName", e.target.value)}
-                                                            placeholder="Enter Name"
-                                                        />
-                                                    </label>
+                                        {isAvailable && vendors.map((v, index) => {
+                                            const vendor = v || {};
+                                            return (
+                                                <div key={index} className="mb-6 last:mb-0 p-4 bg-white rounded border relative">
+                                                    <h4 className="font-bold text-gray-800 mb-3 border-b pb-2">
+                                                        Vendor #{index + 1}
+                                                    </h4>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Vendor Name</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.towingVendorName || ""}
+                                                                onChange={(e) => updateVendor(index, "towingVendorName", e.target.value)}
+                                                                placeholder="Enter Name"
+                                                            />
+                                                        </label>
 
-                                                    {/* Contact */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Contact No</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.towingVendorContactNo || ""}
-                                                            onChange={(e) => updateVendor(index, "towingVendorContactNo", e.target.value)}
-                                                            placeholder="Enter Contact"
-                                                        />
-                                                    </label>
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Contact No</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.towingVendorContactNo || ""}
+                                                                onChange={(e) => updateVendor(index, "towingVendorContactNo", e.target.value)}
+                                                                placeholder="Enter Contact"
+                                                            />
+                                                        </label>
 
-                                                    {/* Address */}
-                                                    <label className="md:col-span-2">
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Address</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.towingVendorAddress || ""}
-                                                            onChange={(e) => updateVendor(index, "towingVendorAddress", e.target.value)}
-                                                            placeholder="Enter Address"
-                                                        />
-                                                    </label>
+                                                        <label className="md:col-span-2">
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Address</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.towingVendorAddress || ""}
+                                                                onChange={(e) => updateVendor(index, "towingVendorAddress", e.target.value)}
+                                                                placeholder="Enter Address"
+                                                            />
+                                                        </label>
 
-                                                    {/* Invoice OD Details */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Invoice OD Towing</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.invoiceOdTowing || ""}
-                                                            onChange={(e) => updateVendor(index, "invoiceOdTowing", e.target.value)}
-                                                            placeholder="Invoice Details"
-                                                        />
-                                                    </label>
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Invoice OD Towing</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.invoiceOdTowing || ""}
+                                                                onChange={(e) => updateVendor(index, "invoiceOdTowing", e.target.value)}
+                                                                placeholder="Invoice Details"
+                                                            />
+                                                        </label>
 
-                                                    {/* Where to Where */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Where to Where</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.whereToWhere || ""}
-                                                            onChange={(e) => updateVendor(index, "whereToWhere", e.target.value)}
-                                                            placeholder="Location Details"
-                                                        />
-                                                    </label>
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Where to Where</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.whereToWhere || ""}
+                                                                onChange={(e) => updateVendor(index, "whereToWhere", e.target.value)}
+                                                                placeholder="Location Details"
+                                                            />
+                                                        </label>
 
-                                                    {/* Amount */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Amount</span>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.towingAmount || ""}
-                                                            onChange={(e) => updateVendor(index, "towingAmount", e.target.value)}
-                                                            placeholder="Enter Amount"
-                                                        />
-                                                    </label>
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Amount</span>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.towingAmount || ""}
+                                                                onChange={(e) => updateVendor(index, "towingAmount", e.target.value)}
+                                                                placeholder="Enter Amount"
+                                                            />
+                                                        </label>
 
-                                                    {/* Verified */}
-                                                    <label>
-                                                        <span className="text-xs font-semibold text-gray-600 block mb-1">Verified or Not</span>
-                                                        <select
-                                                            className="w-full border px-2 py-1.5 rounded"
-                                                            value={vendor.verifiedOrNot || ""}
-                                                            onChange={(e) => updateVendor(index, "verifiedOrNot", e.target.value)}
-                                                        >
-                                                            <option value="">Select</option>
-                                                            <option value="Verified">Verified</option>
-                                                            <option value="Not Verified">Not Verified</option>
-                                                        </select>
-                                                    </label>
+                                                        <label>
+                                                            <span className="text-xs font-semibold text-gray-600 block mb-1">Verified or Not</span>
+                                                            <select
+                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                value={vendor.verifiedOrNot || ""}
+                                                                onChange={(e) => updateVendor(index, "verifiedOrNot", e.target.value)}
+                                                            >
+                                                                <option value="">Select</option>
+                                                                <option value="Verified">Verified</option>
+                                                                <option value="Not Verified">Not Verified</option>
+                                                            </select>
+                                                        </label>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 );
                             }
@@ -1902,66 +2007,81 @@ function SectionUnit({
 
 
 
-                            if (field === "policyDuration") {
-                                const [startDateStr, endDateStr] = (currentSection[field] || "").split(" to ");
 
-                                // Helper to convert DD.MM.YYYY to YYYY-MM-DD for input
-                                const toInputDate = (dateStr) => {
-                                    if (!dateStr) return "";
-                                    const [day, month, year] = dateStr.split(".");
-                                    return `${year}-${month}-${day}`;
-                                };
-
-                                // Helper to convert YYYY-MM-DD to DD.MM.YYYY for storage
-                                const toStorageDate = (dateStr) => {
-                                    if (!dateStr) return "";
-                                    const [year, month, day] = dateStr.split("-");
-                                    return `${day}.${month}.${year}`;
-                                };
-
-                                return (
-                                    <div key={field} className="col-span-1 md:col-span-2">
-                                        <label className="block">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-semibold text-gray-700">
-                                                    {uiLabel}
-                                                </span>
+                            // ------------------------------------------------------------------------------------------------
+                            // SPECIAL UI FOR INSURED DOCUMENTS (HIGH-END GRID)
+                            // ------------------------------------------------------------------------------------------------
+                            if (sectionKey === "insuredDocuments" && field === Object.keys(fieldsObj || {})[0]) {
+                                // We render the ENTIRE section at once for the first field, then return null for others
+                                const docs = fieldsObj || {};
+                                
+                                const renderDocCard = (title, items, icon) => (
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm mb-6 last:mb-0 transition-all hover:shadow-md">
+                                        <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center gap-3">
+                                            <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
+                                                {icon}
                                             </div>
-                                            <div className="flex gap-4 items-center">
-                                                <div className="flex-1">
-                                                    <input
-                                                        type="date"
-                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
-                                                        value={toInputDate(startDateStr)}
-                                                        onChange={(e) => {
-                                                            const newStart = toStorageDate(e.target.value);
-                                                            const end = endDateStr || "";
-                                                            updateField(field, `${newStart} to ${end}`);
-                                                        }}
-                                                    />
-                                                </div>
-                                                <span className="text-gray-500 font-medium">to</span>
-                                                <div className="flex-1">
-                                                    <input
-                                                        type="date"
-                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
-                                                        value={toInputDate(endDateStr)}
-                                                        onChange={(e) => {
-                                                            const start = startDateStr || "";
-                                                            const newEnd = toStorageDate(e.target.value);
-                                                            updateField(field, `${start} to ${newEnd}`);
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                            {error && (
-                                                <span className="text-xs text-red-500 mt-1 block font-medium">
-                                                    {error}
-                                                </span>
-                                            )}
-                                        </label>
+                                            <h3 className="font-bold text-gray-800 uppercase tracking-wide text-sm">{title}</h3>
+                                        </div>
+                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            {items.map(itemKey => {
+                                                const currentFileConfig = fileFields[itemKey];
+                                                const currentUiLabel = itemKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                                const existingImgs = docs[itemKey];
+
+                                                return (
+                                                    <div key={itemKey} className="space-y-4">
+                                                        <DragDropUpload
+                                                            id={`${sectionKey}-${itemKey}`}
+                                                            accept="image/*"
+                                                            multiple={currentFileConfig === "multiple" || currentFileConfig === "max-2"}
+                                                            value={currentSection[itemKey]}
+                                                            isOptional={true}
+                                                            title={currentUiLabel}
+                                                            onMetadataChange={(metadata) => {
+                                                                setFileMetadata(prev => ({ ...prev, [itemKey]: metadata }));
+                                                            }}
+                                                            onChange={(e) => {
+                                                                const sFiles = e.target.files;
+                                                                if (!sFiles || sFiles.length === 0) {
+                                                                    updateField(itemKey, currentFileConfig === "multiple" ? [] : null);
+                                                                    return;
+                                                                }
+                                                                const listedFiles = Array.from(sFiles);
+                                                                updateField(itemKey, (currentFileConfig === "multiple" || currentFileConfig === "max-2") ? [...(currentSection[itemKey] || []), ...listedFiles] : listedFiles[0]);
+                                                            }}
+                                                        />
+                                                        {existingImgs && (
+                                                            <ImageGallery
+                                                                images={existingImgs}
+                                                                title={currentUiLabel}
+                                                                caseId={caseId}
+                                                                sectionPath={apiPath}
+                                                                fieldName={itemKey}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 );
+
+                                return (
+                                    <React.Fragment key="insured-docs-overide-wrapper">
+                                        {/* GROUP 1: RC DETAILS */}
+                                        {renderDocCard("1. Registration Certificate (RC)", ["rcPhoto", "rcverification"], <CreditCard className="w-4 h-4" />)}
+                                        
+                                        {/* GROUP 2: DL DETAILS */}
+                                        {renderDocCard("2. Driving License (DL)", ["dlPhoto", "dlverification"], <FileText className="w-4 h-4" />)}
+                                        
+                                        {/* GROUP 3: PERSONAL IDS */}
+                                        {renderDocCard("3. Identification Documents", ["insuredPanCardPhoto", "insuredAadharCardPhoto"], <Shield className="w-4 h-4" />)}
+                                    </React.Fragment>
+                                );
+                            } else if (sectionKey === "insuredDocuments") {
+                                // Skip individual rendering for other fields as they were handled as a group above
+                                return null;
                             }
 
                             if (isFile) {
@@ -2084,7 +2204,9 @@ function SectionUnit({
                                                 `}
                                                 value={
                                                     (type === 'datetime-local' && currentSection[field]) 
-                                                        ? currentSection[field].slice(0, 16) 
+                                                        ? (typeof currentSection[field] === 'string' 
+                                                            ? currentSection[field].slice(0, 16) 
+                                                            : (currentSection[field].$date ? currentSection[field].$date.slice(0, 16) : ""))
                                                         : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")
                                                 }
                                                 onChange={(e) => updateField(field, e.target.value)}

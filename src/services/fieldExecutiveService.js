@@ -4,9 +4,12 @@ import apiClient from './apiClient';
 export const fieldExecutiveService = {
     // Get all field executives
     getAll: async ({ page = 1, limit = 10 } = {}) => {
-        return toast.promise(apiClient.get('/field-executives', { params: { page, limit } }).then(res => res.data), {
+        return toast.promise(apiClient.get('/field-executives', { params: { page, limit } }).then(res => {
+            if (res.data.success === false) throw new Error(res.data.message || 'Failed to fetch executives');
+            return res.data;
+        }), {
             loading: 'Fetching executives...',
-            success: false,
+            success: (data) => data.message || 'Executives loaded',
             error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch executives',
         });
     },
@@ -22,9 +25,12 @@ export const fieldExecutiveService = {
 
     // Create field executive
     create: async (executiveData) => {
-        return toast.promise(apiClient.post('/field-executives', executiveData).then(res => res.data), {
+        return toast.promise(apiClient.post('/field-executives', executiveData).then(res => {
+            if (res.data.success === false) throw new Error(res.data.message || 'Failed to create executive');
+            return res.data;
+        }), {
             loading: 'Creating executive...',
-            success: false,
+            success: (data) => data.message || 'Executive created successfully',
             error: (err) => err?.response?.data?.message || err?.message || 'Failed to create executive',
         });
     },
@@ -40,9 +46,12 @@ export const fieldExecutiveService = {
 
     // Delete field executive
     delete: async (id) => {
-        return toast.promise(apiClient.delete(`/field-executives/${id}`).then(res => res.data), {
+        return toast.promise(apiClient.delete(`/field-executives/${id}`).then(res => {
+            if (res.data.success === false) throw new Error(res.data.message || 'Failed to delete executive');
+            return res.data;
+        }), {
             loading: 'Deleting executive...',
-            success: false,
+            success: (data) => data.message || 'Executive deleted successfully',
             error: (err) => err?.response?.data?.message || err?.message || 'Failed to delete executive',
         });
     },

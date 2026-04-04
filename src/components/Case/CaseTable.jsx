@@ -32,8 +32,8 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
   const { globalSearch } = useGlobalSearch();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [statusFilter] = useState("all");
+  const [itemsPerPage] = useState(15);
 
   const handleDelete = useCallback(
     (id, recordNumber) => {
@@ -123,7 +123,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
   const currentCases = sortedCases.slice(startIndex, endIndex);
 
   // Reset to page 1 when filters change
-  useMemo(() => {
+  useEffect(() => {
     setCurrentPage(1);
   }, [globalSearch, statusFilter]);
 
@@ -162,8 +162,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
     }
   };
 
-  const paidCount = cases.filter(c => c.status?.toLowerCase() === "paid").length;
-  const pendingCount = cases.filter(c => c.status?.toLowerCase() === "pending").length;
+  // Removed unused stats count variables
 
   return (
     <>

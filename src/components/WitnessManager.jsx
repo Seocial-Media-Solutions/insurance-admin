@@ -119,6 +119,7 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        setLoading(true);
         const submitPromise = async () => {
             const fd = new FormData();
             Object.keys(formData).forEach(key => {
@@ -133,18 +134,18 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
             };
 
             // Pass queued Documents
-            queuedDocuments.forEach((doc, idx) => {
+            queuedDocuments.forEach((doc, _idx) => {
                 fd.append('witnessDocumentFront', doc.front);
                 fd.append('witnessDocumentBack', doc.back);
                 // Metadata for this pair
-                imageMetadata.witnessDocumentFront[idx] = { title: doc.type };
-                imageMetadata.witnessDocumentBack[idx] = { title: doc.type };
+                imageMetadata.witnessDocumentFront[_idx] = { title: doc.type };
+                imageMetadata.witnessDocumentBack[_idx] = { title: doc.type };
             });
 
             // Pass Photos
-            witnessPhoto.forEach((file, idx) => {
+            witnessPhoto.forEach((file, _idx) => {
                 fd.append('witnessPhoto', file);
-                imageMetadata.witnessPhoto[idx] = { title: `Witness Photo ${idx + 1}` };
+                imageMetadata.witnessPhoto[_idx] = { title: `Witness Photo ${_idx + 1}` };
             });
 
             fd.append('imageMetadata', JSON.stringify(imageMetadata));
@@ -184,7 +185,9 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
             }
         ).then((data) => {
             onUpdate(data.data); // This updates the parent state
-            if (resetForm) resetForm();
+            resetForm();
+        }).finally(() => {
+            setLoading(false);
         });
     };
 

@@ -6,10 +6,11 @@ const CaseContext = createContext();
 
 export function CaseProvider({ children }) {
     const [cases, setCases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [initialized, setInitialized] = useState(false);
     const limit = 10;
 
     const loadCases = async (page = currentPage) => {
@@ -25,6 +26,7 @@ export function CaseProvider({ children }) {
             toast.error("Failed to load cases");
         } finally {
             setLoading(false);
+            setInitialized(true);
         }
     };
 
@@ -79,7 +81,7 @@ export function CaseProvider({ children }) {
     };
 
     useEffect(() => {
-        loadCases(1);
+        // Initial load removed here and handled by hook
     }, []);
 
     const value = {
@@ -94,7 +96,8 @@ export function CaseProvider({ children }) {
         addNewCase,
         updateExistingCase,
         removeCase,
-        getCaseById
+        getCaseById,
+        initialized
     };
 
     return (
@@ -109,5 +112,13 @@ export function useCases() {
     if (!context) {
         throw new Error('useCases must be used within a CaseProvider');
     }
+
+    // Lazy load: Trigger fetch only when a component uses this hook
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadCases(1);
+        }
+    }, [context]);
+
     return context;
 }

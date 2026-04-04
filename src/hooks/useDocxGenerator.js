@@ -17,6 +17,8 @@ import {
   Footer,
   Header,
   PageNumber,
+  BorderStyle,
+  VerticalAlign,
 } from "https://esm.sh/docx@8.5.0";
 import saveAs from "https://esm.sh/file-saver@2.0.5";
 import { getCurrentDate, convertImageToBase64 } from "../utils/helper";
@@ -61,7 +63,7 @@ export const useDocxGenerator = () => {
       // Document Structure Definition
       const createHeading = (text) =>
         new Paragraph({
-          text,
+          children: [new TextRun({ text: String(text) })],
           heading: HeadingLevel.HEADING_3,
           style: "Heading3",
           border: {
@@ -126,12 +128,12 @@ export const useDocxGenerator = () => {
       const headerTable = new Table({
         width: { size: 100, type: WidthType.PERCENTAGE },
         borders: {
-          top: { style: "single", size: 15, color: "888888" },
-          bottom: { style: "none" },
-          left: { style: "none" },
-          right: { style: "none" },
-          insideHorizontal: { style: "none" },
-          insideVertical: { style: "none" },
+          top: { style: BorderStyle.SINGLE, size: 15, color: "888888" },
+          bottom: { style: BorderStyle.NIL },
+          left: { style: BorderStyle.NIL },
+          right: { style: BorderStyle.NIL },
+          insideHorizontal: { style: BorderStyle.NIL },
+          insideVertical: { style: BorderStyle.NIL },
         },
         rows: [
           new TableRow({
@@ -173,10 +175,10 @@ export const useDocxGenerator = () => {
                   }),
                 ],
                 borders: {
-                  top: { style: "none" },
-                  bottom: { style: "none" },
-                  left: { style: "none" },
-                  right: { style: "none" },
+                  top: { style: BorderStyle.NIL },
+                  bottom: { style: BorderStyle.NIL },
+                  left: { style: BorderStyle.NIL },
+                  right: { style: BorderStyle.NIL },
                 },
               }),
               new TableCell({
@@ -232,10 +234,10 @@ export const useDocxGenerator = () => {
                   }),
                 ],
                 borders: {
-                  top: { style: "none" },
-                  bottom: { style: "none" },
-                  left: { style: "none" },
-                  right: { style: "none" },
+                  top: { style: BorderStyle.NIL },
+                  bottom: { style: BorderStyle.NIL },
+                  left: { style: BorderStyle.NIL },
+                  right: { style: BorderStyle.NIL },
                 },
               }),
             ],
@@ -244,7 +246,7 @@ export const useDocxGenerator = () => {
       });
 
       // No longer pushing letterheadTable to docChildren because it will be in the Header
-      docChildren.push(new Paragraph({ text: "" }));
+      docChildren.push(new Paragraph({}));
 
       // Date and Reference
       docChildren.push(
@@ -272,33 +274,33 @@ export const useDocxGenerator = () => {
         })
       );
 
-      docChildren.push(new Paragraph({ text: "" }));
+      docChildren.push(new Paragraph({}));
 
       // Recipient
-      docChildren.push(new Paragraph({ text: "To,", spacing: { after: 100 } }));
-      docChildren.push(new Paragraph({ text: "Manager,", spacing: { after: 100 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "To," })], spacing: { after: 100 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "Manager," })], spacing: { after: 100 } }));
       docChildren.push(
-        new Paragraph({ text: "Claim Tie-up Hub (NON-SUIT),", spacing: { after: 100 } })
+        new Paragraph({ children: [new TextRun({ text: "Claim Tie-up Hub (NON-SUIT)," })], spacing: { after: 100 } })
       );
       docChildren.push(
         new Paragraph({
-          text: "The New India Assurance Co. Ltd,",
+          children: [new TextRun({ text: "The New India Assurance Co. Ltd," })],
           spacing: { after: 100 },
         })
       );
       docChildren.push(
         new Paragraph({
-          text: "C-18, Vaishali Marg, Near Sogani Jewellers,",
+          children: [new TextRun({ text: "C-18, Vaishali Marg, Near Sogani Jewellers," })],
           spacing: { after: 100 },
         })
       );
       docChildren.push(
         new Paragraph({
-          text: "Vaishali Nagar, Jaipur,",
+          children: [new TextRun({ text: "Vaishali Nagar, Jaipur," })],
           spacing: { after: 100 },
         })
       );
-      docChildren.push(new Paragraph({ text: "Rajasthan - 302021", spacing: { after: 200 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "Rajasthan - 302021" })], spacing: { after: 200 } }));
 
       // Subject
       docChildren.push(
@@ -315,7 +317,7 @@ export const useDocxGenerator = () => {
 
       docChildren.push(
         new Paragraph({
-          text: "In reference to the subject Own damage claim, we have been appointed as an Investigator. Our investigation report as follows:",
+          children: [new TextRun({ text: "In reference to the subject Own damage claim, we have been appointed as an Investigator. Our investigation report as follows:" })],
           spacing: { after: 400 },
         })
       );
@@ -345,13 +347,15 @@ export const useDocxGenerator = () => {
       ];
 
 
-      const claimSummaryTable = new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        rows: claimSummaryRows,
-      });
+      if (claimSummaryRows.length > 0) {
+        const claimSummaryTable = new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: claimSummaryRows,
+        });
 
-      docChildren.push(claimSummaryTable);
-      docChildren.push(new Paragraph({ text: "" }));
+        docChildren.push(claimSummaryTable);
+      }
+      docChildren.push(new Paragraph({}));
 
       // Accident Summary
       docChildren.push(
@@ -368,7 +372,7 @@ export const useDocxGenerator = () => {
 
       docChildren.push(
         new Paragraph({
-          text: "N/A",
+          children: [new TextRun({ text: String(investigation?.caseId?.accidentSummary || "N/A") })],
           spacing: { after: 400 },
         })
       );
@@ -466,7 +470,7 @@ const driverDetailsRows = [
 
       docChildren.push(
         new Paragraph({
-          text: "N/A",
+          children: [new TextRun({ text: String(investigation?.caseId?.accidentSummary || "N/A") })],
           spacing: { after: 400 },
         })
       );
@@ -503,7 +507,7 @@ const vehicleDetailsRows = [
       });
 
       docChildren.push(vehicleDetailsTable);
-      docChildren.push(new Paragraph({ text: "", spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ spacing: { after: 400 } }));
 
       // --- MEETING WITH INSURED DETAILS ---
       docChildren.push(createHeading("Details of meeting with Insured"));
@@ -526,8 +530,8 @@ const vehicleDetailsRows = [
 
       // Statements
       docChildren.push(createSubHeading("Statement of the Insured's / deceased Wife:"));
-      docChildren.push(new Paragraph({ text: "N/A", spacing: { after: 200 } }));
-      docChildren.push(new Paragraph({ text: "Statement enclosed.", italic: true, spacing: { after: 200 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "N/A" })], spacing: { after: 200 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "Statement enclosed." })], italic: true, spacing: { after: 200 } }));
 
       const additionalMeetingRows = [
         createTwoColumnTableRow("Accident details as per Occupant- True version of statement submitted not brief", "N/A"),
@@ -546,8 +550,8 @@ const vehicleDetailsRows = [
 
       // Witness Statement
       docChildren.push(createSubHeading("Statement of the witness:"));
-      docChildren.push(new Paragraph({ text: "N/A", spacing: { after: 200 } }));
-      docChildren.push(new Paragraph({ text: "Statement enclosed.", italic: true, spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "N/A" })], spacing: { after: 200 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "Statement enclosed." })], italic: true, spacing: { after: 400 } }));
 
       // --- POLICY & BREAK-IN DETAILS ---
       docChildren.push(createHeading("Policy & Break in Details"));
@@ -576,7 +580,7 @@ const vehicleDetailsRows = [
       });
 
       docChildren.push(policyTable);
-      docChildren.push(new Paragraph({ text: "", spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ spacing: { after: 400 } }));
 
       // --- GARAGE VISIT DETAILS ---
       docChildren.push(createHeading("Garage Visit"));
@@ -598,7 +602,7 @@ const vehicleDetailsRows = [
       });
 
       docChildren.push(garageTable);
-      docChildren.push(new Paragraph({ text: "", spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ spacing: { after: 400 } }));
 
       // --- POLICE RECORD DETAILS ---
       docChildren.push(createHeading("Police record details"));
@@ -620,8 +624,8 @@ const vehicleDetailsRows = [
 
       // GD Entry
       docChildren.push(createSubHeading("Details of GD entry received from the police under RTI as follows:"));
-      docChildren.push(new Paragraph({ text: "N/A", spacing: { after: 200 } }));
-      docChildren.push(new Paragraph({ text: "GD Entry report Enclosed.", italic: true, spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: String(investigation.caseId?.generalDiary || "N/A") })], spacing: { after: 200 } }));
+      docChildren.push(new Paragraph({ children: [new TextRun({ text: "GD Entry report Enclosed." })], italic: true, spacing: { after: 400 } }));
 
       // --- ACTUAL INVESTIGATION DATA SECTION ---
       docChildren.push(createHeading("Actual Investigation Data Available"));
@@ -647,19 +651,19 @@ const vehicleDetailsRows = [
       // Investigation Summary
       if (investigation.investigationSummary) {
         docChildren.push(createSubHeading("Investigation Summary"));
-        docChildren.push(new Paragraph({ text: investigation.investigationSummary, spacing: { after: 200 } }));
+        docChildren.push(new Paragraph({ children: [new TextRun({ text: investigation.investigationSummary })], spacing: { after: 200 } }));
       }
 
       // Observations
       if (investigation.observations) {
         docChildren.push(createSubHeading("Observations"));
-        docChildren.push(new Paragraph({ text: investigation.observations, spacing: { after: 200 } }));
+        docChildren.push(new Paragraph({ children: [new TextRun({ text: investigation.observations })], spacing: { after: 200 } }));
       }
 
       // Recommendations
       if (investigation.recommendations) {
         docChildren.push(createSubHeading("Recommendations"));
-        docChildren.push(new Paragraph({ text: investigation.recommendations, spacing: { after: 200 } }));
+        docChildren.push(new Paragraph({ children: [new TextRun({ text: investigation.recommendations })], spacing: { after: 200 } }));
       }
 
       // --- PEOPLE/PERSONS INTERVIEWED ---
@@ -739,7 +743,7 @@ const vehicleDetailsRows = [
             });
           }
 
-          docChildren.push(new Paragraph({ text: "" })); // Spacing between persons
+          docChildren.push(new Paragraph({})); // Spacing between persons
         });
       }
 
@@ -755,20 +759,20 @@ const vehicleDetailsRows = [
       observations.forEach((obs, index) => {
         docChildren.push(
           new Paragraph({
-            text: `${index + 1}. ${obs}`,
+            children: [new TextRun({ text: `${index + 1}. ${obs}` })],
             spacing: { after: 150 },
           })
         );
       });
 
-      docChildren.push(new Paragraph({ text: "", spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ spacing: { after: 400 } }));
 
       // --- OPINION SECTION ---
       docChildren.push(createHeading("Opinion"));
 
       docChildren.push(
         new Paragraph({
-          text: "N/A - No opinion data available in the investigation record.",
+          children: [new TextRun({ text: "N/A - No opinion data available in the investigation record." })],
           spacing: { after: 400 },
         })
       );
@@ -792,7 +796,7 @@ const vehicleDetailsRows = [
         new TableRow({
           children: [
             new TableCell({
-              children: [new Paragraph(enclosure)],
+              children: [new Paragraph({ children: [new TextRun({ text: enclosure })] })],
               width: { size: 70, type: WidthType.PERCENTAGE },
             }),
             new TableCell({
@@ -809,7 +813,7 @@ const vehicleDetailsRows = [
       });
 
       docChildren.push(enclosureTable);
-      docChildren.push(new Paragraph({ text: "", spacing: { after: 400 } }));
+      docChildren.push(new Paragraph({ spacing: { after: 400 } }));
 
       // --- SUPPORTING IMAGES SECTION ---
       if (investigation.images && investigation.images.length > 0) {
@@ -855,17 +859,19 @@ const vehicleDetailsRows = [
 
         // If odd number of images, add an empty cell for last one
         if (rowCells.length === 1) {
-          rowCells.push(new TableCell({ children: [] }));
+          rowCells.push(new TableCell({ children: [new Paragraph({})] }));
           imageRows.push(new TableRow({ children: rowCells }));
         }
 
-        docChildren.push(
-          new Table({
-            rows: imageRows,
-            width: { size: 100, type: WidthType.PERCENTAGE },
-            alignment: AlignmentType.CENTER,
-          })
-        );
+        if (imageRows.length > 0) {
+          docChildren.push(
+            new Table({
+              rows: imageRows,
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              alignment: AlignmentType.CENTER,
+            })
+          );
+        }
       }
 
 
@@ -962,10 +968,10 @@ const vehicleDetailsRows = [
                               }),
                             ],
                             borders: {
-                              top: { style: "none" },
-                              bottom: { style: "none" },
-                              left: { style: "none" },
-                              right: { style: "none" },
+                              top: { style: BorderStyle.NIL },
+                              bottom: { style: BorderStyle.NIL },
+                              left: { style: BorderStyle.NIL },
+                              right: { style: BorderStyle.NIL },
                             },
                           }),
                         ],
@@ -974,13 +980,12 @@ const vehicleDetailsRows = [
                         children: [
                           new TableCell({
                             shading: { fill: "e3f2f1" }, // Matches the light base bar color
-                            children: [new Paragraph({ text: "" })],
-                            height: { value: 150, rule: "atLeast" },
+                            children: [new Paragraph({})],
                             borders: {
-                              top: { style: "none" },
-                              bottom: { style: "none" },
-                              left: { style: "none" },
-                              right: { style: "none" },
+                              top: { style: BorderStyle.NIL },
+                              bottom: { style: BorderStyle.NIL },
+                              left: { style: BorderStyle.NIL },
+                              right: { style: BorderStyle.NIL },
                             },
                           }),
                         ],

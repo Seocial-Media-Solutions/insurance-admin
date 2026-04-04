@@ -6,13 +6,16 @@ const ODCaseContext = createContext();
 
 export function ODCaseProvider({ children }) {
     const [odCases, setOdCases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
-    const loadODCases = async () => {
+    const loadODCases = async (force = false) => {
+        if (!force && (loading || initialized)) return; // Prevent duplicate or redundant calls
         setLoading(true);
         try {
             const resp = await odCaseService.getAll();
             setOdCases(resp.data || []);
+            setInitialized(true);
         } catch (err) {
             console.error("Error loading OD cases:", err);
             toast.error("Failed to load OD cases");
@@ -24,11 +27,34 @@ export function ODCaseProvider({ children }) {
     const deleteODCase = async (id) => {
         try {
             await odCaseService.delete(id);
+            // Force re-fetch the list after deletion
+            loadODCases(true);
             toast.success("OD Case deleted successfully");
-            loadODCases();
         } catch (err) {
-            console.error(err);
-            toast.error("Failed to delete OD case");
+            console.error("Delete error:", err);
+        }
+    };
+
+    const updateODSection = async (caseId, sectionPath, formData) => {
+        try {
+            await odCaseService.updateSection({ caseId, sectionPath, formData });
+            toast.success("Section updated successfully");
+            // Invalidate/Refresh details if needed - usually done via refetch in editor
+            return true;
+        } catch (err) {
+            console.error("Update error:", err);
+            toast.error("Failed to update section");
+            return false;
+        }
+    };
+
+    const deleteODImage = async (caseId, sectionPath, fieldName, publicId) => {
+        try {
+            await odCaseService.deleteImage({ caseId, sectionPath, fieldName, publicId });
+            return true;
+        } catch (err) {
+            console.error("Image delete error:", err);
+            return false;
         }
     };
 
@@ -40,13 +66,13 @@ export function ODCaseProvider({ children }) {
             return resp.data;
         } catch (err) {
             console.error(err);
-            toast.error("Failed to get OD case details");
+            // Service layer already showed the error toast
             return null;
         }
     };
 
     useEffect(() => {
-        loadODCases();
+        // Initial fetch is now lazy-loaded by the hook
     }, []);
 
     const value = {
@@ -54,7 +80,10 @@ export function ODCaseProvider({ children }) {
         loading,
         loadODCases,
         deleteODCase,
-        getODCaseById
+        getODCaseById,
+        updateODSection,
+        deleteODImage,
+        initialized
     };
 
     return (
@@ -69,5 +98,13 @@ export function useODCases() {
     if (!context) {
         throw new Error('useODCases must be used within an ODCaseProvider');
     }
+
+    // Lazy load: fetch data only when component uses this context
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadODCases();
+        }
+    }, [context]);
+
     return context;
 }

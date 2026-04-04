@@ -6,7 +6,8 @@ const TheftCaseContext = createContext();
 
 export function TheftCaseProvider({ children }) {
     const [theftCases, setTheftCases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [initialized, setInitialized] = useState(false);
 
     const loadTheftCases = async () => {
         setLoading(true);
@@ -18,6 +19,7 @@ export function TheftCaseProvider({ children }) {
             toast.error("Failed to load Theft cases");
         } finally {
             setLoading(false);
+            setInitialized(true);
         }
     };
 
@@ -33,7 +35,7 @@ export function TheftCaseProvider({ children }) {
     };
 
     useEffect(() => {
-        loadTheftCases();
+        // Initial fetch is now lazy-loaded by the hook
     }, []);
 
     const getTheftCaseById = async (id) => {
@@ -52,7 +54,8 @@ export function TheftCaseProvider({ children }) {
         loading,
         loadTheftCases,
         deleteTheftCase,
-        getTheftCaseById
+        getTheftCaseById,
+        initialized
     };
 
     return (
@@ -62,10 +65,19 @@ export function TheftCaseProvider({ children }) {
     );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useTheftCases() {
     const context = useContext(TheftCaseContext);
     if (!context) {
         throw new Error('useTheftCases must be used within a TheftCaseProvider');
     }
+
+    // Lazy load when hook is used
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadTheftCases();
+        }
+    }, [context]);
+
     return context;
 }

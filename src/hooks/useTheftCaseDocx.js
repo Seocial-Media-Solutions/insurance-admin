@@ -14,6 +14,7 @@ import {
     Header,
     PageNumber,
     BorderStyle,
+    VerticalAlign,
 } from "https://esm.sh/docx@8.5.0";
 import saveAs from "https://esm.sh/file-saver@2.0.5";
 import { useCallback, useState } from "react";
@@ -57,12 +58,12 @@ const createStandardRow = (label, value, labelPercent = 40, align = AlignmentTyp
 // Helper: Heading
 const createHeading = (text) =>
     new Paragraph({
-        text: text,
+        children: [new TextRun({ text: String(text) })],
         heading: HeadingLevel.HEADING_2,
         alignment: AlignmentType.CENTER,
         spacing: { before: 400, after: 200 },
         border: {
-            bottom: { color: "000000", space: 1, value: "single", size: 6 },
+            bottom: { color: "000000", space: 1, style: BorderStyle.SINGLE, size: 6 },
         },
     });
 
@@ -86,11 +87,11 @@ export const useTheftCaseDocx = () => {
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 borders: {
                     top: { style: BorderStyle.SINGLE, size: 15, color: "888888" },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                    insideHorizontal: { style: BorderStyle.NONE },
-                    insideVertical: { style: BorderStyle.NONE },
+                    bottom: { style: BorderStyle.NIL },
+                    left: { style: BorderStyle.NIL },
+                    right: { style: BorderStyle.NIL },
+                    insideHorizontal: { style: BorderStyle.NIL },
+                    insideVertical: { style: BorderStyle.NIL },
                 },
                 rows: [
                     new TableRow({
@@ -132,10 +133,10 @@ export const useTheftCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                             new TableCell({
@@ -191,10 +192,10 @@ export const useTheftCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],
@@ -209,7 +210,7 @@ export const useTheftCaseDocx = () => {
 
             children.push(
                 new Paragraph({
-                    text: date,
+                    children: [new TextRun({ text: date })],
                     alignment: AlignmentType.RIGHT,
                     spacing: { after: 200 },
                 }),
@@ -217,11 +218,11 @@ export const useTheftCaseDocx = () => {
                     children: [new TextRun({ text: `Ref No: ${refNo}`, bold: true })],
                     spacing: { after: 200 },
                 }),
-                new Paragraph({ text: "To,", spacing: { after: 50 } }),
-                new Paragraph({ text: letter.recipientDesignation || "The Manager,", spacing: { after: 50 } }),
-                new Paragraph({ text: letter.recipientDepartment || "Claim Department,", spacing: { after: 50 } }),
-                new Paragraph({ text: letter.recipientCompany || "Insurance Co. Ltd.,", spacing: { after: 50 } }),
-                new Paragraph({ text: letter.recipientAddress || "", spacing: { after: 300 } })
+                new Paragraph({ children: [new TextRun({ text: "To," })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDesignation || "The Manager,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDepartment || "Claim Department,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientCompany || "Insurance Co. Ltd.,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientAddress || "") })], spacing: { after: 300 } })
             );
 
             // Subject
@@ -236,7 +237,7 @@ export const useTheftCaseDocx = () => {
                         new TextRun({
                             text: `Sub: Theft Investigation Report`,
                             bold: true,
-                            underline: {},
+                            underline: { type: "single" },
                         }),
                         new TextRun({ text: `\nInsured: ${insuredName}` }),
                         new TextRun({ text: `\nVehicle No: ${vehicleNo}` }),
@@ -248,11 +249,11 @@ export const useTheftCaseDocx = () => {
 
             children.push(
                 new Paragraph({
-                    text: "Dear Sir/Madam,",
+                    children: [new TextRun({ text: "Dear Sir/Madam," })],
                     spacing: { after: 100 },
                 }),
                 new Paragraph({
-                    text: "As per your instructions, we have visited the insured, local police station, and RTO to investigate the subject theft claim. Please find our detailed report below:",
+                    children: [new TextRun({ text: "As per your instructions, we have visited the insured, local police station, and RTO to investigate the subject theft claim. Please find our detailed report below:" })],
                     alignment: AlignmentType.JUSTIFIED,
                     spacing: { after: 200 },
                 })
@@ -261,15 +262,19 @@ export const useTheftCaseDocx = () => {
             // 2. Summary of Claim
             const summary = data.summaryOfTheClaim || {};
             children.push(createHeading("1. Summary of Claim"));
-            children.push(new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                    createStandardRow("Claim No", summary.claimNo),
-                    createStandardRow("Policy No", summary.policyNo),
-                    createStandardRow("Date of Appointment", summary.dateOfAppointmentForInvestigation),
-                    createStandardRow("Date of First Contact", summary.dateOfFirstContactWithClaimant),
-                ]
-            }));
+            const summaryRows = [
+                createStandardRow("Claim No", summary.claimNo),
+                createStandardRow("Policy No", summary.policyNo),
+                createStandardRow("Date of Appointment", summary.dateOfAppointmentForInvestigation),
+                createStandardRow("Date of First Contact", summary.dateOfFirstContactWithClaimant),
+            ].filter(row => row !== null);
+
+            if (summaryRows.length > 0) {
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: summaryRows
+                }));
+            }
 
             // 3. Policy & Incident Details
             const policy = data.policyAndIncidentDetails || {};
@@ -396,7 +401,7 @@ export const useTheftCaseDocx = () => {
                 }));
             } else {
                 children.push(new Paragraph({
-                    text: "No documents verified yet.",
+                    children: [new TextRun({ text: "No documents verified yet." })],
                     spacing: { after: 200 },
                     alignment: AlignmentType.CENTER,
                 }));
@@ -407,7 +412,7 @@ export const useTheftCaseDocx = () => {
             if (data.findings) {
                 const f = data.findings;
                 children.push(new Paragraph({
-                    text: f.suspectedInvolvementOfFriendsFamilyOnAnyReport || f.anyInconsistentStatementOfFacts || "Investigation findings enclosed.",
+                    children: [new TextRun({ text: String(f.suspectedInvolvementOfFriendsFamilyOnAnyReport || f.anyInconsistentStatementOfFacts || "Investigation findings enclosed.") })],
                     spacing: { after: 200 },
                     alignment: AlignmentType.JUSTIFIED,
                 }));
@@ -492,7 +497,7 @@ export const useTheftCaseDocx = () => {
                         alignment: AlignmentType.CENTER
                     });
                     const txtPara = new Paragraph({
-                        text: img.category || img.title || `Image ${idx + 1}`,
+                        children: [new TextRun({ text: String(img.category || img.title || `Image ${idx + 1}`) })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 200 }
                     });
@@ -500,7 +505,7 @@ export const useTheftCaseDocx = () => {
                     rowCells.push(new TableCell({
                         children: [imgPara, txtPara],
                         width: { size: 50, type: WidthType.PERCENTAGE },
-                        borders: { style: BorderStyle.NONE } // Clean look
+                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } } // Clean look
                     }));
 
                     if (rowCells.length === 2) {
@@ -513,18 +518,20 @@ export const useTheftCaseDocx = () => {
                     imageRows.push(new TableRow({ children: rowCells }));
                 }
 
-                children.push(new Table({
-                    rows: imageRows,
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    borders: {
-                        top: { style: BorderStyle.NONE },
-                        bottom: { style: BorderStyle.NONE },
-                        left: { style: BorderStyle.NONE },
-                        right: { style: BorderStyle.NONE },
-                        insideHorizontal: { style: BorderStyle.NONE },
-                        insideVertical: { style: BorderStyle.NONE },
-                    }
-                }));
+                if (imageRows.length > 0) {
+                    children.push(new Table({
+                        rows: imageRows,
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        borders: {
+                            top: { style: BorderStyle.NIL },
+                            bottom: { style: BorderStyle.NIL },
+                            left: { style: BorderStyle.NIL },
+                            right: { style: BorderStyle.NIL },
+                            insideHorizontal: { style: BorderStyle.NIL },
+                            insideVertical: { style: BorderStyle.NIL },
+                        }
+                    }));
+                }
             }
 
             // Footer Design
@@ -561,10 +568,10 @@ export const useTheftCaseDocx = () => {
                                     }),
                                 ],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],
@@ -573,13 +580,12 @@ export const useTheftCaseDocx = () => {
                         children: [
                             new TableCell({
                                 shading: { fill: "e3f2f1" },
-                                children: [new Paragraph({ text: "" })],
-                                height: { value: 150, rule: "atLeast" },
+                                children: [new Paragraph({})],
                                 borders: {
-                                    top: { style: BorderStyle.NONE },
-                                    bottom: { style: BorderStyle.NONE },
-                                    left: { style: BorderStyle.NONE },
-                                    right: { style: BorderStyle.NONE },
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
                                 },
                             }),
                         ],

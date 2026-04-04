@@ -35,21 +35,21 @@ function Analytics() {
     });
 
     const statusCounts = {
-      pending: cases.filter(c => c.status?.toLowerCase() === 'pending').length,
-      paid: cases.filter(c => c.status?.toLowerCase() === 'paid').length,
-      rejected: cases.filter(c => c.status?.toLowerCase() === 'rejected').length
+      pending: filteredCases.filter(c => c.status?.toLowerCase() === 'pending').length,
+      paid: filteredCases.filter(c => c.status?.toLowerCase() === 'paid').length,
+      rejected: filteredCases.filter(c => c.status?.toLowerCase() === 'rejected').length
     };
 
-    const totalBilled = cases.reduce((sum, c) => sum + (parseFloat(c.feeBillRs) || 0), 0);
-    const totalReceived = cases.reduce((sum, c) => sum + (parseFloat(c.feeRec) || 0), 0);
+    const totalBilled = filteredCases.reduce((sum, c) => sum + (parseFloat(c.feeBillRs) || 0), 0);
+    const totalReceived = filteredCases.reduce((sum, c) => sum + (parseFloat(c.feeRec) || 0), 0);
     const pendingAmount = totalBilled - totalReceived;
 
-    const overdueCases = cases.filter(c => {
+    const overdueCases = filteredCases.filter(c => {
       if (!c.slaDueDate) return false;
       return new Date(c.slaDueDate) < now && c.status?.toLowerCase() === 'pending';
     }).length;
 
-    const resolvedCases = cases.filter(c => c.status?.toLowerCase() === 'paid' && c.dateOfLoss && c.feeRecDt);
+    const resolvedCases = filteredCases.filter(c => c.status?.toLowerCase() === 'paid' && c.dateOfLoss && c.feeRecDt);
     const avgResolutionDays = resolvedCases.length > 0
       ? Math.round(resolvedCases.reduce((sum, c) => {
           const start = new Date(c.dateOfLoss);

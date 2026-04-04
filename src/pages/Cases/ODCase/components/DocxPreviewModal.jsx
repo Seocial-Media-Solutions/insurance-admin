@@ -6,7 +6,6 @@ import saveAs from "https://esm.sh/file-saver@2.0.5";
 const DocxPreviewModal = ({ blob, onClose, onConfirm, fileName }) => {
     const containerRef = useRef(null);
     const [loading, setLoading] = useState(true);
-    const [hasDownloaded, setHasDownloaded] = useState(false);
     const [renderError, setRenderError] = useState(false);
 
     useEffect(() => {
@@ -95,7 +94,6 @@ const DocxPreviewModal = ({ blob, onClose, onConfirm, fileName }) => {
                     <button
                         onClick={() => {
                             saveAs(blob, fileName);
-                            setHasDownloaded(true);
                             onConfirm();
                         }}
                         className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-sm hover:shadow active:scale-95 transition-all text-sm"

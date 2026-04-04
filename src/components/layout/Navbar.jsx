@@ -1,16 +1,25 @@
 import { Menu, X, Bell, User, Search } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useGlobalSearch } from "../../context/SearchContext";
+import useDebounce from "../../hooks/useDebounce";
 
 export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
+  const [localSearch, setLocalSearch] = useState(globalSearch);
+  const debouncedSearch = useDebounce(localSearch, 500);
   const location = useLocation();
+
+  // Update global search when debounced value changes
+  useEffect(() => {
+    setGlobalSearch(debouncedSearch);
+  }, [debouncedSearch, setGlobalSearch]);
 
   // Clear search when navigating to a different page
   useEffect(() => {
+    setLocalSearch("");
     setGlobalSearch("");
-  }, [location.pathname]);
+  }, [location.pathname, setGlobalSearch]);
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
@@ -40,14 +49,14 @@ export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
                 placeholder="Search cases, executives..."
                 className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               />
-              {globalSearch && (
+              {localSearch && (
                 <button
-                  onClick={() => setGlobalSearch("")}
+                  onClick={() => setLocalSearch("")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-4 h-4" />
@@ -65,14 +74,14 @@ export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                value={globalSearch}
-                onChange={(e) => setGlobalSearch(e.target.value)}
+                value={localSearch}
+                onChange={(e) => setLocalSearch(e.target.value)}
                 placeholder="Search..."
                 className="w-36 sm:w-48 pl-9 pr-8 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
               />
-              {globalSearch && (
+              {localSearch && (
                 <button
-                  onClick={() => setGlobalSearch("")}
+                  onClick={() => setLocalSearch("")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
                 >
                   <X className="w-3.5 h-3.5" />

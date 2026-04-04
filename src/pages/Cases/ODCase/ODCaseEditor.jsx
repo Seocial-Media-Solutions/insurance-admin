@@ -65,43 +65,105 @@ export default function OdCaseEditor() {
 
   const caseFirmData = isFirmPopulated ? parentCaseData.caseFirmId : caseFirmResponse?.data;
 
-  // 3. Auto-fill Form Details from Parent Case & Firm
+  // 3. Form Initialization & Auto-fill
+  // We consolidate all data sync logic into a single effect to prevent redundant updates
   useEffect(() => {
-    if (!caseData || !parentCaseData) return;
+    if (!caseData) return;
 
-    setForm(prev => ({
-      ...prev,
-      ...caseData,
+    setForm(prev => {
+      // 1. Start with previous form but merge in base case data
+      const newForm = { ...prev, ...caseData };
 
-      // Force refresh Letter Details from Firm (Overwrites saved/old details for these specific fields)
-      letterDetails: {
-        ...prev.letterDetails,
-        ...caseData.letterDetails,
-        referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || "",
-        recipientDesignation: caseFirmData?.recipientDesignation || caseData.letterDetails?.recipientDesignation || "",
-        recipientDepartment: caseFirmData?.recipientDepartment || caseData.letterDetails?.recipientDepartment || "",
-        recipientCompany: caseFirmData?.recipientCompany || caseData.letterDetails?.recipientCompany || "",
-        recipientAddress: caseFirmData?.recipientAddress || caseData.letterDetails?.recipientAddress || "",
-      },
+      // 2. Helper to deeply merge sections like odDetails and meetingDetails
+      const mergeDeepSection = (sectionKey) => {
+        if (caseData[sectionKey] && prev[sectionKey]) {
+          Object.keys(prev[sectionKey]).forEach(subKey => {
+            const val = caseData[sectionKey][subKey];
+            if (val !== undefined && val !== null) {
+                let repairedVal = val;
+                // If it's an object with numeric keys, it's likely a corrupted string
+                if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length > 0 && Object.keys(val).every(k => !isNaN(k))) {
+                    repairedVal = Object.values(val).join('');
+                }
 
-      // Sync Claim Summary from Parent Case
-      odDetails: {
-        ...prev.odDetails,
-        ...caseData.odDetails,
-        claimSummary: {
-          ...prev.odDetails?.claimSummary,
-          ...caseData.odDetails?.claimSummary,
-          vehicleNo: caseData.odDetails?.claimSummary?.vehicleNo || parentCaseData.vehicleNo || "",
-          claimNo: caseData.odDetails?.claimSummary?.claimNo || parentCaseData.coClaimNo || "",
-          policyNo: caseData.odDetails?.claimSummary?.policyNo || parentCaseData.policyNo || "",
-          policyDuration: caseData.odDetails?.claimSummary?.policyDuration || parentCaseData.policyPeriod || "",
-          insuredName: caseData.odDetails?.claimSummary?.insuredName || parentCaseData.nameOfInsured || "",
-          insuredContactNo: caseData.odDetails?.claimSummary?.insuredContactNo || parentCaseData.contactNo || "",
-          chassisNo: caseData.odDetails?.claimSummary?.chassisNo || parentCaseData.chassisNo || "",
-          engineNo: caseData.odDetails?.claimSummary?.engineNo || parentCaseData.engineNo || "",
+                // If it's a plain object (not an array, not a string)
+                if (typeof repairedVal === 'object' && !Array.isArray(repairedVal) && !(repairedVal.$date)) {
+                    newForm[sectionKey][subKey] = {
+                        ...(prev[sectionKey][subKey] || {}),
+                        ...repairedVal
+                    };
+                } else {
+                    newForm[sectionKey][subKey] = repairedVal;
+                }
+            }
+          });
+        }
+      };
+
+      // Merge base sections
+      mergeDeepSection('odDetails');
+      mergeDeepSection('meetingDetails');
+
+        if (newForm.odDetails?.claimSummary) {
+            delete newForm.odDetails.claimSummary.policyNo;
+            delete newForm.odDetails.claimSummary.policyDuration;
+        }
+
+      // 3. AUTO-FILL FROM PARENT CASE DATA
+      if (parentCaseData) {
+        const pc = parentCaseData;
+
+        // Letter Details Sync
+        const fileNo = pc.ourFileNo || caseData.ourFileNo || caseData.fileNo;
+        if (fileNo) {
+          newForm.letterDetails = {
+            ...(newForm.letterDetails || {}),
+            referenceNumber: fileNo,
+          };
+        }
+
+        // Claim Summary - Merge from parent if local is empty
+        if (newForm.odDetails?.claimSummary) {
+          const cs = newForm.odDetails.claimSummary;
+          cs.vehicleNo = cs.vehicleNo || pc.vehicleNo || "";
+          cs.insuredName = cs.insuredName || pc.nameOfInsured || "";
+          cs.insuredContactNo = cs.insuredContactNo || pc.contactNo || "";
+          cs.chassisNo = cs.chassisNo || pc.chassisNo || "";
+          cs.engineNo = cs.engineNo || pc.engineNo || "";
+          cs.claimNo = cs.claimNo || pc.coClaimNo || "";
+        }
+
+        // Vehicle & Insured Details
+        if (newForm.odDetails?.vehicleDetails) {
+          const vd = newForm.odDetails.vehicleDetails;
+          vd.vehicleRegistrationNo = vd.vehicleRegistrationNo || pc.vehicleNo || "";
+          vd.registeredOwnerName = vd.registeredOwnerName || pc.nameOfInsured || "";
+        }
+        if (newForm.odDetails?.insuredDetails) {
+          const id = newForm.odDetails.insuredDetails;
+          id.nameOfInsured = id.nameOfInsured || pc.nameOfInsured || "";
+          id.addressAsPerRC = id.addressAsPerRC || pc.addressOfInsured || "";
+        }
+        if (newForm.policyBreakInDetails) {
+          newForm.policyBreakInDetails.policyNo = newForm.policyBreakInDetails.policyNo || pc.policyNo || "";
+          newForm.policyBreakInDetails.policyPeriod = newForm.policyBreakInDetails.policyPeriod || pc.policyPeriod || "";
         }
       }
-    }));
+
+      // 4. AUTO-FILL FROM FIRM DATA
+      if (caseFirmData) {
+        const cf = caseFirmData;
+        newForm.letterDetails = {
+          ...(newForm.letterDetails || {}),
+          recipientDesignation: newForm.letterDetails?.recipientDesignation || cf.recipientDesignation || "",
+          recipientDepartment: newForm.letterDetails?.recipientDepartment || cf.recipientDepartment || "",
+          recipientCompany: newForm.letterDetails?.recipientCompany || cf.recipientCompany || "",
+          recipientAddress: newForm.letterDetails?.recipientAddress || cf.recipientAddress || "",
+        };
+      }
+
+      return newForm;
+    });
   }, [caseData, parentCaseData, caseFirmData]);
 
   // DOCX Generation Hook
@@ -213,8 +275,6 @@ export default function OdCaseEditor() {
       claimSummary: {
         vehicleNo: "",
         claimNo: "",
-        policyNo: "",
-        policyDuration: "",
         closeProximity: "",
         insuredName: "",
         insuredContactNo: "",
@@ -380,127 +440,7 @@ export default function OdCaseEditor() {
     },
   });
 
-  /* ---------------------------------------------------
-     DATA POPULATION
-  --------------------------------------------------- */
-  useEffect(() => {
-    if (caseData) {
-      setForm(prev => {
-        const newForm = { ...prev };
 
-        // Helper to deeply merge sections like odDetails and theftDetails
-        const mergeDeepSection = (sectionKey) => {
-          if (caseData[sectionKey] && newForm[sectionKey]) {
-            Object.keys(newForm[sectionKey]).forEach(subKey => {
-              if (caseData[sectionKey][subKey]) {
-                newForm[sectionKey][subKey] = {
-                  ...newForm[sectionKey][subKey],
-                  ...caseData[sectionKey][subKey]
-                };
-              }
-            });
-          }
-        };
-
-        // Standard merge for top-level keys (skipping deep sections handled above)
-        Object.keys(newForm).forEach(key => {
-          if (key === 'odDetails' || key === 'theftDetails') return;
-
-          if (caseData[key]) {
-            if (typeof newForm[key] === 'object' && newForm[key] !== null && !Array.isArray(newForm[key])) {
-              newForm[key] = { ...newForm[key], ...caseData[key] };
-            } else {
-              newForm[key] = caseData[key];
-            }
-          }
-        });
-
-        // Deep merge specific sections
-        mergeDeepSection('odDetails');
-        mergeDeepSection('theftDetails');
-
-        // Force Investigator Name as requested
-        if (newForm.odDetails?.claimSummary) {
-          newForm.odDetails.claimSummary.investigatorName = "Satyendra Kumar Garg";
-        }
-
-        // -----------------------------------------------
-        // AUTO-FILL FROM PARENT CASE DATA (common fields)
-        // -----------------------------------------------
-        if (parentCaseData) {
-          const pc = parentCaseData;
-
-          // Reference number → letterDetails
-          const fileNo = pc.ourFileNo || caseData.ourFileNo || caseData.fileNo;
-          if (fileNo) {
-            newForm.letterDetails = {
-              ...(newForm.letterDetails || {}),
-              referenceNumber: fileNo,
-            };
-          }
-
-          // Claim Summary — pre-fill from parent case common fields
-          if (newForm.odDetails?.claimSummary) {
-            const cs = newForm.odDetails.claimSummary;
-            if (!cs.vehicleNo && pc.vehicleNo) cs.vehicleNo = pc.vehicleNo;
-            if (!cs.policyNo && pc.policyNo) cs.policyNo = pc.policyNo;
-            if (!cs.policyDuration && pc.policyPeriod) cs.policyDuration = pc.policyPeriod;
-            if (!cs.insuredName && pc.nameOfInsured) cs.insuredName = pc.nameOfInsured;
-            if (!cs.insuredContactNo && pc.contactNo) cs.insuredContactNo = pc.contactNo;
-            if (!cs.chassisNo && pc.chassisNo) cs.chassisNo = pc.chassisNo;
-            if (!cs.engineNo && pc.engineNo) cs.engineNo = pc.engineNo;
-            if (!cs.claimNo && pc.coClaimNo) cs.claimNo = pc.coClaimNo;
-          }
-
-          // Vehicle Details — pre-fill from parent case
-          if (newForm.odDetails?.vehicleDetails) {
-            const vd = newForm.odDetails.vehicleDetails;
-            if (!vd.vehicleRegistrationNo && pc.vehicleNo) vd.vehicleRegistrationNo = pc.vehicleNo;
-            if (!vd.registeredOwnerName && pc.nameOfInsured) vd.registeredOwnerName = pc.nameOfInsured;
-            if (!vd.chassisNo && pc.chassisNo) vd.chassisNo = pc.chassisNo;
-            if (!vd.engineNo && pc.engineNo) vd.engineNo = pc.engineNo;
-          }
-
-          // Insured Details — pre-fill from parent case
-          if (newForm.odDetails?.insuredDetails) {
-            const id = newForm.odDetails.insuredDetails;
-            if (!id.nameOfInsured && pc.nameOfInsured) id.nameOfInsured = pc.nameOfInsured;
-            if (!id.addressAsPerRC && pc.addressOfInsured) id.addressAsPerRC = pc.addressOfInsured;
-          }
-
-          // Policy Break-In Details — pre-fill from parent case
-          if (newForm.policyBreakInDetails) {
-            const pb = newForm.policyBreakInDetails;
-            if (!pb.policyNo && pc.policyNo) pb.policyNo = pc.policyNo;
-            if (!pb.policyPeriod && pc.policyPeriod) pb.policyPeriod = pc.policyPeriod;
-          }
-
-          // Meeting Details — pre-fill dateOfLoss
-          if (newForm.meetingDetails) {
-            if (!newForm.meetingDetails.dateAndTimeOfLoss && pc.dateOfLoss) {
-              newForm.meetingDetails.dateAndTimeOfLoss = pc.dateOfLoss;
-            }
-          }
-        }
-
-        // -----------------------------------------------
-        // AUTO-FILL LETTER DETAILS FROM CASE FIRM DATA
-        // -----------------------------------------------
-        if (caseFirmData) {
-          const cf = caseFirmData;
-          newForm.letterDetails = {
-            ...(newForm.letterDetails || {}),
-            recipientDesignation: newForm.letterDetails?.recipientDesignation || cf.recipientDesignation || "",
-            recipientDepartment: newForm.letterDetails?.recipientDepartment || cf.recipientDepartment || "",
-            recipientCompany: newForm.letterDetails?.recipientCompany || cf.recipientCompany || "",
-            recipientAddress: newForm.letterDetails?.recipientAddress || cf.recipientAddress || "",
-          };
-        }
-
-        return newForm;
-      });
-    }
-  }, [caseData, parentCaseData, caseFirmData]);
 
   /* ---------------------------------------------------
      SECTION CONFIG
@@ -511,7 +451,7 @@ export default function OdCaseEditor() {
     { key: "odDetails.insuredDetails", api: "od-details/insured-details" },
     { key: "odDetails.vehicleDetails", api: "od-details/vehicle-details" },
     { key: "meetingDetails", api: "meeting-details" },
-    { key: "policyBreakInDetails", api: "policy-break-in-details" },
+    { key: "policyBreakInDetails", api: "policy-break-in-details", label: "Policy Details" },
     {
       key: "spotVisit",
       api: "spot-visit",

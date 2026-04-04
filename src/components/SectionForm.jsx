@@ -125,8 +125,6 @@ export default function SectionUnit({
       const sectionData = form[sectionKey];
       const hasFiles = Object.keys(fileFields).length > 0;
 
-      let res;
-
       if (hasFiles) {
         const fd = new FormData();
 
@@ -140,8 +138,6 @@ export default function SectionUnit({
           if (!fileFields[key]) return;
           if (!val) return; // Skip empty/null files
 
-          // Backend expects simple keys for files in this specific controller setup
-          // or flattened keys.
           if (Array.isArray(val)) {
             val.forEach((f) => fd.append(key, f));
           } else {
@@ -149,9 +145,9 @@ export default function SectionUnit({
           }
         });
 
-        res = await axios.patch(url, fd);
+        await axios.patch(url, fd);
       } else {
-        res = await axios.patch(url, sectionData);
+        await axios.patch(url, sectionData);
       }
 
       toast.success("Saved Successfully!");

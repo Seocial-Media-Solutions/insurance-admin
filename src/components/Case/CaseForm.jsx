@@ -93,38 +93,36 @@ export default function CaseForm({
   /* --------------------------
      INITIAL LOAD
   -------------------------- */
-  useEffect(() => {
-    fetchCaseFirmsList();
-  }, [state]);
-
-  useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      setForm((prev) => ({ ...prev, ...initialData }));
-    }
-  }, [JSON.stringify(initialData)]);
-
-
-
-  const fetchCaseFirmsList = async () => {
+  const fetchCaseFirmsList = useCallback(async () => {
     try {
       const res = await fetch(
         `${API}/casefirm/state/${state.toUpperCase()}`
       );
       const data = await res.json();
 
-      // Handle both successful and error responses
       if (data.success && data.data) {
         setCaseFirmOptions(data.data);
-        console.log("Fetched CaseFirms by state:", data.data);
       } else {
         setCaseFirmOptions([]);
-        console.log(`No case firms found for state ${state}`);
       }
     } catch (err) {
       console.error("Error fetching case firms:", err);
       setCaseFirmOptions([]);
     }
-  };
+  }, [state]);
+
+  /* --------------------------
+     INITIAL LOAD
+  -------------------------- */
+  useEffect(() => {
+    fetchCaseFirmsList();
+  }, [fetchCaseFirmsList]);
+
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      setForm((prev) => ({ ...prev, ...initialData }));
+    }
+  }, [initialData]);
 
   /* --------------------------
      SUBMIT HANDLER

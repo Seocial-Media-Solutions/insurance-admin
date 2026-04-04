@@ -1,15 +1,15 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast';
 import { fieldExecutiveService } from '../services/fieldExecutiveService';
 
 const FieldExecutiveContext = createContext();
 
 export function FieldExecutiveProvider({ children }) {
     const [executives, setExecutives] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [initialized, setInitialized] = useState(false);
     const limit = 10;
 
     const loadExecutives = async (page = currentPage) => {
@@ -22,9 +22,10 @@ export function FieldExecutiveProvider({ children }) {
             setCurrentPage(resp.currentPage || page);
         } catch (err) {
             console.error("Error loading Field Executives:", err);
-            toast.error("Failed to load Field Executives");
+            // Service layer handles the error toast
         } finally {
             setLoading(false);
+            setInitialized(true);
         }
     };
 
@@ -37,38 +38,39 @@ export function FieldExecutiveProvider({ children }) {
     const addExecutive = async (data) => {
         try {
             await fieldExecutiveService.create(data);
-            toast.success("Field Executive created successfully");
+            // No manual success toast needed as it's in the promise
             loadExecutives(1);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to create Field Executive");
+            // Service handles the error toast
         }
     };
 
     const updateExecutive = async (id, data) => {
         try {
             await fieldExecutiveService.update({ id, executiveData: data });
-            toast.success("Field Executive updated successfully");
+            // No manual success toast needed
             loadExecutives();
         } catch (err) {
             console.error(err);
-            toast.error("Failed to update Field Executive");
+            // Service handles error toast
         }
     };
 
     const deleteExecutive = async (id) => {
         try {
             await fieldExecutiveService.delete(id);
-            toast.success("Field Executive deleted successfully");
+            // No manual success toast needed
             loadExecutives();
         } catch (err) {
             console.error(err);
-            toast.error("Failed to delete Field Executive");
+            // Service handles error toast
         }
     };
 
     useEffect(() => {
-        loadExecutives(1);
+        // Initial load removed to avoid bulk fetches. 
+        // Handles lazily by hook now.
     }, []);
 
     const value = {
@@ -82,7 +84,8 @@ export function FieldExecutiveProvider({ children }) {
         goToPage,
         addExecutive,
         updateExecutive,
-        deleteExecutive
+        deleteExecutive,
+        initialized
     };
 
     return (
@@ -97,5 +100,13 @@ export function useFieldExecutives() {
     if (!context) {
         throw new Error('useFieldExecutives must be used within a FieldExecutiveProvider');
     }
+
+    // Lazy load when hook is used
+    useEffect(() => {
+        if (!context.initialized && !context.loading) {
+            context.loadExecutives(1);
+        }
+    }, [context]);
+
     return context;
 }

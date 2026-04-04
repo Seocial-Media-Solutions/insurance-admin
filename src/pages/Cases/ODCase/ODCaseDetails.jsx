@@ -121,8 +121,6 @@ export default function ODCaseDetails() {
                         <DetailGrid>
                             <DetailItem label="Vehicle No" value={caseData.odDetails.claimSummary.vehicleNo} />
                             <DetailItem label="Claim No" value={caseData.odDetails.claimSummary.claimNo} />
-                            <DetailItem label="Policy No" value={caseData.odDetails.claimSummary.policyNo} />
-                            <DetailItem label="Policy Duration" value={caseData.odDetails.claimSummary.policyDuration} />
                             <DetailItem label="Close Proximity" value={caseData.odDetails.claimSummary.closeProximity} />
                             <DetailItem label="Insured Name" value={caseData.odDetails.claimSummary.insuredName} />
                             <DetailItem label="Contact No" value={caseData.odDetails.claimSummary.insuredContactNo} />
