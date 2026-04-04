@@ -26,7 +26,7 @@ import { AlignCenter } from "lucide-react";
 // Helper for consistent table rows
 const createStandardRow = (label, value, labelPercent = 40, align = AlignmentType.LEFT) => {
     const valuePercent = 100 - labelPercent;
-    
+
     // Safety check for objects
     let displayValue = value;
     if (typeof value === 'object' && value !== null) {
@@ -421,18 +421,18 @@ export const useODCaseDocx = () => {
                     panCard: "PAN Card",
                     aadharCardNo: "Aadhar Card No.",
                     addressAsPerRC: "Address of Insured as per RC",
-                    addressAsPerAadharCard: "Address of Insured as per Aadhar Card",
+                    // addressAsPerAadharCard: "Address of Insured as per Aadhar Card",
                     insuredProfession: "Insured Profession",
                     driverInjured: "Driver injured or not",
                     driverRelationshipWithInsured: "Driver relationship",
                     nameOfDriver: "Name of Driver",
                     attestedLetterFromDriver: "Attested Letter Copy from the Driver with Sign Across his Photograph",
                     driverConfirmation: "Driver Confirmation",
-                    employmentStability: "Emp. Stability",
-                    dlDetails: "DL details/ Any Endorsements",
-                    rtoName: "Name of RTO (Licencing Authority) from DL is issued",
-                    eligibleToDrive: "Eligible to drive",
-                    validityDetails: "validity details",
+                    // employmentStability: "Emp. Stability",
+                    // dlDetails: "DL details/ Any Endorsements",
+                    // rtoName: "Name of RTO (Licencing Authority) from DL is issued",
+                    // eligibleToDrive: "Eligible to drive",
+                    // validityDetails: "validity details",
                 };
 
                 for (const [key, label] of Object.entries(insuredFields)) {
@@ -1383,8 +1383,8 @@ export const useODCaseDocx = () => {
             // Photo sections configuration updated to match current data structure
             const allPhotoSections = [
                 {
-                    title: "Insured Documents", 
-                    data: data.insuredDocuments || {}, 
+                    title: "Insured Documents",
+                    data: data.insuredDocuments || {},
                     fields: {
                         rcPhoto: "RC Photo",
                         rcverification: "RC Verification",
@@ -1395,15 +1395,15 @@ export const useODCaseDocx = () => {
                     }
                 },
                 {
-                    title: "Spot Visit Photos", 
-                    data: data.spotVisit || {}, 
+                    title: "Spot Visit Photos",
+                    data: data.spotVisit || {},
                     fields: {
                         spotImages: "Spot Photos",
                     }
                 },
                 {
-                    title: "GPS Timeline", 
-                    data: data.gpsTimelineDriver || {}, 
+                    title: "GPS Timeline",
+                    data: data.gpsTimelineDriver || {},
                     fields: {
                         type: "GPS Timeline Images",
                     }
@@ -1416,8 +1416,8 @@ export const useODCaseDocx = () => {
                     }
                 },
                 {
-                    title: "Witness Photos & Documents", 
-                    data: data.witnessDetails ? { 
+                    title: "Witness Photos & Documents",
+                    data: data.witnessDetails ? {
                         allWitnessItems: data.witnessDetails.flatMap(w => [
                             ...(w.witnessPhoto || []),
                             ...(w.witnessDocument || []).flatMap(doc => [
@@ -1425,7 +1425,7 @@ export const useODCaseDocx = () => {
                                 { imageUrl: typeof doc.back === 'string' ? doc.back : doc.back?.imageUrl, title: `${doc.title || 'Document'} (Back)` }
                             ])
                         ])
-                    } : {}, 
+                    } : {},
                     fields: {
                         allWitnessItems: "Witness Evidence",
                     }
@@ -1442,7 +1442,7 @@ export const useODCaseDocx = () => {
 
                 if (hasPhotos) {
                     // PageBreak must be wrapped in a Paragraph
-                    children.push(new Paragraph({ children: [new PageBreak()] })); 
+                    children.push(new Paragraph({ children: [new PageBreak()] }));
 
                     children.push(
                         new Paragraph({
