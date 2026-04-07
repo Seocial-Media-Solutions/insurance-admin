@@ -161,7 +161,7 @@ function CaseFirmPage() {
                 <tbody>
                   {firms.map((firm) => (
                     <tr key={firm._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <td className="p-3 whitespace-nowrap font-medium">{firm.name || "—"}</td>
+                      <td className="p-3 whitespace-nowrap font-medium">{firm.name || firm.recipientCompany || "—"}</td>
                       <td className="p-3 whitespace-nowrap">{firm.city || "—"}</td>
                       <td className="p-3 whitespace-nowrap">{firm.regionalOffice || "—"}</td>
                       <td className="p-3 whitespace-nowrap">{firm.operationType || "—"}</td>

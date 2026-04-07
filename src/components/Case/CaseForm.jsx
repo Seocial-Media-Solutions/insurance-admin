@@ -94,9 +94,10 @@ export default function CaseForm({
      INITIAL LOAD
   -------------------------- */
   const fetchCaseFirmsList = useCallback(async () => {
+    if (!city) return;
     try {
       const res = await fetch(
-        `${API}/casefirm/state/${state.toUpperCase()}`
+        `${API}/casefirm/city/${city.toUpperCase()}`
       );
       const data = await res.json();
 
@@ -109,7 +110,7 @@ export default function CaseForm({
       console.error("Error fetching case firms:", err);
       setCaseFirmOptions([]);
     }
-  }, [state]);
+  }, [city]);
 
   /* --------------------------
      INITIAL LOAD
@@ -117,6 +118,23 @@ export default function CaseForm({
   useEffect(() => {
     fetchCaseFirmsList();
   }, [fetchCaseFirmsList]);
+
+  // Handle automatic file code generation
+  useEffect(() => {
+    // Only auto-generate for NEW cases
+    if (initialData && initialData._id) return;
+
+    if (form.ourFileNoId && form.caseType) {
+      const firm = caseFirmOptions.find(f => f._id === form.ourFileNoId);
+      if (firm) {
+        // Map exactly to the actual code from the firm as requested
+        const actualCode = firm.code || "";
+        if (actualCode !== form.ourFileNo) {
+          setForm(prev => ({ ...prev, ourFileNo: actualCode }));
+        }
+      }
+    }
+  }, [form.caseType, form.ourFileNoId, caseFirmOptions]);
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
@@ -150,14 +168,8 @@ export default function CaseForm({
     });
   };
   function generateNextFirmCode(firm) {
-    if (!firm || !firm.code) return "";
-
-    const nextRecordNumber = (firm.recordNumber || 0) + 1;
-    const year = form.dtOfCaseRec ? new Date(form.dtOfCaseRec).getFullYear() : new Date().getFullYear();
-
-    const baseCode = firm.code.replace(/\/\d+$/, ""); // remove last number if any
-
-    return `${baseCode}/${String(nextRecordNumber).padStart(3, "0")}/${year}`;
+    // We now just return the actual code as requested
+    return firm?.code || "";
   }
   /* --------------------------
      DATE FIELDS
@@ -252,7 +264,6 @@ export default function CaseForm({
                   setForm((prev) => ({
                     ...prev,
                     recordNumber: (firm.recordNumber || 0) + 1,
-                    ourFileNo: generateNextFirmCode(firm),
                     ourFileNoId: firm._id,
                   }));
                 }
@@ -260,11 +271,13 @@ export default function CaseForm({
               className="w-full p-3 border rounded-md"
             >
               <option value="">-- Select Case Firm --</option>
-              {(caseFirmOptions || []).map((firm) => (
-                <option key={firm._id} value={firm._id}>
-                  {firm.name} ({firm.city}) — {generateNextFirmCode(firm)}
-                </option>
-              ))}
+              {(caseFirmOptions || [])
+                .filter((f) => f.operationType.toUpperCase() === form.caseType)
+                .map((firm) => (
+                  <option key={firm._id} value={firm._id}>
+                    {firm.name} ({firm.city}) — {generateNextFirmCode(firm)}
+                  </option>
+                ))}
             </select>
 
             {/* MAIN FORM SECTIONS */}
