@@ -19,7 +19,6 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
     caseType: "",
     fieldExecutiveId: "",
     investigationVisits: [], // visit objects {visitKey, label, endpoint}
-    selectedVisitEndpoint: "",
     contactPersonName: "",
     contactPersonPhone: "",
     priority: "high",
@@ -61,7 +60,6 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
       caseId,
       caseType: selected?.caseType || "",
       investigationVisits: [],
-      selectedVisitEndpoint: "",
     }));
 
     setAlreadyVisits(selected?.alreadyVisits || []);
@@ -96,8 +94,6 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
         ];
       }
 
-      // Optional: update selectedVisitEndpoint based on last selection or primary selection
-      // For now, we leave it as references might be inside investigationVisits
       return { ...prev, investigationVisits: updated };
     });
   };
@@ -175,7 +171,6 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
           caseType: "",
           fieldExecutiveId: "",
           investigationVisits: [],
-          selectedVisitEndpoint: "",
           contactPersonName: "",
           contactPersonPhone: "",
           priority: "high",
@@ -321,14 +316,7 @@ export default function AssignCaseForm({ onAssignmentCreated }) {
               />
             </div>
 
-            <div>
-              <label className="block mb-2 text-sm">Selected Endpoint</label>
-              <input
-                readOnly
-                value={formData.selectedVisitEndpoint}
-                className="w-full p-2 border rounded bg-gray-100 cursor-not-allowed"
-              />
-            </div>
+          
           </div>
         )}
 
