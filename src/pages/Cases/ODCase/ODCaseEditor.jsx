@@ -26,7 +26,7 @@ import DocxPreviewModal from "./components/DocxPreviewModal";
 --------------------------------------------------- */
 export default function OdCaseEditor() {
   const { caseId } = useParams();
-  
+
   const location = useLocation();
 
   // 1. Check navigation state for parentCaseData
@@ -50,12 +50,12 @@ export default function OdCaseEditor() {
     enabled: !!caseData?.caseId && !stateParentCase, // Skip if state exists
     staleTime: 5 * 60 * 1000,
   });
-  
+
   const parentCaseData = stateParentCase || parentCaseResponse?.data;
 
   // 2. Firm Data (Look in populated parentCaseData or fetch)
   const isFirmPopulated = typeof parentCaseData?.caseFirmId === 'object' && parentCaseData.caseFirmId !== null;
-  
+
   const { data: caseFirmResponse } = useQuery({
     queryKey: ['caseFirm', typeof parentCaseData?.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData?.caseFirmId?._id],
     queryFn: () => caseFirmApi.getById(typeof parentCaseData.caseFirmId === 'string' ? parentCaseData.caseFirmId : parentCaseData.caseFirmId._id),
@@ -80,21 +80,21 @@ export default function OdCaseEditor() {
           Object.keys(prev[sectionKey]).forEach(subKey => {
             const val = caseData[sectionKey][subKey];
             if (val !== undefined && val !== null) {
-                let repairedVal = val;
-                // If it's an object with numeric keys, it's likely a corrupted string
-                if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length > 0 && Object.keys(val).every(k => !isNaN(k))) {
-                    repairedVal = Object.values(val).join('');
-                }
+              let repairedVal = val;
+              // If it's an object with numeric keys, it's likely a corrupted string
+              if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length > 0 && Object.keys(val).every(k => !isNaN(k))) {
+                repairedVal = Object.values(val).join('');
+              }
 
-                // If it's a plain object (not an array, not a string)
-                if (typeof repairedVal === 'object' && !Array.isArray(repairedVal) && !(repairedVal.$date)) {
-                    newForm[sectionKey][subKey] = {
-                        ...(prev[sectionKey][subKey] || {}),
-                        ...repairedVal
-                    };
-                } else {
-                    newForm[sectionKey][subKey] = repairedVal;
-                }
+              // If it's a plain object (not an array, not a string)
+              if (typeof repairedVal === 'object' && !Array.isArray(repairedVal) && !(repairedVal.$date)) {
+                newForm[sectionKey][subKey] = {
+                  ...(prev[sectionKey][subKey] || {}),
+                  ...repairedVal
+                };
+              } else {
+                newForm[sectionKey][subKey] = repairedVal;
+              }
             }
           });
         }
@@ -104,10 +104,10 @@ export default function OdCaseEditor() {
       mergeDeepSection('odDetails');
       mergeDeepSection('meetingDetails');
 
-        if (newForm.odDetails?.claimSummary) {
-            delete newForm.odDetails.claimSummary.policyNo;
-            delete newForm.odDetails.claimSummary.policyDuration;
-        }
+      if (newForm.odDetails?.claimSummary) {
+        delete newForm.odDetails.claimSummary.policyNo;
+        delete newForm.odDetails.claimSummary.policyDuration;
+      }
 
       // 3. AUTO-FILL FROM PARENT CASE DATA
       if (parentCaseData) {

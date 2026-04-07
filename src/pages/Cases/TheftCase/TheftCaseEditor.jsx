@@ -3,7 +3,7 @@ import { useParams, Link, useLocation } from "react-router-dom";
 import { useQuery } from '@tanstack/react-query';
 import { caseApi, caseFirmApi } from '../../../services/api';
 import { toast } from "react-hot-toast";
-import { ArrowLeft, Loader2, FileText } from "lucide-react";
+import { ArrowLeft, Loader2, FileText, Edit2 } from "lucide-react";
 
 // Hooks
 import { useTheftCase } from "../../../hooks/useTheftCases";
@@ -398,6 +398,15 @@ export default function TheftCaseEditor() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              {parentCaseData?._id && (
+                <Link
+                  to={`/cases/edit/${parentCaseData._id}`}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg border border-indigo-200 transition-colors"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  Manage Case
+                </Link>
+              )}
               <button
                 onClick={() => generateDocx(caseData)}
                 disabled={isDocGenerating}

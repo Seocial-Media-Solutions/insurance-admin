@@ -34,7 +34,7 @@ export default function CaseForm({
     caseType: "",
     recordNumber: 0,
     ourFileNo: "",
-    ourFileNoId: "",
+    caseFirmId: "",
     dtOfCaseRec: new Date().toISOString().split('T')[0],
     caseRecVia: "",
     coClaimNo: "",
@@ -71,6 +71,70 @@ export default function CaseForm({
   /* --------------------------
      MAIN FORM HANDLER
   -------------------------- */
+  /* --------------------------
+     EFFECT: PARSE INITIAL DATA
+  -------------------------- */
+  useEffect(() => {
+    if (initialData && Object.keys(initialData).length > 0) {
+      const data = { ...initialData };
+      
+      // Map caseFirmId (populated or ID) correctly
+      if (data.caseFirmId) {
+        const firmId = typeof data.caseFirmId === 'object' ? data.caseFirmId._id : data.caseFirmId;
+        data.caseFirmId = firmId;
+        
+        // Sync City/State from the firm if it's already populated
+        if (typeof initialData.caseFirmId === 'object') {
+          if (initialData.caseFirmId.city) setCity(initialData.caseFirmId.city);
+          if (initialData.caseFirmId.code && !data.ourFileNo) data.ourFileNo = initialData.caseFirmId.code;
+        }
+      }
+
+      setForm((prev) => ({ ...prev, ...data }));
+
+      // Parse policyPeriod "YYYY-MM-DD to YYYY-MM-DD"
+      if (data.policyPeriod && typeof data.policyPeriod === 'string' && data.policyPeriod.includes(" to ")) {
+        const [start, end] = data.policyPeriod.split(" to ");
+        setPolicyPeriodStart(start);
+        setPolicyPeriodEnd(end);
+      }
+
+      // Parse caseRecVia OTHER
+      const standardVia = ["BY EMAIL", "BY HAND"];
+      if (data.caseRecVia && !standardVia.includes(data.caseRecVia.toUpperCase())) {
+        setForm(prev => ({ ...prev, caseRecVia: "OTHER" }));
+        setCaseRecViaOther(data.caseRecVia);
+      }
+    }
+  }, [initialData, caseFirmOptions]);
+
+  /* --------------------------
+     FETCH SPECIFIC FIRM BY ID (For existing cases)
+  -------------------------- */
+  useEffect(() => {
+    const fetchFirmById = async () => {
+      if (!form.caseFirmId || form.ourFileNo) return;
+      
+      // Check if already in options
+      if (caseFirmOptions.some(f => f._id === form.caseFirmId)) return;
+
+      try {
+        const res = await fetch(`${API}/casefirm/${form.caseFirmId}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          setForm(prev => ({ 
+            ...prev, 
+            ourFileNo: data.data.code || "",
+            recordNumber: data.data.recordNumber || prev.recordNumber
+          }));
+        }
+      } catch (err) {
+        console.error("Error fetching specific firm:", err);
+      }
+    };
+    fetchFirmById();
+  }, [form.caseFirmId, form.ourFileNo, caseFirmOptions]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -97,7 +161,7 @@ export default function CaseForm({
     if (!city) return;
     try {
       const res = await fetch(
-        `${API}/casefirm/city/${city.toUpperCase()}`
+        `${API}/casefirm/city/${city}`
       );
       const data = await res.json();
 
@@ -136,11 +200,7 @@ export default function CaseForm({
     }
   }, [form.caseType, form.ourFileNoId, caseFirmOptions]);
 
-  useEffect(() => {
-    if (initialData && Object.keys(initialData).length > 0) {
-      setForm((prev) => ({ ...prev, ...initialData }));
-    }
-  }, [initialData]);
+
 
   /* --------------------------
      SUBMIT HANDLER
@@ -165,6 +225,9 @@ export default function CaseForm({
       policyPeriod: composedPolicyPeriod,
       caseRecVia: finalCaseRecVia,
       contactNo: String(form.contactNo),
+      // Ensure backend-friendly ID mapping
+      caseFirmId: form.caseFirmId,
+      ourFileNoId: form.caseFirmId, // Send both just in case
     });
   };
   function generateNextFirmCode(firm) {
@@ -255,6 +318,7 @@ export default function CaseForm({
               Select CaseFirm (Auto-fill Record Number)
             </label>
             <select
+              value={form.caseFirmId || ""}
               onChange={(e) => {
                 const firm = caseFirmOptions.find(
                   (f) => f._id === e.target.value
@@ -264,18 +328,22 @@ export default function CaseForm({
                   setForm((prev) => ({
                     ...prev,
                     recordNumber: (firm.recordNumber || 0) + 1,
-                    ourFileNoId: firm._id,
+                    caseFirmId: firm._id,
+                    ourFileNo: firm.code || "",
                   }));
+                } else {
+                  setForm(prev => ({ ...prev, caseFirmId: "", recordNumber: 0, ourFileNo: "" }));
                 }
               }}
-              className="w-full p-3 border rounded-md"
+              className="w-full p-3 border rounded-md bg-white disabled:opacity-50"
+              disabled={!form.caseType}
             >
-              <option value="">-- Select Case Firm --</option>
+              <option value="">{form.caseType ? `-- Select ${form.caseType} Firm --` : "-- Select Case Type First --"}</option>
               {(caseFirmOptions || [])
-                .filter((f) => f.operationType.toUpperCase() === form.caseType)
+                .filter((f) => (f.operationType || "").toUpperCase() === (form.caseType || "").toUpperCase())
                 .map((firm) => (
                   <option key={firm._id} value={firm._id}>
-                    {firm.name} ({firm.city}) — {generateNextFirmCode(firm)}
+                    {firm.name} ({firm.city}) — {firm.code}
                   </option>
                 ))}
             </select>
@@ -292,7 +360,11 @@ export default function CaseForm({
                   <select
                     name="caseType"
                     value={form.caseType}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e);
+                      // Clear firm selection when case type changes
+                      setForm(prev => ({ ...prev, ourFileNoId: "", ourFileNo: "", recordNumber: 0 }));
+                    }}
                     className="w-full p-3 border rounded-md"
                   >
                     <option value="">Select Case Type</option>
@@ -302,6 +374,19 @@ export default function CaseForm({
                     <option value="FIRE">Fire</option>
                     <option value="OTHER">Other</option>
                   </select>
+                </div>
+
+                {/* Our File No (Generated) */}
+                <div>
+                  <label className="block mb-1 font-bold text-blue-700">File No</label>
+                  <input
+                    type="text"
+                    name="ourFileNo"
+                    value={form.ourFileNo || ""}
+                    readOnly
+                    className="w-full p-3 border rounded-md bg-blue-50 font-mono font-bold text-blue-800"
+                    placeholder="Select CaseFirm to generate..."
+                  />
                 </div>
 
                 {/* Dt Of Case Rec */}

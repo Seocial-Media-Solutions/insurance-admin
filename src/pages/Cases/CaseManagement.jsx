@@ -32,15 +32,25 @@ const getNestedValue = (obj, path) => {
 /* -------------------------------------------------
    Firm Display Cell (Handles populated or fetching)
 ------------------------------------------------- */
-const FirmCell = ({ firmId, firmData }) => {
+const FirmCell = ({ firmId, firmData, caseFileNo }) => {
   const { getFirmSync } = useFirms();
 
-  // 1. If we have populated data from backend
+  // 1. If we have ourFileNo for THIS specific case, show it first
+  if (caseFileNo) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-gray-900 font-semibold">{firmData?.name || "--"}</span>
+        <span className="text-xs text-blue-600 font-mono font-bold tracking-tight">{caseFileNo}</span>
+      </div>
+    );
+  }
+
+  // 2. If we have populated data from backend
   if (firmData && typeof firmData === "object") {
     return (
       <div className="flex flex-col">
         <span className="text-gray-900 font-semibold">{firmData.name}</span>
-        <span className="text-xs text-gray-500 font-mono">{firmData.code}</span>
+        <span className="text-xs text-gray-400 font-mono">{firmData.code}</span>
       </div>
     );
   }
@@ -250,12 +260,13 @@ export default function CaseList() {
                         <td className="px-6 py-4 text-gray-400 font-mono text-[10px] w-16">
                            {(page - 1) * 15 + idx + 1}
                         </td>
-                        <td className="px-6 py-4 min-w-[150px]">
-                           <FirmCell 
-                             firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
-                             firmData={item?.caseId?.caseFirmId}
-                           />
-                        </td>
+                         <td className="px-6 py-4 min-w-[150px]">
+                            <FirmCell 
+                              firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
+                              firmData={item?.caseId?.caseFirmId}
+                              caseFileNo={item?.caseId?.ourFileNo}
+                            />
+                         </td>
                         {columns.map((col, colIdx) => (
                           <td key={colIdx} className="px-6 py-4">
                             {col.isDate ? (
