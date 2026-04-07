@@ -23,7 +23,6 @@ export const useImageReportGenerator = () => {
     /**
      * Groups an array of image objects by their ID.
      * Large groups are split into chunks of 10 to satisfy memory and limit requirements.
-     * 
      * @param {Array} images - Array of { id, image (base64/ArrayBuffer) }
      * @returns {Object} Grouped and chunked images
      */
@@ -147,6 +146,5 @@ export const useImageReportGenerator = () => {
             toast.dismiss(toastId);
         }
     };
-
     return { generateImageReport, isGenerating };
 };
