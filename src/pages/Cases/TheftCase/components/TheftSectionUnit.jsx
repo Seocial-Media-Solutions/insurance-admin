@@ -133,7 +133,7 @@ function SectionUnit({
             }),
             {
                 loading: "Saving...",
-                success: false,
+                success: "Section saved successfully!",
                 error: (err) => err.response?.data?.message || err.message || "Save failed",
             }
         );

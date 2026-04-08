@@ -100,7 +100,7 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
                     deletePromise(),
                     {
                         loading: 'Deleting asset...',
-                        success: false,
+                        success: 'Asset deleted successfully!',
                         error: "Failed to delete asset"
                     }
                 ).then(() => {
@@ -173,7 +173,7 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
             submitPromise(),
             {
                 loading: editingId ? 'Updating witness...' : 'Adding witness...',
-                success: false,
+                success: editingId ? 'Witness updated successfully!' : 'Witness added successfully!',
                 error: (err) => {
                     console.error("Error submitting witness:", err);
                     const msg = err.response?.data?.message || err.message || "Failed to save witness";
@@ -225,7 +225,7 @@ const WitnessManager = ({ caseId, witnesses = [], onUpdate, caseType = 'od' }) =
                     deletePromise(),
                     {
                         loading: 'Deleting witness...',
-                        success: false,
+                        success: 'Witness deleted successfully!',
                         error: (err) => err.message || "Failed to delete witness"
                     }
                 ).then(() => {

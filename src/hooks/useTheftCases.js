@@ -56,12 +56,9 @@ export const useUpdateTheftCaseSection = (options = {}) => {
             queryClient.invalidateQueries({
                 queryKey: theftCaseKeys.lists(),
             });
-
-            toast.success(data.message || 'Section updated successfully');
         },
         onError: (error) => {
-            const message = error.response?.data?.message || error.message || 'Failed to update section';
-            toast.error(message);
+            // Error handled by caller via promise or manual toast
         },
         ...options,
     });
@@ -77,11 +74,9 @@ export const useDeleteTheftCaseImage = (options = {}) => {
             queryClient.invalidateQueries({
                 queryKey: theftCaseKeys.detail(variables.caseId),
             });
-            toast.success(data.message || 'Image deleted successfully');
         },
         onError: (error) => {
-            const message = error.response?.data?.message || 'Failed to delete image';
-            toast.error(message);
+            // Error handled by caller
         },
         ...options,
     });

@@ -14,23 +14,35 @@ const TheftImageGallery = ({ images, title, caseId, sectionPath, fieldName }) =>
     // Handle both single image object and array of images
     const imageArray = (Array.isArray(images) ? images : [images]).filter(img => img && img.imageUrl);
 
-    const handleDelete = (publicId, imageIndex) => {
+    const handleDelete = (publicId) => {
         confirmToast(
             "Are you sure you want to delete this image? This action cannot be undone.",
-            () => {
-                setDeletingId(publicId);
+            async () => {
+                const deletePromise = async () => {
+                    setDeletingId(publicId);
+                    return new Promise((resolve, reject) => {
+                        deleteImage(
+                            {
+                                caseId,
+                                sectionPath,
+                                fieldName,
+                                publicId,
+                            },
+                            {
+                                onSuccess: (data) => resolve(data),
+                                onError: (err) => reject(err),
+                                onSettled: () => setDeletingId(null)
+                            }
+                        );
+                    });
+                };
 
-                deleteImage(
+                await toast.promise(
+                    deletePromise(),
                     {
-                        caseId,
-                        sectionPath,
-                        fieldName,
-                        publicId,
-                    },
-                    {
-                        onSettled: () => {
-                            setDeletingId(null);
-                        },
+                        loading: "Deleting image...",
+                        success: "Image deleted successfully!",
+                        error: (err) => err.response?.data?.message || err.message || "Failed to delete image",
                     }
                 );
             }
