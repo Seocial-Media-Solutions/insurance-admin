@@ -71,28 +71,35 @@ export default function OdCaseEditor() {
     if (!caseData) return;
 
     setForm(prev => {
-      // 1. Start with previous form but merge in base case data
-      const newForm = { ...prev, ...caseData };
+      // 1. Start with a deep clone of the previous state (prev) to preserve default structures
+      // We use JSON.parse(JSON.stringify()) to ensure a clean slate of defaults
+      const newForm = JSON.parse(JSON.stringify(prev));
 
       // 2. Helper to deeply merge sections like odDetails and meetingDetails
+      // This ensures we keep the keys from the default form even if the API returns an empty section
       const mergeDeepSection = (sectionKey) => {
-        if (caseData[sectionKey] && prev[sectionKey]) {
-          Object.keys(prev[sectionKey]).forEach(subKey => {
+        if (caseData[sectionKey] && typeof caseData[sectionKey] === 'object') {
+          // Initialize section if for some reason it's missing in newForm
+          if (!newForm[sectionKey]) newForm[sectionKey] = {};
+
+          Object.keys(caseData[sectionKey]).forEach(subKey => {
             const val = caseData[sectionKey][subKey];
             if (val !== undefined && val !== null) {
               let repairedVal = val;
-              // If it's an object with numeric keys, it's likely a corrupted string
+              
+              // Corruption repair: Handle objects that are actually string characters
               if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length > 0 && Object.keys(val).every(k => !isNaN(k))) {
                 repairedVal = Object.values(val).join('');
               }
 
-              // If it's a plain object (not an array, not a string)
+              // If it's a second-level object (like odDetails.claimSummary), merge it
               if (typeof repairedVal === 'object' && !Array.isArray(repairedVal) && !(repairedVal.$date)) {
                 newForm[sectionKey][subKey] = {
-                  ...(prev[sectionKey][subKey] || {}),
+                  ...(newForm[sectionKey][subKey] || {}),
                   ...repairedVal
                 };
               } else {
+                // Otherwise override field or array
                 newForm[sectionKey][subKey] = repairedVal;
               }
             }
@@ -100,9 +107,25 @@ export default function OdCaseEditor() {
         }
       };
 
-      // Merge base sections
-      mergeDeepSection('odDetails');
-      mergeDeepSection('meetingDetails');
+      // Merge top-level simple fields and arrays directly
+      Object.keys(caseData).forEach(key => {
+        const val = caseData[key];
+        // We only handle non-objects here; objects are handled by mergeDeepSection
+        if (typeof val !== 'object' || Array.isArray(val) || val === null) {
+          if (val !== undefined && val !== null) {
+            newForm[key] = val;
+          }
+        }
+      });
+
+      // List of all sections that need deep merging to preserve structure
+      const sectionsToMerge = [
+        'odDetails', 'meetingDetails', 'letterDetails', 'policyBreakInDetails',
+        'spotVisit', 'garageVisit', 'policeRecordDetails',
+        'observationFindingsConclusion', 'opinion', 'insuredDocuments', 'gpsTimelineDriver'
+      ];
+
+      sectionsToMerge.forEach(mergeDeepSection);
 
       if (newForm.odDetails?.claimSummary) {
         delete newForm.odDetails.claimSummary.policyNo;
