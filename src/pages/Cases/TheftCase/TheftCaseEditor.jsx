@@ -15,7 +15,7 @@ import { getNestedValue } from "../../../utils/odCaseHelpers";
 // Components
 import WitnessManager from "../../../components/WitnessManager";
 import TheftSectionUnit from "./components/TheftSectionUnit";
-import ProgressTracker from "../ODCase/components/ProgressTracker";
+import TheftProgressTracker from "./components/TheftProgressTracker";
 
 /* ---------------------------------------------------
    MAIN THEFT CASE EDITOR
@@ -320,7 +320,7 @@ export default function TheftCaseEditor() {
         dlPhoto: "max-2",
         dlverification: "max-1",
         bankPassbookDetails: "max-1",
-        insuredPanCardPhoto: "max-2",
+        insuredPanCardPhoto: "max-1",
         insuredAadharCardPhoto: "max-2",
       },
     },
@@ -434,7 +434,7 @@ export default function TheftCaseEditor() {
             </h3>
           </div>
           <div className="flex-1 overflow-y-auto p-1 m-1 custom-scrollbar">
-            <ProgressTracker
+            <TheftProgressTracker
               sections={sections}
               activeSection={activeSection}
               onSectionClick={handleSectionChange}

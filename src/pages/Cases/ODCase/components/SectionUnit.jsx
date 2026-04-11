@@ -2041,15 +2041,22 @@ function SectionUnit({
                                                             onMetadataChange={(metadata) => {
                                                                 setFileMetadata(prev => ({ ...prev, [itemKey]: metadata }));
                                                             }}
-                                                            onChange={(e) => {
-                                                                const sFiles = e.target.files;
-                                                                if (!sFiles || sFiles.length === 0) {
-                                                                    updateField(itemKey, currentFileConfig === "multiple" ? [] : null);
-                                                                    return;
-                                                                }
-                                                                const listedFiles = Array.from(sFiles);
-                                                                updateField(itemKey, (currentFileConfig === "multiple" || currentFileConfig === "max-2") ? [...(currentSection[itemKey] || []), ...listedFiles] : listedFiles[0]);
-                                                            }}
+                                                                onChange={(e) => {
+                                                                    const sFiles = e.target.files;
+                                                                    if (!sFiles || sFiles.length === 0) {
+                                                                        updateField(itemKey, currentFileConfig === "multiple" ? [] : null);
+                                                                        return;
+                                                                    }
+
+                                                                    // If files is already an array (from remove operation), just set it
+                                                                    if (Array.isArray(sFiles)) {
+                                                                        updateField(itemKey, sFiles);
+                                                                        return;
+                                                                    }
+
+                                                                    const listedFiles = Array.from(sFiles);
+                                                                    updateField(itemKey, (currentFileConfig === "multiple" || currentFileConfig === "max-2") ? [...(currentSection[itemKey] || []), ...listedFiles] : listedFiles[0]);
+                                                                }}
                                                         />
                                                         {existingImgs && (
                                                             <ImageGallery
@@ -2120,6 +2127,7 @@ function SectionUnit({
                                                 value={currentSection[field]}
                                                 isOptional={true}
                                                 title={uiLabel}
+                                                limit={fileConfig === "max-2" ? 2 : (fileConfig === "max-1" ? 1 : null)}
                                                 onMetadataChange={(metadata) => {
                                                     setFileMetadata(prev => ({
                                                         ...prev,

@@ -264,7 +264,7 @@ export default function OdCaseEditor() {
       })(),
       {
         loading: 'Generating DOCX...',
-        success: false,
+        success: "Report generated successfully!",
         error: (err) => {
           console.error("Error generating DOCX:", err);
           return "Failed to generate DOCX";
@@ -504,7 +504,7 @@ export default function OdCaseEditor() {
         rcverification: "max-1",
         dlPhoto: "max-2",
         dlverification: "max-1",
-        insuredPanCardPhoto: "max-2",
+        insuredPanCardPhoto: "max-1",
         insuredAadharCardPhoto: "max-2",
       },
     },

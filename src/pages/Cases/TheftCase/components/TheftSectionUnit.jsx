@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useUpdateTheftCaseSection } from "../../../../hooks/useTheftCases"; // Use correct hook
 import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../../utils/odCaseHelpers";
 import TheftImageGallery from "./TheftImageGallery";
-import DocumentUpload from "../../ODCase/components/DocumentUpload";
+import TheftDocumentUpload from "./TheftDocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 import { toast } from "react-hot-toast";
 import { ChevronDown, ChevronUp } from "lucide-react";
@@ -205,7 +205,7 @@ function SectionUnit({
                                     <div key={field} className={fileConfig === "multiple" ? "col-span-1 md:col-span-2 lg:col-span-3" : "col-span-1"}>
 
                                         {isWitnessDoc ? (
-                                            <DocumentUpload
+                                            <TheftDocumentUpload
                                                 field={field}
                                                 title={formatLabel(field)}
                                                 value={currentSection[field]}
@@ -232,6 +232,7 @@ function SectionUnit({
                                                 value={currentSection[field]}
                                                 isOptional={true}
                                                 title={formatLabel(field)}
+                                                limit={fileConfig === "max-2" ? 2 : (fileConfig === "max-1" ? 1 : null)}
                                                 onMetadataChange={(metadata) => {
                                                     setFileMetadata(prev => ({
                                                         ...prev,

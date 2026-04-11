@@ -20,6 +20,7 @@ function DragDropUpload({
   enableCamera = true,
   multiple = false,
   title = "", // New: Section title
+  limit = null, // New: Limit number of files
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewUrls, setPreviewUrls] = useState([]); // Changed to array
@@ -226,9 +227,9 @@ function DragDropUpload({
         onDrop={!isMobile ? handleDrop : undefined}
       >
         {/* Preview Grid */}
-        {previewUrls.length > 0 ? (
+        {(previewUrls.length > 0 || limit) ? (
           <div
-            className={`grid gap-3 ${multiple ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1"}`}
+            className={`grid gap-3 ${(multiple || (limit && limit > 1)) ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4" : "grid-cols-1"}`}
           >
             {previewUrls.map((p, idx) => (
               <div key={idx} className="relative group">
@@ -253,7 +254,7 @@ function DragDropUpload({
                 </button>
 
                 {/* Metadata inputs */}
-                <div className="mt-2 space-y-1.5">
+                <div className="mt-2 space-y-1.5 text-left">
                   <input
                     type="text"
                     placeholder="Title (optional)"
@@ -288,8 +289,8 @@ function DragDropUpload({
               </div>
             ))}
 
-            {/* Add More Button (Only for multiple) */}
-            {multiple && (
+            {/* Add More Slots / Empty Slots up to limit */}
+            {(!limit || previewUrls.length < limit) && (
               <label
                 htmlFor={id}
                 className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all group"
@@ -299,11 +300,18 @@ function DragDropUpload({
                     <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-600 transition-colors" />
                   </div>
                   <span className="text-xs font-medium text-gray-600 group-hover:text-blue-600 transition-colors">
-                    Add More
+                    {limit ? (limit > 1 ? `Slot ${previewUrls.length + 1} of ${limit}` : `Upload ${title || 'File'}`) : "Add More"}
                   </span>
                 </div>
               </label>
             )}
+
+            {/* Empty placeholders for remaining slots to keep boxes consistent */}
+            {limit && previewUrls.length < limit && Array.from({ length: limit - previewUrls.length - 1 }).map((_, i) => (
+              <div key={`empty-${i}`} className="aspect-square border-2 border-dashed border-gray-100 rounded-lg flex items-center justify-center bg-gray-50/30">
+                <span className="text-[10px] text-gray-300 uppercase font-bold tracking-widest">Empty Slot</span>
+              </div>
+            ))}
 
             {/* Change File button for Single */}
             {!multiple && (
@@ -346,6 +354,7 @@ function DragDropUpload({
                   : isOptional
                     ? optionalLabel
                     : label}
+              {limit && ` (Max ${limit})`}
             </span>
 
             <span className="text-xs text-gray-400">{instructions}</span>
