@@ -1102,7 +1102,7 @@ function SectionUnit({
                                                         <input
                                                             type="date"
                                                             className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                            value={person.dateOfDeath || ""}
+                                                            value={person.dateOfDeath ? (typeof person.dateOfDeath === 'string' ? person.dateOfDeath.slice(0, 10) : "") : ""}
                                                             onChange={(e) => updatePerson(index, "dateOfDeath", e.target.value)}
                                                         />
                                                     </label>
@@ -1152,7 +1152,7 @@ function SectionUnit({
                                                                 <input
                                                                     type="datetime-local"
                                                                     className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                                                    value={person.pmrDetails?.pmrTime || ""}
+                                                                    value={person.pmrDetails?.pmrTime ? (typeof person.pmrDetails.pmrTime === 'string' ? person.pmrDetails.pmrTime.slice(0, 16) : "") : ""}
                                                                     onChange={(e) => updatePerson(index, "pmrTime", e.target.value, true)}
                                                                 />
                                                             </label>
@@ -2207,7 +2207,11 @@ function SectionUnit({
                                                         ? (typeof currentSection[field] === 'string' 
                                                             ? currentSection[field].slice(0, 16) 
                                                             : (currentSection[field].$date ? currentSection[field].$date.slice(0, 16) : ""))
-                                                        : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")
+                                                        : (type === 'date' && currentSection[field])
+                                                            ? (typeof currentSection[field] === 'string'
+                                                                ? currentSection[field].slice(0, 10)
+                                                                : (currentSection[field].$date ? currentSection[field].$date.slice(0, 10) : ""))
+                                                            : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")
                                                 }
                                                 onChange={(e) => updateField(field, e.target.value)}
                                                 placeholder={type === 'date' ? '' : `Enter ${uiLabel}`}
