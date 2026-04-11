@@ -8,7 +8,7 @@
 //    Add any new field here and it propagates everywhere.
 // ----------------------------------------------------------
 export const CASE_FIRM_INITIAL_STATE = {
-    name: "",
+   
     recipientCompany: "",
     city: "",
     state: "Rajasthan",
@@ -25,7 +25,6 @@ export const CASE_FIRM_INITIAL_STATE = {
 //    Used by the Edit handler.
 // ----------------------------------------------------------
 export const firmToFormData = (firm) => ({
-    name: firm.name || "",
     recipientCompany: firm.recipientCompany || "",
     city: firm.city || " ",
     state: firm.state || "Rajasthan",
@@ -52,13 +51,7 @@ export const firmToFormData = (firm) => ({
 //    }
 // ----------------------------------------------------------
 export const CASE_FIRM_FIELDS = [
-    {
-        key: "name",
-        label: "Firm Name",
-        type: "text",
-        placeholder: "Enter Firm Name",
-        required: true,
-    },
+   
     {
         key: "recipientCompany",
         label: "Recipient Company",
