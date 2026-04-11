@@ -141,35 +141,35 @@ export default function OdCaseEditor() {
         if (fileNo) {
           newForm.letterDetails = {
             ...(newForm.letterDetails || {}),
-            referenceNumber: fileNo,
+            referenceNumber: fileNo, // Force sync
           };
         }
 
-        // Claim Summary - Merge from parent if local is empty
+        // Claim Summary - Force sync from parent
         if (newForm.odDetails?.claimSummary) {
           const cs = newForm.odDetails.claimSummary;
-          cs.vehicleNo = cs.vehicleNo || pc.vehicleNo || "";
-          cs.insuredName = cs.insuredName || pc.nameOfInsured || "";
-          cs.insuredContactNo = cs.insuredContactNo || pc.contactNo || "";
-          cs.chassisNo = cs.chassisNo || pc.chassisNo || "";
-          cs.engineNo = cs.engineNo || pc.engineNo || "";
-          cs.claimNo = cs.claimNo || pc.coClaimNo || "";
+          cs.vehicleNo = pc.vehicleNo || cs.vehicleNo || "";
+          cs.insuredName = pc.nameOfInsured || cs.insuredName || "";
+          cs.insuredContactNo = pc.contactNo || cs.insuredContactNo || "";
+          cs.chassisNo = pc.chassisNo || cs.chassisNo || "";
+          cs.engineNo = pc.engineNo || cs.engineNo || "";
+          cs.claimNo = pc.coClaimNo || cs.claimNo || "";
         }
 
-        // Vehicle & Insured Details
+        // Vehicle & Insured Details - Force sync from parent
         if (newForm.odDetails?.vehicleDetails) {
           const vd = newForm.odDetails.vehicleDetails;
-          vd.vehicleRegistrationNo = vd.vehicleRegistrationNo || pc.vehicleNo || "";
-          vd.registeredOwnerName = vd.registeredOwnerName || pc.nameOfInsured || "";
+          vd.vehicleRegistrationNo = pc.vehicleNo || vd.vehicleRegistrationNo || "";
+          vd.registeredOwnerName = pc.nameOfInsured || vd.registeredOwnerName || "";
         }
         if (newForm.odDetails?.insuredDetails) {
           const id = newForm.odDetails.insuredDetails;
-          id.nameOfInsured = id.nameOfInsured || pc.nameOfInsured || "";
-          id.addressAsPerRC = id.addressAsPerRC || pc.addressOfInsured || "";
+          id.nameOfInsured = pc.nameOfInsured || id.nameOfInsured || "";
+          id.addressAsPerRC = pc.addressOfInsured || id.addressAsPerRC || "";
         }
         if (newForm.policyBreakInDetails) {
-          newForm.policyBreakInDetails.policyNo = newForm.policyBreakInDetails.policyNo || pc.policyNo || "";
-          newForm.policyBreakInDetails.policyPeriod = newForm.policyBreakInDetails.policyPeriod || pc.policyPeriod || "";
+          newForm.policyBreakInDetails.policyNo = pc.policyNo || newForm.policyBreakInDetails.policyNo || "";
+          newForm.policyBreakInDetails.policyPeriod = pc.policyPeriod || newForm.policyBreakInDetails.policyPeriod || "";
         }
       }
 
@@ -469,12 +469,33 @@ export default function OdCaseEditor() {
      SECTION CONFIG
   --------------------------------------------------- */
   const sections = [
-    { key: "letterDetails", api: "letter-details" },
-    { key: "odDetails.claimSummary", api: "od-details/claim-summary" },
-    { key: "odDetails.insuredDetails", api: "od-details/insured-details" },
-    { key: "odDetails.vehicleDetails", api: "od-details/vehicle-details" },
+    {
+      key: "letterDetails",
+      api: "letter-details",
+      readonlyFields: ["referenceNumber"]
+    },
+    {
+      key: "odDetails.claimSummary",
+      api: "od-details/claim-summary",
+      readonlyFields: ["vehicleNo", "insuredName", "insuredContactNo", "chassisNo", "engineNo", "claimNo"]
+    },
+    {
+      key: "odDetails.insuredDetails",
+      api: "od-details/insured-details",
+      readonlyFields: ["nameOfInsured", "addressAsPerRC"]
+    },
+    {
+      key: "odDetails.vehicleDetails",
+      api: "od-details/vehicle-details",
+      readonlyFields: ["vehicleRegistrationNo", "registeredOwnerName"]
+    },
     { key: "meetingDetails", api: "meeting-details" },
-    { key: "policyBreakInDetails", api: "policy-break-in-details", label: "Policy Details" },
+    {
+      key: "policyBreakInDetails",
+      api: "policy-break-in-details",
+      label: "Policy Details",
+      readonlyFields: ["policyNo", "policyPeriod"]
+    },
     {
       key: "spotVisit",
       api: "spot-visit",
@@ -673,6 +694,7 @@ export default function OdCaseEditor() {
                   defaultFieldValues={activeSectionConfig.key === 'letterDetails' ? { referenceNumber: parentCaseData?.ourFileNo || caseData?.ourFileNo || caseData?.fileNo || "" } : {}}
                   isExpanded={true} // Always expanded in Tab view
                   onToggle={() => { }} // No toggle needed
+                  readonlyFields={activeSectionConfig.readonlyFields || []}
                 />
               ) : (
                 <div className="p-12 text-center border-2 border-dashed border-gray-300 rounded-xl bg-white">

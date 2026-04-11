@@ -21,6 +21,7 @@ function SectionUnit({
     isExpanded,
     onToggle,
     firmData,
+    readonlyFields = []
 }) {
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
@@ -56,6 +57,7 @@ function SectionUnit({
     };
 
     const updateField = (field, value) => {
+        if (readonlyFields.includes(field)) return;
         setForm((prev) => {
             const newForm = { ...prev };
             const currentSection = getNestedValue(newForm, sectionKey) || {};
@@ -502,7 +504,8 @@ function SectionUnit({
                                                     </span>
                                                 </div>
                                                 <select
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -531,7 +534,8 @@ function SectionUnit({
                                             <label className="block">
                                                 <span className="text-sm font-semibold text-gray-700 mb-1 block">State</span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => {
                                                         updateField(field, e.target.value);
@@ -563,7 +567,8 @@ function SectionUnit({
                                             <label className="block">
                                                 <span className="text-sm font-semibold text-gray-700 mb-1 block">{label}</span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -592,7 +597,9 @@ function SectionUnit({
                                                 </span>
                                                 <input
                                                     type="text"
-                                                    className={`w-full border px-3 py-2 rounded-lg bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : ""}`}
+                                                    readOnly={readonlyFields.includes(field)}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : ""} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                     placeholder="Enter Date and Time of Loss"
@@ -614,7 +621,8 @@ function SectionUnit({
                                                 </div>
                                                 <div className="space-y-3">
                                                     <select
-                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300`}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={isGDAvailable ? "available" : "not_available"}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
@@ -634,7 +642,9 @@ function SectionUnit({
 
                                                     {isGDAvailable && (
                                                         <textarea
-                                                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             rows={3}
                                                             value={currentSection[field] || ""}
                                                             onChange={(e) => updateField(field, e.target.value)}
@@ -681,7 +691,8 @@ function SectionUnit({
                                                     <span className="text-sm font-semibold text-gray-700">Permit Detail</span>
                                                 </div>
                                                 <select
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -704,7 +715,8 @@ function SectionUnit({
                                                 <label className="block">
                                                     <span className="text-sm font-semibold text-gray-700 mb-1 block">Permit Type</span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={currentSection[field] || ""}
                                                         onChange={(e) => updateField(field, e.target.value)}
                                                     >
@@ -723,7 +735,8 @@ function SectionUnit({
                                                 <label className="block">
                                                     <span className="text-sm font-semibold text-gray-700 mb-1 block">Locate</span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={currentSection[field] || ""}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
@@ -750,7 +763,8 @@ function SectionUnit({
                                                 <label className="block">
                                                     <span className="text-sm font-semibold text-gray-700 mb-1 block">State</span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={currentSection[field] || ""}
                                                         onChange={(e) => {
                                                             updateField(field, e.target.value);
@@ -775,7 +789,8 @@ function SectionUnit({
                                                 <label className="block">
                                                     <span className="text-sm font-semibold text-gray-700 mb-1 block">City</span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={currentSection[field] || ""}
                                                         onChange={(e) => updateField(field, e.target.value)}
                                                     >
@@ -803,7 +818,8 @@ function SectionUnit({
                                                     </span>
                                                 </div>
                                                 <select
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -836,6 +852,7 @@ function SectionUnit({
                                 const count = persons.length > 0 ? persons.length : 1;
 
                                 const updateInjuredDetails = (newData) => {
+                                    if (readonlyFields.includes(field)) return;
                                     updateField("detailsOfInjured", { ...injuredData, ...newData });
                                 };
 
@@ -865,7 +882,8 @@ function SectionUnit({
                                                     Details of Injured Available?
                                                 </span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={injuredData.availability || ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -890,7 +908,8 @@ function SectionUnit({
                                                         Number of Injured (1-10)
                                                     </span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={count}
                                                         onChange={handleCountChange}
                                                     >
@@ -912,7 +931,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Name of Injured</span>
                                                         <input
                                                             type="text"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.name || ""}
                                                             onChange={(e) => updatePerson(index, "name", e.target.value)}
                                                             placeholder="Enter Name"
@@ -923,7 +944,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Age of Injured</span>
                                                         <input
                                                             type="number"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.age || ""}
                                                             onChange={(e) => updatePerson(index, "age", e.target.value)}
                                                             placeholder="Enter Age"
@@ -934,7 +957,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Address of Injured</span>
                                                         <input
                                                             type="text"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.address || ""}
                                                             onChange={(e) => updatePerson(index, "address", e.target.value)}
                                                             placeholder="Enter Address"
@@ -944,7 +969,8 @@ function SectionUnit({
                                                     <label>
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Type of Injury</span>
                                                         <select
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.injuryType || ""}
                                                             onChange={(e) => updatePerson(index, "injuryType", e.target.value)}
                                                         >
@@ -958,7 +984,9 @@ function SectionUnit({
                                                         <label className="md:col-span-2">
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Injury Description (Grievous)</span>
                                                             <textarea
-                                                                className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 rows={2}
                                                                 value={person.injuryDescription || ""}
                                                                 onChange={(e) => updatePerson(index, "injuryDescription", e.target.value)}
@@ -982,6 +1010,7 @@ function SectionUnit({
                                 const count = persons.length > 0 ? persons.length : 1;
 
                                 const updateDeceasedDetails = (newData) => {
+                                    if (readonlyFields.includes(field)) return;
                                     updateField("detailsOfDeceased", { ...deceasedData, ...newData });
                                 };
 
@@ -1022,7 +1051,8 @@ function SectionUnit({
                                                     Details of Deceased Available?
                                                 </span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={deceasedData.availability || ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
@@ -1049,7 +1079,9 @@ function SectionUnit({
                                                         type="number"
                                                         min="1"
                                                         max="100"
-                                                        className="w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={count}
                                                         onChange={handleCountChange}
                                                     />
@@ -1068,7 +1100,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Name of Deceased</span>
                                                         <input
                                                             type="text"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.name || ""}
                                                             onChange={(e) => updatePerson(index, "name", e.target.value)}
                                                             placeholder="Enter Name"
@@ -1079,7 +1113,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Age of Deceased</span>
                                                         <input
                                                             type="number"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.age || ""}
                                                             onChange={(e) => updatePerson(index, "age", e.target.value)}
                                                             placeholder="Enter Age"
@@ -1090,7 +1126,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Address of Deceased</span>
                                                         <input
                                                             type="text"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.address || ""}
                                                             onChange={(e) => updatePerson(index, "address", e.target.value)}
                                                             placeholder="Enter Address"
@@ -1101,7 +1139,9 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">Date of Death</span>
                                                         <input
                                                             type="date"
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.dateOfDeath ? (typeof person.dateOfDeath === 'string' ? person.dateOfDeath.slice(0, 10) : "") : ""}
                                                             onChange={(e) => updatePerson(index, "dateOfDeath", e.target.value)}
                                                         />
@@ -1111,7 +1151,8 @@ function SectionUnit({
                                                     <label>
                                                         <span className="text-xs font-semibold text-gray-600 block mb-1">PMR Available?</span>
                                                         <select
-                                                            className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={person.pmrAvailable || ""}
                                                             onChange={(e) => updatePerson(index, "pmrAvailable", e.target.value)}
                                                         >
@@ -1126,7 +1167,9 @@ function SectionUnit({
                                                         <label className="md:col-span-2">
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Reason for No PMR / Details</span>
                                                             <textarea
-                                                                className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 rows={2}
                                                                 value={person.pmrDetails?.noPmrReason || ""}
                                                                 onChange={(e) => updatePerson(index, "noPmrReason", e.target.value, true)}
@@ -1141,7 +1184,9 @@ function SectionUnit({
                                                                 <span className="text-xs font-semibold text-gray-600 block mb-1">PMR No</span>
                                                                 <input
                                                                     type="text"
-                                                                    className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
+                                                                    className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     value={person.pmrDetails?.pmrNo || ""}
                                                                     onChange={(e) => updatePerson(index, "pmrNo", e.target.value, true)}
                                                                     placeholder="Enter PMR No"
@@ -1151,7 +1196,9 @@ function SectionUnit({
                                                                 <span className="text-xs font-semibold text-gray-600 block mb-1">Time of PMR</span>
                                                                 <input
                                                                     type="datetime-local"
-                                                                    className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
+                                                                    className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     value={person.pmrDetails?.pmrTime ? (typeof person.pmrDetails.pmrTime === 'string' ? person.pmrDetails.pmrTime.slice(0, 16) : "") : ""}
                                                                     onChange={(e) => updatePerson(index, "pmrTime", e.target.value, true)}
                                                                 />
@@ -1160,7 +1207,9 @@ function SectionUnit({
                                                                 <span className="text-xs font-semibold text-gray-600 block mb-1">Place of PMR</span>
                                                                 <input
                                                                     type="text"
-                                                                    className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
+                                                                    className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     value={person.pmrDetails?.pmrPlace || ""}
                                                                     onChange={(e) => updatePerson(index, "pmrPlace", e.target.value, true)}
                                                                     placeholder="Enter Place"
@@ -1169,7 +1218,9 @@ function SectionUnit({
                                                             <label className="md:col-span-2">
                                                                 <span className="text-xs font-semibold text-gray-600 block mb-1">Doctor Opinion</span>
                                                                 <textarea
-                                                                    className="w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
+                                                                    className={`w-full border px-2 py-1.5 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     rows={2}
                                                                     value={person.pmrDetails?.doctorOpinion || ""}
                                                                     onChange={(e) => updatePerson(index, "doctorOpinion", e.target.value, true)}
@@ -1196,13 +1247,14 @@ function SectionUnit({
                                                     Filled Any RTI Details?
                                                 </label>
                                                 <select
+                                                    disabled={readonlyFields.includes(field)}
                                                     value={currentSection.rtiDetailsAvailability || ""}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
                                                         updateField("rtiDetailsAvailability", val);
                                                         if (val === "No") updateField("rtiDetails", []);
                                                     }}
-                                                    className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                                    className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                 >
                                                     <option value="">Select Option</option>
                                                     <option value="Yes">Yes</option>
@@ -1219,16 +1271,19 @@ function SectionUnit({
                                     const rtiList = Array.isArray(currentSection.rtiDetails) ? currentSection.rtiDetails : [];
 
                                     const updateRtiDetail = (idx, val) => {
+                                        if (readonlyFields.includes(field)) return;
                                         const newList = [...rtiList];
                                         newList[idx] = val;
                                         updateField("rtiDetails", newList);
                                     };
 
                                     const addRtiDetail = () => {
+                                        if (readonlyFields.includes(field)) return;
                                         updateField("rtiDetails", [...rtiList, ""]);
                                     };
 
                                     const removeRtiDetail = (idx) => {
+                                        if (readonlyFields.includes(field)) return;
                                         const newList = rtiList.filter((_, i) => i !== idx);
                                         updateField("rtiDetails", newList);
                                     };
@@ -1237,13 +1292,15 @@ function SectionUnit({
                                         <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                                             <div className="flex justify-between items-center mb-3">
                                                 <h4 className="text-sm font-semibold text-gray-700">RTI Description List</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={addRtiDetail}
-                                                    className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
-                                                >
-                                                    <span>+ Add Detail</span>
-                                                </button>
+                                                {!readonlyFields.includes(field) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={addRtiDetail}
+                                                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
+                                                    >
+                                                        <span>+ Add Detail</span>
+                                                    </button>
+                                                )}
                                             </div>
 
                                             {rtiList.length === 0 && (
@@ -1258,6 +1315,8 @@ function SectionUnit({
                                                         <span className="text-xs font-semibold text-gray-500 w-6">#{idx + 1}</span>
                                                         <input
                                                             type="text"
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
                                                             value={detail}
                                                             onChange={(e) => updateRtiDetail(idx, e.target.value)}
                                                             onKeyDown={(e) => {
@@ -1267,17 +1326,19 @@ function SectionUnit({
                                                                 }
                                                             }}
                                                             autoFocus={idx === rtiList.length - 1 && idx !== 0}
-                                                            className="flex-1 border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                            className={`flex-1 border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             placeholder={`Enter RTI detail...`}
                                                         />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeRtiDetail(idx)}
-                                                            className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors"
-                                                            title="Remove"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {!readonlyFields.includes(field) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeRtiDetail(idx)}
+                                                                className="text-red-500 hover:text-red-700 p-2 hover:bg-red-50 rounded-full transition-colors"
+                                                                title="Remove"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1292,16 +1353,19 @@ function SectionUnit({
                                     const docs = Array.isArray(currentSection.enclosures) ? currentSection.enclosures : [];
 
                                     const updateDoc = (idx, key, val) => {
+                                        if (readonlyFields.includes(field)) return;
                                         const newDocs = [...docs];
                                         newDocs[idx] = { ...newDocs[idx], [key]: val };
                                         updateField("enclosures", newDocs);
                                     };
 
                                     const addDoc = () => {
+                                        if (readonlyFields.includes(field)) return;
                                         updateField("enclosures", [...docs, { field: "", answer: "" }]);
                                     };
 
                                     const removeDoc = (idx) => {
+                                        if (readonlyFields.includes(field)) return;
                                         const newDocs = docs.filter((_, i) => i !== idx);
                                         updateField("enclosures", newDocs);
                                     };
@@ -1310,13 +1374,15 @@ function SectionUnit({
                                         <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3 mb-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                                             <div className="flex justify-between items-center mb-3">
                                                 <h4 className="text-sm font-semibold text-gray-700">Enclosure Documents</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={addDoc}
-                                                    className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
-                                                >
-                                                    <span>+ Add Document</span>
-                                                </button>
+                                                {!readonlyFields.includes(field) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={addDoc}
+                                                        className="text-xs bg-indigo-600 text-white px-3 py-1.5 rounded hover:bg-indigo-700 transition-colors shadow-sm flex items-center gap-1"
+                                                    >
+                                                        <span>+ Add Document</span>
+                                                    </button>
+                                                )}
                                             </div>
 
                                             {docs.length === 0 && (
@@ -1333,9 +1399,11 @@ function SectionUnit({
                                                                 <label className="block text-xs font-medium text-gray-500 mb-1">Field Name</label>
                                                                 <input
                                                                     type="text"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
                                                                     value={doc.field || ""}
                                                                     onChange={(e) => updateDoc(idx, "field", e.target.value)}
-                                                                    className="w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                    className={`w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     placeholder="e.g. RC Status"
                                                                 />
                                                             </div>
@@ -1343,21 +1411,25 @@ function SectionUnit({
                                                                 <label className="block text-xs font-medium text-gray-500 mb-1">Answer/Value</label>
                                                                 <input
                                                                     type="text"
+                                                                    readOnly={readonlyFields.includes(field)}
+                                                                    disabled={readonlyFields.includes(field)}
                                                                     value={doc.answer || ""}
                                                                     onChange={(e) => updateDoc(idx, "answer", e.target.value)}
-                                                                    className="w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                                    className={`w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                     placeholder="e.g. Verified"
                                                                 />
                                                             </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeDoc(idx)}
-                                                            className="text-red-500 hover:text-red-700 p-2 mt-4 hover:bg-red-50 rounded-full transition-colors"
-                                                            title="Remove"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
+                                                        {!readonlyFields.includes(field) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeDoc(idx)}
+                                                                className="text-red-500 hover:text-red-700 p-2 mt-4 hover:bg-red-50 rounded-full transition-colors"
+                                                                title="Remove"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -1373,9 +1445,10 @@ function SectionUnit({
                                         <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3 mb-4 border-t pt-4">
                                             <span className="block text-sm font-bold text-gray-800 mb-3">Conclusion Section</span>
                                             <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                                                <label className="flex items-center gap-2 cursor-pointer bg-white p-3 rounded border hover:bg-gray-50">
+                                                <label className={`flex items-center gap-2 cursor-pointer bg-white p-3 rounded border hover:bg-gray-50 ${readonlyFields.includes(field) ? "opacity-50 cursor-not-allowed" : ""}`}>
                                                     <input
                                                         type="radio"
+                                                        disabled={readonlyFields.includes(field)}
                                                         name="findingType"
                                                         value="Observation and Finding Conclusion"
                                                         checked={currentSection.findingType === "Observation and Finding Conclusion"}
@@ -1384,9 +1457,10 @@ function SectionUnit({
                                                     />
                                                     <span className="text-sm font-medium text-gray-700">Observation and Finding Conclusion</span>
                                                 </label>
-                                                <label className="flex items-center gap-2 cursor-pointer bg-white p-3 rounded border hover:bg-gray-50">
+                                                <label className={`flex items-center gap-2 cursor-pointer bg-white p-3 rounded border hover:bg-gray-50 ${readonlyFields.includes(field) ? "opacity-50 cursor-not-allowed" : ""}`}>
                                                     <input
                                                         type="radio"
+                                                        disabled={readonlyFields.includes(field)}
                                                         name="findingType"
                                                         value="Observation and Finding"
                                                         checked={currentSection.findingType === "Observation and Finding"}
@@ -1410,7 +1484,9 @@ function SectionUnit({
                                                     {currentSection.findingType} - Details
                                                 </span>
                                                 <textarea
-                                                    className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    readOnly={readonlyFields.includes(field)}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     rows={6}
                                                     value={currentSection.findingText || ""}
                                                     onChange={(e) => updateField("findingText", e.target.value)}
@@ -1429,7 +1505,9 @@ function SectionUnit({
                                                     Discrepancy
                                                 </span>
                                                 <textarea
-                                                    className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                                    readOnly={readonlyFields.includes(field)}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     rows={4}
                                                     value={currentSection.discrepancy || ""}
                                                     onChange={(e) => updateField("discrepancy", e.target.value)}
@@ -1469,7 +1547,8 @@ function SectionUnit({
                                                 </div>
                                                 <div className="space-y-3">
                                                     <select
-                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300`}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={isAvailable ? "yes" : "no"}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
@@ -1489,7 +1568,9 @@ function SectionUnit({
                                                     {isAvailable && (
                                                         <input
                                                             type="text"
-                                                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                            readOnly={readonlyFields.includes(field)}
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                             value={currentSection[field] || ""}
                                                             onChange={(e) => updateField(field, e.target.value)}
                                                             placeholder="Enter Previous Policy No..."
@@ -1549,7 +1630,9 @@ function SectionUnit({
                                                         <div className="flex-1">
                                                             <input
                                                                 type="date"
-                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={toInputDate(startDateStr)}
                                                                 onChange={(e) => {
                                                                     const inputVal = e.target.value;
@@ -1563,7 +1646,9 @@ function SectionUnit({
                                                         <div className="flex-1">
                                                             <input
                                                                 type="date"
-                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={toInputDate(endDateStr)}
                                                                 onChange={(e) => {
                                                                     const start = startDateStr || "";
@@ -1593,7 +1678,9 @@ function SectionUnit({
                                                 </div>
                                                 <input
                                                     type={type}
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    readOnly={readonlyFields.includes(field)}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                     placeholder={`Enter ${uiLabel}...`}
@@ -1626,7 +1713,8 @@ function SectionUnit({
                                                     </span>
                                                 </div>
                                                 <select
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -1674,6 +1762,7 @@ function SectionUnit({
                                 const vendorCount = vendors.length > 0 ? vendors.length : 1;
 
                                 const updateVendor = (index, key, val) => {
+                                    if (readonlyFields.includes(field)) return;
                                     const newVendors = [...vendors];
                                     if (!newVendors[index]) newVendors[index] = {};
                                     newVendors[index][key] = val;
@@ -1681,6 +1770,7 @@ function SectionUnit({
                                 };
 
                                 const handleAvailabilityChange = (e) => {
+                                    if (readonlyFields.includes(field)) return;
                                     const val = e.target.value;
                                     if (val === "no") {
                                         updateField(field, JSON.stringify([])); // Empty array means No
@@ -1693,6 +1783,7 @@ function SectionUnit({
                                 };
 
                                 const handleCountChange = (e) => {
+                                    if (readonlyFields.includes(field)) return;
                                     const count = parseInt(e.target.value, 10);
                                     let newVendors = [...vendors];
                                     if (count > newVendors.length) {
@@ -1711,7 +1802,8 @@ function SectionUnit({
                                                     Towing Vendor Details Available?
                                                 </span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg bg-white"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={isAvailable ? "yes" : "no"}
                                                     onChange={handleAvailabilityChange}
                                                 >
@@ -1726,7 +1818,8 @@ function SectionUnit({
                                                         Number of Vendors
                                                     </span>
                                                     <select
-                                                        className="w-full border px-3 py-2 rounded-lg bg-white"
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg bg-white ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={vendorCount}
                                                         onChange={handleCountChange}
                                                     >
@@ -1752,7 +1845,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Vendor Name</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.towingVendorName || ""}
                                                                 onChange={(e) => updateVendor(index, "towingVendorName", e.target.value)}
                                                                 placeholder="Enter Name"
@@ -1763,7 +1858,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Contact No</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.towingVendorContactNo || ""}
                                                                 onChange={(e) => updateVendor(index, "towingVendorContactNo", e.target.value)}
                                                                 placeholder="Enter Contact"
@@ -1774,7 +1871,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Address</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.towingVendorAddress || ""}
                                                                 onChange={(e) => updateVendor(index, "towingVendorAddress", e.target.value)}
                                                                 placeholder="Enter Address"
@@ -1785,7 +1884,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Invoice OD Towing</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.invoiceOdTowing || ""}
                                                                 onChange={(e) => updateVendor(index, "invoiceOdTowing", e.target.value)}
                                                                 placeholder="Invoice Details"
@@ -1796,7 +1897,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Where to Where</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.whereToWhere || ""}
                                                                 onChange={(e) => updateVendor(index, "whereToWhere", e.target.value)}
                                                                 placeholder="Location Details"
@@ -1807,7 +1910,9 @@ function SectionUnit({
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Towing Amount</span>
                                                             <input
                                                                 type="text"
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                readOnly={readonlyFields.includes(field)}
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.towingAmount || ""}
                                                                 onChange={(e) => updateVendor(index, "towingAmount", e.target.value)}
                                                                 placeholder="Enter Amount"
@@ -1817,7 +1922,8 @@ function SectionUnit({
                                                         <label>
                                                             <span className="text-xs font-semibold text-gray-600 block mb-1">Verified or Not</span>
                                                             <select
-                                                                className="w-full border px-2 py-1.5 rounded"
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                                 value={vendor.verifiedOrNot || ""}
                                                                 onChange={(e) => updateVendor(index, "verifiedOrNot", e.target.value)}
                                                             >
@@ -1840,6 +1946,7 @@ function SectionUnit({
                                 const isAvailable = jobCardData.availability === "yes";
 
                                 const updateJobCardField = (subField, value) => {
+                                    if (readonlyFields.includes(field)) return;
                                     const updated = { ...jobCardData, [subField]: value };
                                     updateField(field, updated);
                                 };
@@ -1852,7 +1959,8 @@ function SectionUnit({
                                                     Job Card Details Available?
                                                 </span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg bg-white"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={jobCardData.availability || ""}
                                                     onChange={(e) => updateJobCardField("availability", e.target.value)}
                                                 >
@@ -1870,7 +1978,9 @@ function SectionUnit({
                                                     <span className="text-xs font-semibold text-gray-600 block mb-1">Job Card No</span>
                                                     <input
                                                         type="text"
-                                                        className="w-full border px-2 py-1.5 rounded"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={jobCardData.jobCardNo || ""}
                                                         onChange={(e) => updateJobCardField("jobCardNo", e.target.value)}
                                                         placeholder="Enter Job Card Number"
@@ -1882,7 +1992,9 @@ function SectionUnit({
                                                     <span className="text-xs font-semibold text-gray-600 block mb-1">Date of Job Card</span>
                                                     <input
                                                         type="date"
-                                                        className="w-full border px-2 py-1.5 rounded"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={jobCardData.dateOfJobCard || ""}
                                                         onChange={(e) => updateJobCardField("dateOfJobCard", e.target.value)}
                                                     />
@@ -1893,7 +2005,9 @@ function SectionUnit({
                                                     <span className="text-xs font-semibold text-gray-600 block mb-1">Name of Garage</span>
                                                     <input
                                                         type="text"
-                                                        className="w-full border px-2 py-1.5 rounded"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={jobCardData.nameOfGarage || ""}
                                                         onChange={(e) => updateJobCardField("nameOfGarage", e.target.value)}
                                                         placeholder="Enter Garage Name"
@@ -1911,6 +2025,7 @@ function SectionUnit({
                                 const isAvailable = vehicleStatusData.availability === "yes";
 
                                 const updateVehicleStatusField = (subField, value) => {
+                                    if (readonlyFields.includes(field)) return;
                                     const updated = { ...vehicleStatusData, [subField]: value };
                                     updateField(field, updated);
                                 };
@@ -1923,7 +2038,8 @@ function SectionUnit({
                                                     Vehicle Status After 24 Hours Available?
                                                 </span>
                                                 <select
-                                                    className="w-full border px-3 py-2 rounded-lg bg-white"
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg bg-white ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={vehicleStatusData.availability || ""}
                                                     onChange={(e) => updateVehicleStatusField("availability", e.target.value)}
                                                 >
@@ -1941,7 +2057,9 @@ function SectionUnit({
                                                     <span className="text-xs font-semibold text-gray-600 block mb-1">Check In Date and Time</span>
                                                     <input
                                                         type="datetime-local"
-                                                        className="w-full border px-2 py-1.5 rounded"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={vehicleStatusData.checkInDateTime || ""}
                                                         onChange={(e) => updateVehicleStatusField("checkInDateTime", e.target.value)}
                                                     />
@@ -1952,7 +2070,9 @@ function SectionUnit({
                                                     <span className="text-xs font-semibold text-gray-600 block mb-1">Check Out Date and Time</span>
                                                     <input
                                                         type="datetime-local"
-                                                        className="w-full border px-2 py-1.5 rounded"
+                                                        readOnly={readonlyFields.includes(field)}
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-2 py-1.5 rounded ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                         value={vehicleStatusData.checkOutDateTime || ""}
                                                         onChange={(e) => updateVehicleStatusField("checkOutDateTime", e.target.value)}
                                                     />
@@ -1982,7 +2102,8 @@ function SectionUnit({
                                                     </span>
                                                 </div>
                                                 <select
-                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    disabled={readonlyFields.includes(field)}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                     value={currentSection[field] || ""}
                                                     onChange={(e) => updateField(field, e.target.value)}
                                                 >
@@ -2196,8 +2317,10 @@ function SectionUnit({
 
                                         {type === "textarea" ? (
                                             <textarea
+                                                readOnly={readonlyFields.includes(field)}
+                                                disabled={readonlyFields.includes(field)}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"
-                                                    }`}
+                                                    } ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
                                                 rows={3}
                                                 value={currentSection[field] || ""}
                                                 onChange={(e) => updateField(field, e.target.value)}
@@ -2206,6 +2329,8 @@ function SectionUnit({
                                         ) : (
                                             <input
                                                 type={type}
+                                                readOnly={readonlyFields.includes(field)}
+                                                disabled={readonlyFields.includes(field)}
                                                 step={type === 'number' ? "any" : undefined}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all 
                                                     ${error ? "border-red-500 bg-red-50" : "border-gray-300"}
