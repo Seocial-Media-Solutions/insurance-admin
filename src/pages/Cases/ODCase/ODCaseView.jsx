@@ -158,10 +158,10 @@ const GeneralDetails = ({ letterData, referenceData }) => {
         <p className="font-bold text-sm md:text-base">
           <span className="underline underline-offset-2">Ref:</span> OD
           Investigation Report for claim of: -
-          <span className="underline underline-offset-2 ml-1">
-            {referenceData.insuredName || "Insured Name"}
+          <span className="font-bold uppercase tracking-wide">
+            {referenceData.insuredName || referenceData.nameOfInsured || "Insured Name"}
           </span>{" "}
-          ({referenceData.vehicleNumber || "Vehicle No"})
+          ({referenceData.vehicleNumber || referenceData.vehicleNo || referenceData.vehicleRegistrationNo || "Vehicle No"})
         </p>
       </div>
 
@@ -1002,7 +1002,7 @@ export default function ODCaseView() {
           {/* 1. Letter / General Details */}
           <GeneralDetails
             letterData={data.letterDetails}
-            referenceData={data.reportReference}
+            referenceData={data.odDetails?.claimSummary || {}}
           />
 
           {/* 2. OD Specific Nested Sections (if odDetails exists) */}
@@ -1038,25 +1038,24 @@ export default function ODCaseView() {
           {/* 7. Opinion & Enclosures */}
           <OpinionEnclosures
             opinion={data.opinion}
-            enclosures={data.enclosures}
+            enclosures={data.opinion?.enclosures}
             investigatorName={data.odDetails?.claimSummary?.investigatorName}
           />
 
           {/* 8. Attachments Gallery */}
           <ImageGallery
             data={{
-              ...data.photosAndDocuments,
-              ...data.photosAndEvidence,
-              ...data.dlDocuments,
+              ...data.insuredDocuments,
+              ...data.spotVisit,
+              ...data.garageVisit,
             }}
             fileFields={{
               rcPhoto: true,
               insuredPanCardPhoto: true,
-              driverAadharCardPhoto: true,
-              driverDlPhoto: true,
-              spotPhotos: true,
-              vehiclePhotos: true,
-              insuredWithStatementPhoto: true,
+              insuredAadharCardPhoto: true,
+              dlPhoto: true,
+              spotImages: true,
+              garageImages: true,
             }}
           />
 

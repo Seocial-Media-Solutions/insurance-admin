@@ -102,15 +102,15 @@ export default function ODCaseDetails() {
                     </Section>
                 )}
 
-                {/* Report Reference */}
-                {caseData.reportReference && (
+                {/* Report Reference - Fallback to Claim Summary */}
+                {(caseData.odDetails?.claimSummary || caseData.reportReference) && (
                     <Section title="Report Reference" icon={FileText}>
                         <DetailGrid>
-                            <DetailItem label="Report Type" value={caseData.reportReference.reportType} />
-                            <DetailItem label="Claim Type" value={caseData.reportReference.claimType} />
-                            <DetailItem label="Insured Name" value={caseData.reportReference.insuredName} />
-                            <DetailItem label="Vehicle Number" value={caseData.reportReference.vehicleNumber} />
-                            <DetailItem label="Investigator Appointment Date" value={formatDate(caseData.reportReference.investigatorAppointmentDate)} />
+                            <DetailItem label="Insured Name" value={caseData.odDetails?.claimSummary?.insuredName || caseData.reportReference?.insuredName} />
+                            <DetailItem label="Vehicle Number" value={caseData.odDetails?.claimSummary?.vehicleNo || caseData.reportReference?.vehicleNumber} />
+                            <DetailItem label="Claim Number" value={caseData.odDetails?.claimSummary?.claimNo || caseData.reportReference?.claimNumber} />
+                            <DetailItem label="Investigator" value={caseData.odDetails?.claimSummary?.investigatorName} />
+                            <DetailItem label="Appointment Date" value={formatDate(caseData.reportReference?.investigatorAppointmentDate || caseData.createdAt)} />
                         </DetailGrid>
                     </Section>
                 )}
@@ -506,10 +506,10 @@ export default function ODCaseDetails() {
                 )}
 
                 {/* Enclosures */}
-                {caseData.enclosures && caseData.enclosures.documents && caseData.enclosures.documents.length > 0 && (
+                {caseData.opinion?.enclosures && caseData.opinion.enclosures.length > 0 && (
                     <Section title="Enclosures" icon={Paperclip}>
                         <DetailGrid>
-                            {caseData.enclosures.documents.map((doc, idx) => (
+                            {caseData.opinion.enclosures.map((doc, idx) => (
                                 <DetailItem
                                     key={idx}
                                     label={doc.field || `Enclosure ${idx + 1}`}

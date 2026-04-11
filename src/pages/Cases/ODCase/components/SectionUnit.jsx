@@ -418,9 +418,9 @@ function SectionUnit({
 
     return (
         <div id={id} className={`scroll-mt-48 border rounded-xl bg-white shadow-sm mb-8 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-100' : ''}`}>
-            <button
+            <div
                 onClick={onToggle}
-                className="w-full flex justify-between items-center p-6 hover:bg-gray-50 transition-colors rounded-t-xl"
+                className="w-full flex justify-between items-center p-6 hover:bg-gray-50 transition-colors rounded-t-xl cursor-pointer"
             >
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3">
@@ -471,7 +471,7 @@ function SectionUnit({
                 <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-500 uppercase tracking-wide">
                     {sectionKey}
                 </span>
-            </button>
+            </div>
 
             {/* Collapsible Content */}
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'}`}>
@@ -902,7 +902,7 @@ function SectionUnit({
                                             )}
                                         </div>
 
-                                        {isAvailable && persons.map((person, index) => (
+                                        {isAvailable && persons.map((person, index) => person && (
                                             <div key={index} className="mb-6 last:mb-0 p-4 bg-white rounded border relative shadow-sm">
                                                 <h4 className="font-bold text-gray-800 mb-3 border-b pb-2 flex justify-between">
                                                     <span>Injured Person #{index + 1}</span>
@@ -1057,7 +1057,7 @@ function SectionUnit({
                                             )}
                                         </div>
 
-                                        {isAvailable && persons.map((person, index) => (
+                                        {isAvailable && persons.map((person, index) => person && (
                                             <div key={index} className="mb-6 last:mb-0 p-4 bg-white rounded border relative shadow-sm">
                                                 <h4 className="font-bold text-gray-800 mb-3 border-b pb-2 flex justify-between">
                                                     <span>Deceased Person #{index + 1}</span>

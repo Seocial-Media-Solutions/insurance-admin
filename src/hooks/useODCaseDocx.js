@@ -1416,13 +1416,26 @@ export const useODCaseDocx = () => {
                     }
                 },
                 {
+                    title: "Police Records (RTI)",
+                    data: data.policeRecordDetails || {},
+                    fields: {
+                        rtiDetails: "RTI Documents",
+                    }
+                },
+                {
                     title: "Witness Photos & Documents",
                     data: data.witnessDetails ? {
-                        allWitnessItems: data.witnessDetails.flatMap(w => [
-                            ...(w.witnessPhoto || []),
-                            ...(w.witnessDocument || []).flatMap(doc => [
-                                { imageUrl: typeof doc.front === 'string' ? doc.front : doc.front?.imageUrl, title: `${doc.title || 'Document'} (Front)` },
-                                { imageUrl: typeof doc.back === 'string' ? doc.back : doc.back?.imageUrl, title: `${doc.title || 'Document'} (Back)` }
+                        allWitnessItems: (data.witnessDetails || []).flatMap(w => [
+                            ...(Array.isArray(w.witnessPhoto) ? w.witnessPhoto : (w.witnessPhoto ? [w.witnessPhoto] : [])),
+                            ...(Array.isArray(w.witnessDocument) ? w.witnessDocument : []).flatMap(doc => [
+                                { 
+                                    imageUrl: typeof doc.front === 'string' ? doc.front : doc.front?.imageUrl, 
+                                    title: `${doc.title || 'Document'} (Front)` 
+                                },
+                                { 
+                                    imageUrl: typeof doc.back === 'string' ? doc.back : doc.back?.imageUrl, 
+                                    title: `${doc.title || 'Document'} (Back)` 
+                                }
                             ])
                         ])
                     } : {},
@@ -1441,23 +1454,23 @@ export const useODCaseDocx = () => {
                 );
 
                 if (hasPhotos) {
-                    // PageBreak must be wrapped in a Paragraph
+                    // Page Break
                     children.push(new Paragraph({ children: [new PageBreak()] }));
 
+                    // Section Title
                     children.push(
                         new Paragraph({
-                            children: [new TextRun({ text: section.title })],
-                            heading: HeadingLevel.HEADING_2,
+                            children: [
+                                new TextRun({
+                                    text: section.title.toUpperCase(),
+                                    bold: true,
+                                    size: 28,
+                                    underline: { type: "single" },
+                                    color: "CC0000",
+                                }),
+                            ],
                             alignment: AlignmentType.CENTER,
-                            spacing: { before: 400, after: 200 },
-                            border: {
-                                bottom: {
-                                    color: "000000",
-                                    space: 1,
-                                    style: BorderStyle.SINGLE,
-                                    size: 6,
-                                },
-                            },
+                            spacing: { before: 400, after: 400 },
                         })
                     );
 
@@ -1465,89 +1478,71 @@ export const useODCaseDocx = () => {
                         const fieldValue = section.data[fieldKey];
                         if (!fieldValue) continue;
 
-                        // Add field label
-                        children.push(
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: fieldLabel,
-                                        bold: true,
-                                        size: 22,
-                                    }),
-                                ],
-                                spacing: { before: 200, after: 100 },
+                        const rawItems = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
+                        
+                        // Process images in parallel for this field
+                        const processedResults = await Promise.all(
+                            rawItems.map(async (imgItem, idx) => {
+                                const imgUrl = typeof imgItem === "string" ? imgItem : imgItem?.imageUrl;
+                                if (!imgUrl) return null;
+
+                                try {
+                                    const base64 = await convertImageToBase64(imgUrl);
+                                    if (base64) {
+                                        return {
+                                            base64,
+                                            label: Array.isArray(fieldValue) ? (imgItem.title || `${fieldLabel} ${idx + 1}`) : (imgItem.title || fieldLabel)
+                                        };
+                                    }
+                                } catch (e) {
+                                    console.error(`Error processing image ${fieldKey}[${idx}]`, e);
+                                }
+                                return null;
                             })
                         );
 
-                        // Normalize to array for uniform 2-column layout
-                        const rawItems = Array.isArray(fieldValue) ? fieldValue : [fieldValue];
-                        const validImages = [];
-
-                        for (let idx = 0; idx < rawItems.length; idx++) {
-                            const imgItem = rawItems[idx];
-                            const imgUrl = typeof imgItem === "string" ? imgItem : imgItem?.imageUrl;
-                            if (!imgUrl) continue;
-
-                            try {
-                                const base64Data = await convertImageToBase64(imgUrl);
-                                if (base64Data) {
-                                    validImages.push({
-                                        base64: base64Data,
-                                        label: Array.isArray(fieldValue) ? (imgItem.title || `${fieldLabel} ${idx + 1}`) : (imgItem.title || fieldLabel)
-                                    });
-                                }
-                            } catch (e) {
-                                console.error(`Error processing image ${fieldKey}[${idx}]`, e);
-                            }
-                        }
+                        const validImages = processedResults.filter(img => img !== null);
 
                         if (validImages.length > 0) {
+                            // Add sub-label for the field
+                            children.push(
+                                new Paragraph({
+                                    children: [
+                                        new TextRun({
+                                            text: fieldLabel,
+                                            bold: true,
+                                            size: 24,
+                                            color: "333333",
+                                        }),
+                                    ],
+                                    spacing: { before: 200, after: 100 },
+                                })
+                            );
+
                             const tableRows = [];
 
                             for (let i = 0; i < validImages.length; i += 2) {
-                                const img1 = validImages[i];
-                                const img2 = validImages[i + 1]; // Can be undefined
+                                const imagesInRow = validImages.slice(i, i + 2);
+                                const cells = imagesInRow.map((img) => {
+                                    // Robust base64 to Uint8Array conversion
+                                    let binaryData;
+                                    try {
+                                        const binaryString = atob(img.base64);
+                                        binaryData = new Uint8Array(binaryString.length);
+                                        for (let j = 0; j < binaryString.length; j++) {
+                                            binaryData[j] = binaryString.charCodeAt(j);
+                                        }
+                                    } catch (err) {
+                                        console.error("Binary conversion failed", err);
+                                        return new TableCell({ children: [] });
+                                    }
 
-                                const cells = [];
-
-                                // Column 1
-                                cells.push(new TableCell({
-                                    children: [
-                                        new Paragraph({
-                                            children: [
-                                                new ImageRun({
-                                                    data: Uint8Array.from(atob(img1.base64), c => c.charCodeAt(0)),
-                                                    transformation: { width: 240, height: 180 },
-                                                }),
-                                            ],
-                                            alignment: AlignmentType.CENTER,
-                                            spacing: { after: 100 },
-                                        }),
-                                        new Paragraph({
-                                            children: [
-                                                new TextRun({
-                                                    text: img1.label,
-                                                    size: 18,
-                                                    italics: true,
-                                                    color: "000000",
-                                                }),
-                                            ],
-                                            alignment: AlignmentType.CENTER,
-                                            spacing: { after: 200 },
-                                        })
-                                    ],
-                                    width: { size: 50, type: WidthType.PERCENTAGE },
-                                    borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
-                                }));
-
-                                // Column 2
-                                if (img2) {
-                                    cells.push(new TableCell({
+                                    return new TableCell({
                                         children: [
                                             new Paragraph({
                                                 children: [
                                                     new ImageRun({
-                                                        data: Uint8Array.from(atob(img2.base64), c => c.charCodeAt(0)),
+                                                        data: binaryData,
                                                         transformation: { width: 240, height: 180 },
                                                     }),
                                                 ],
@@ -1557,9 +1552,9 @@ export const useODCaseDocx = () => {
                                             new Paragraph({
                                                 children: [
                                                     new TextRun({
-                                                        text: img2.label,
+                                                        text: img.label,
                                                         size: 18,
-                                                        italics: true,
+                                                        italic: true,
                                                         color: "000000",
                                                     }),
                                                 ],
@@ -1568,14 +1563,26 @@ export const useODCaseDocx = () => {
                                             })
                                         ],
                                         width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
-                                    }));
-                                } else {
-                                    // Empty filler cell
+                                        borders: {
+                                            top: { style: BorderStyle.NIL },
+                                            bottom: { style: BorderStyle.NIL },
+                                            left: { style: BorderStyle.NIL },
+                                            right: { style: BorderStyle.NIL }
+                                        }
+                                    });
+                                });
+
+                                // Fill remaining cell if odd number of images
+                                if (cells.length === 1) {
                                     cells.push(new TableCell({
-                                        children: [new Paragraph({})],
+                                        children: [],
                                         width: { size: 50, type: WidthType.PERCENTAGE },
-                                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
+                                        borders: {
+                                            top: { style: BorderStyle.NIL },
+                                            bottom: { style: BorderStyle.NIL },
+                                            left: { style: BorderStyle.NIL },
+                                            right: { style: BorderStyle.NIL }
+                                        }
                                     }));
                                 }
 
@@ -1585,7 +1592,14 @@ export const useODCaseDocx = () => {
                             children.push(new Table({
                                 rows: tableRows,
                                 width: { size: 100, type: WidthType.PERCENTAGE },
-                                borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
+                                borders: {
+                                    top: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.NIL },
+                                    left: { style: BorderStyle.NIL },
+                                    right: { style: BorderStyle.NIL },
+                                    insideHorizontal: { style: BorderStyle.NIL },
+                                    insideVertical: { style: BorderStyle.NIL }
+                                }
                             }));
                         }
                     }
