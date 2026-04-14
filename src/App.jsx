@@ -1,6 +1,9 @@
 import React, { Suspense, lazy, memo } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
+import Layout from "./components/layout/Layout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 /* --------------------------
    Lazy Loaded Pages with Prefetch
 --------------------------- */
@@ -22,6 +25,8 @@ const CreateTheftCaseFull = lazy(() => import("./pages/Cases/TheftCase/TheftCase
 const CreateOdCaseFull = lazy(() => import("./pages/Cases/ODCase/ODCaseEditor"));
 const ODCaseView = lazy(() => import("./pages/Cases/ODCase/ODCaseView"));
 const TheftCaseView = lazy(() => import("./pages/Cases/TheftCase/TheftCaseView"));
+const LoginPage = lazy(() => import("./pages/Login"));
+const CreateSubAdmin = lazy(() => import("./pages/Admin/CreateSubAdmin"));
 
 /* --------------------------
    Optimized Loader
@@ -62,30 +67,51 @@ function AppComponent() {
 
       <Suspense fallback={<Loader />}>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/cases" element={<CaseManagement />} />
+          <Route path="/login" element={<LoginPage />} />
 
-          {/* Field Executives */}
-          <Route path="/field-executives" element={<FieldExecutiveList />} />
-          <Route path="/field-executives/add" element={<AddFieldExecutive />} />
-          <Route path="/field-executives/edit/:id" element={<EditFieldExecutive />} />
+          {/* Protected Routes Wrapper */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/cases" element={<CaseManagement />} />
 
-          {/* Case Firm */}
-          <Route path="/casefirm" element={<CaseFirmPage />} />
-          {/* Case CRUD */}
-          <Route path="/cases/addcase" element={<CaseAdd />} />
-          <Route path="/cases/view/:caseId" element={<CaseView />} />
-          <Route path="/cases/edit/:caseId" element={<CaseEdit />} />
-          {/* Assignments */}
-          <Route path="/cases/assignments" element={<AssignmentManagement />} />
-          <Route path="/cases/assignments/view/:id" element={<AssignmentViewPage />} />
-          {/* Theft & OD case creation */}
-          <Route path="case" element={<CaseList />} />
-          <Route path="case/theft-case/edit/:caseId" element={<CreateTheftCaseFull />} />
-          <Route path="case/od-case/edit/:caseId" element={<CreateOdCaseFull />} />
-          {/* Read-Only View Routes */}
-          <Route path="case/od-case/view/:caseId" element={<ODCaseView />} />
-          <Route path="case/theft-case/view/:caseId" element={<TheftCaseView />} />
+            {/* Field Executives */}
+            <Route path="/field-executives" element={<FieldExecutiveList />} />
+            <Route path="/field-executives/add" element={<AddFieldExecutive />} />
+            <Route path="/field-executives/edit/:id" element={<EditFieldExecutive />} />
+
+            {/* Case Firm */}
+            <Route path="/casefirm" element={<CaseFirmPage />} />
+            {/* Case CRUD */}
+            <Route path="/cases/addcase" element={<CaseAdd />} />
+            <Route path="/cases/view/:caseId" element={<CaseView />} />
+            <Route path="/cases/edit/:caseId" element={<CaseEdit />} />
+            {/* Assignments */}
+            <Route path="/cases/assignments" element={<AssignmentManagement />} />
+            <Route path="/cases/assignments/view/:id" element={<AssignmentViewPage />} />
+            {/* Theft & OD case creation */}
+            <Route path="case" element={<CaseList />} />
+            <Route path="case/theft-case/edit/:caseId" element={<CreateTheftCaseFull />} />
+            <Route path="case/od-case/edit/:caseId" element={<CreateOdCaseFull />} />
+            {/* Read-Only View Routes */}
+            <Route path="case/od-case/view/:caseId" element={<ODCaseView />} />
+            <Route path="case/theft-case/view/:caseId" element={<TheftCaseView />} />
+
+            {/* Admin only routes */}
+            <Route
+              path="/admin/create-sub-admin"
+              element={
+                <ProtectedRoute allowedRoles={["SUPER_ADMIN"]}>
+                  <CreateSubAdmin />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
         </Routes>
       </Suspense>
     </>

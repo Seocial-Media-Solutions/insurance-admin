@@ -1,10 +1,14 @@
-import { Menu, X, Bell, User, Search } from "lucide-react";
+import { Menu, X, Bell, User, Search, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useGlobalSearch } from "../../context/SearchContext";
 import useDebounce from "../../hooks/useDebounce";
+import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-hot-toast";
+import { confirmToast } from "../Ui/ConfirmToast";
 
 export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
+  const { user, logout } = useAuth();
   const { globalSearch, setGlobalSearch } = useGlobalSearch();
   const [localSearch, setLocalSearch] = useState(globalSearch);
   const debouncedSearch = useDebounce(localSearch, 500);
@@ -99,13 +103,29 @@ export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
           </button>
 
-          {/* User avatar - mobile only */}
-          <button
-            className="md:hidden w-8 h-8 bg-black rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors"
-            aria-label="User menu"
-          >
-            <User className="w-4 h-4 text-white" />
-          </button>
+          {/* User Profile / Logout */}
+          <div className="flex items-center gap-3 ml-2 border-l pl-4 border-gray-100">
+            <div className="hidden sm:block text-right">
+              <p className="text-xs font-bold text-gray-900 truncate max-w-[100px] uppercase">
+                {user?.role?.replace("_", " ")}
+              </p>
+              <p className="text-[10px] text-gray-400 truncate max-w-[100px]">
+                {user?.email}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                confirmToast("Are you sure you want to log out?", async () => {
+                  await logout();
+                  toast.success("Logged out successfully");
+                });
+              }}
+              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </header>

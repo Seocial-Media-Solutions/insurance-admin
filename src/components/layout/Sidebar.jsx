@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Home,
   FileText,
@@ -10,8 +9,12 @@ import {
   Users,
   ClipboardList,
   BarChart3,
+  UserPlus,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-hot-toast";
+import { confirmToast } from "../Ui/ConfirmToast";
 
 export default function Sidebar({
   sidebarOpen,
@@ -20,6 +23,7 @@ export default function Sidebar({
   setSidebarCollapsed,
   setActiveMenu,
 }) {
+  const { user, logout } = useAuth();
   const location = useLocation();
 
   const navLinks = [
@@ -28,9 +32,11 @@ export default function Sidebar({
     { label: "Case Management", icon: FileText, path: "/cases" },
     { label: "Field Executive", icon: Users, path: "/field-executives" },
     { label: "Case Assign", icon: ClipboardList, path: "/cases/assignments" },
-    // { label: "Investigations", icon: BarChart3, path: "/investigations" },
     { label: "Active case", icon: BarChart3, path: "/case" },
   ];
+
+
+  
 
   // Close sidebar on mobile when clicking a link
   const handleLinkClick = () => {
@@ -108,31 +114,33 @@ export default function Sidebar({
           {/* User Section */}
           <div className="p-4 border-t border-gray-200">
             <button
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-all duration-200 ${sidebarCollapsed ? "justify-center" : ""
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-200 ${sidebarCollapsed ? "justify-center" : ""
                 }`}
               onClick={() => {
-                // Add logout logic here
-                console.log("Logout clicked");
+                confirmToast("Are you sure you want to log out?", async () => {
+                  await logout();
+                  toast.success("Logged out successfully");
+                });
               }}
               title={sidebarCollapsed ? "Logout" : ""}
               aria-label="User profile and logout"
             >
-              <div className="w-9 h-9 bg-black rounded-full flex items-center justify-center flex-shrink-0">
+              <div className={`w-9 h-9 ${user?.role === 'SUPER_ADMIN' ? 'bg-blue-600' : 'bg-green-600'} rounded-full flex items-center justify-center flex-shrink-0 transition-colors`}>
                 <User className="w-5 h-5 text-white" />
               </div>
               {!sidebarCollapsed && (
                 <>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium truncate">Admin User</p>
+                    <p className="text-sm font-bold truncate">{user?.role?.replace("_", " ")}</p>
                     <p className="text-xs text-gray-500 truncate">
-                      admin@example.com
+                      {user?.email}
                     </p>
                   </div>
-                  <LogOut className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                  <LogOut className="w-4 h-4" />
                 </>
               )}
               {sidebarCollapsed && (
-                <span className="sr-only">Admin User - Logout</span>
+                <span className="sr-only">{user?.email} - Logout</span>
               )}
             </button>
           </div>

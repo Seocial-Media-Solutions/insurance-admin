@@ -7,19 +7,15 @@ const API_BASE_URL = API;
 // Create axios instance with default config
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-// Request interceptor for adding auth tokens, etc.
+// Request interceptor
 apiClient.interceptors.request.use(
     (config) => {
-        // Add auth token if available
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
         return config;
     },
     (error) => {
@@ -33,9 +29,8 @@ apiClient.interceptors.response.use(
     (error) => {
         // Handle common errors
         if (error.response?.status === 401) {
-            // Unauthorized - redirect to login
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
+            // Unauthorized - you might want to handle this in AuthContext instead of redirecting here
+            // but for now, we leave it or clear local state
         }
         return Promise.reject(error);
     }

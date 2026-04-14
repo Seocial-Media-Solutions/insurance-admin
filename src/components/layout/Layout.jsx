@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Outlet } from "react-router-dom";
 import { Home, FileText, Users, ClipboardList, BarChart3 } from "lucide-react";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import App from "../../App";
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -57,7 +56,7 @@ export default function Layout() {
 
         {/* Page content */}
         <main className=" max-w-full flex-1 overflow-auto p-6">
-          <App />
+          <Outlet />
         </main>
       </div>
     </div>
