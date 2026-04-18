@@ -133,8 +133,8 @@ function Dashboard() {
                   
                   <div className="flex items-center justify-between mb-6 relative z-10">
                     <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110"
-                      style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}dd 100%)`, boxShadow: `0 10px 20px -5px ${stat.color}44` }}
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 bg-black"
+                      style={{ boxShadow: `0 10px 20px -5px ${stat.color}44` }}
                     >
                       <IconComponent
                         size={28}
