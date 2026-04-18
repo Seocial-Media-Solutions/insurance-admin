@@ -7,7 +7,6 @@ import toast, { Toaster } from "react-hot-toast";
 
 const AssignmentManagement = () => {
   const [activeTab, setActiveTab] = useState("assignments");
-  const [refreshList, setRefreshList] = useState(0);
 
   const handleAssignmentCreated = async (
     assignmentPromise
@@ -17,34 +16,21 @@ const AssignmentManagement = () => {
         assignmentPromise,
         {
           loading: "Creating assignment...",
-          success: false,
+          success: "Assignment created successfully!",
           error: (err) => err?.message || "Failed to create assignment",
-        },
-        {
-          position: "top-right",
-          style: {
-            borderRadius: "8px",
-            background: "#333",
-            color: "#fff",
-          },
         }
       );
 
-      // ✅ Runs ONLY on success
       setActiveTab("assignments");
     } catch (error) {
-      // ❌ Runs ONLY on error
       console.error("Assignment creation failed:", error);
-    } finally {
-      // 🔁 Runs ALWAYS (success or error)
-      setRefreshList((prev) => prev + 1);
     }
   };
 
 
   return (
     <div className="space-y-6">
-
+      <Toaster />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -94,7 +80,7 @@ const AssignmentManagement = () => {
 
       {/* Content */}
       <div>
-        {activeTab === "assignments" && <AssignmentList key={refreshList} />}
+        {activeTab === "assignments" && <AssignmentList />}
         {activeTab === "assign" && (
           <AssignCaseForm onAssignmentCreated={handleAssignmentCreated} />
         )}

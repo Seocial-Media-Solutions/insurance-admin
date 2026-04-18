@@ -11,19 +11,30 @@ export function AssignmentProvider({ children }) {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [initialized, setInitialized] = useState(false);
-    const limit = 10;
+    const [search, setSearch] = useState("");
+    const limit = 50;
 
-    const loadAssignments = async (page = currentPage) => {
+    const loadAssignments = async (page = currentPage, currentSearch = search, force = false) => {
+        // Skip if already loaded with same parameters unless forced
+        if (initialized && page === currentPage && currentSearch === search && !force) {
+            return;
+        }
+
         setLoading(true);
         try {
-            const resp = await assignmentService.getAll({ page, limit });
+            const resp = await assignmentService.getAll({ 
+                page, 
+                limit, 
+                search: currentSearch 
+            });
             setAssignments(resp.data || []);
             setTotalPages(resp.totalPages || 1);
             setTotal(resp.total || 0);
             setCurrentPage(resp.currentPage || page);
+            setSearch(currentSearch);
         } catch (err) {
             console.error("Error loading assignments:", err);
-            toast.error("Failed to load assignments");
+            // Service handles the actual errors if needed
         } finally {
             setLoading(false);
             setInitialized(true);
@@ -39,38 +50,35 @@ export function AssignmentProvider({ children }) {
     const addAssignment = async (data) => {
         try {
             await assignmentService.create(data);
-            toast.success("Assignment created successfully");
-            loadAssignments(1);
+            await loadAssignments(1, search, true);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to create assignment");
+            throw err;
         }
     };
 
     const updateAssignment = async (id, data) => {
         try {
             await assignmentService.update({ id, assignmentData: data });
-            toast.success("Assignment updated successfully");
-            loadAssignments();
+            await loadAssignments(currentPage, search, true);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to update assignment");
+            throw err;
         }
     };
 
     const deleteAssignment = async (id) => {
         try {
             await assignmentService.delete(id);
-            toast.success("Assignment deleted successfully");
-            loadAssignments();
+            await loadAssignments(currentPage, search, true);
         } catch (err) {
             console.error(err);
-            toast.error("Failed to delete assignment");
+            throw err;
         }
     };
 
     useEffect(() => {
-        // Fetch is now lazy-loaded via the hook
+        // Handled by lazy load in hook
     }, []);
 
     const getAssignmentsByCaseId = async (caseId) => {

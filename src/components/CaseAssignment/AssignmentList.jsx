@@ -15,44 +15,22 @@ import Pagination from "../Ui/Pagination";
 import { API } from "../../utils/api";
 import { useGlobalSearch } from "../../context/SearchContext";
 import { useFirms } from "../../context/FirmContext";
+import { useAssignments } from "../../context/AssignmentContext";
+import { useFieldExecutives } from "../../context/FieldExecutiveContext";
 
-const FirmCodeCell = ({ caseId }) => {
+const FirmCodeCell = ({ firmId }) => {
   const { getFirmSync } = useFirms();
-  const [caseFirm, setCaseFirm] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const firm = getFirmSync(firmId);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchCaseDetails = async () => {
-      try {
-        const res = await axios.get(`${API}/cases/${caseId}`);
-        const firmId = res.data?.data?.caseFirmId;
-        if (isMounted && firmId) {
-          // If firmId is an object, use it; otherwise lookup in context
-          const firm = (typeof firmId === 'object' && firmId !== null) ? firmId : getFirmSync(firmId);
-          setCaseFirm(firm);
-        }
-      } catch (err) {
-        console.error("Error fetching firm for assignment:", err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    if (caseId) fetchCaseDetails();
-    return () => { isMounted = false; };
-  }, [caseId, getFirmSync]);
-
-  if (loading) return <div className="w-12 h-4 bg-gray-100 animate-pulse rounded"></div>;
-  if (!caseFirm) return <span className="text-gray-400 text-xs">--</span>;
+  if (!firm) return <span className="text-gray-400 text-xs text-center">--</span>;
 
   return (
     <div className="flex flex-col">
       <span className="text-xs font-bold text-blue-600 font-mono tracking-tighter uppercase whitespace-nowrap">
-        {caseFirm.code || "--"}
+        {firm.code || "--"}
       </span>
       <span className="text-[10px] text-gray-400 truncate max-w-[120px]">
-        {caseFirm.name}
+        {firm.name}
       </span>
     </div>
   );
@@ -60,62 +38,35 @@ const FirmCodeCell = ({ caseId }) => {
 
 
 const AssignmentList = () => {
-  const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    assignments, 
+    loading: assignmentsLoading, 
+    loadAssignments, 
+    currentPage, 
+    totalPages, 
+    total, 
+    goToPage, 
+    deleteAssignment,
+    updateAssignment 
+  } = useAssignments();
+  
+  const { 
+    executives, 
+    loading: executivesLoading 
+  } = useFieldExecutives();
+
   const { globalSearch } = useGlobalSearch();
   const [statusFilter, setStatusFilter] = useState("All");
   const [priorityFilter, setPriorityFilter] = useState("All");
   const [sortField, setSortField] = useState("assignedDate");
   const [sortDirection, setSortDirection] = useState("desc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [executives, setExecutives] = useState([]);
   const [reassignModal, setReassignModal] = useState({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
   const [isUpdating, setIsUpdating] = useState(false);
-  const limit = 10;
+  const limit = 50;
 
   useEffect(() => {
-    fetchAssignments(1);
-    fetchExecutives();
-  }, []);
-
-  const fetchExecutives = async () => {
-    try {
-      const response = await axios.get(`${API}/field-executives`);
-      if (response.data.success) {
-        setExecutives(response.data.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch executives", err);
-    }
-  };
-
-  const fetchAssignments = async (page = 1) => {
-    try {
-      const response = await axios.get(
-        `${API}/assignments`,
-        { params: { page, limit } }
-      );
-      if (response.data.success) {
-        setAssignments(response.data.data);
-        setTotalPages(response.data.totalPages || 1);
-        setTotal(response.data.total || 0);
-        setCurrentPage(response.data.currentPage || page);
-      }
-    } catch (error) {
-      toast.error("Failed to fetch assignments");
-      console.error("Error fetching assignments:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      fetchAssignments(page);
-    }
-  };
+    loadAssignments(currentPage, globalSearch);
+  }, [currentPage, globalSearch]);
 
   const handleReassign = async () => {
     if (!reassignModal.newExecutiveId) {
@@ -127,15 +78,11 @@ const AssignmentList = () => {
     const toastId = toast.loading("Reassigning case...");
 
     try {
-      const response = await axios.put(`${API}/assignments/${reassignModal.assignmentId}`, {
+      await updateAssignment(reassignModal.assignmentId, {
         fieldExecutiveId: reassignModal.newExecutiveId
       });
-
-      if (response.data.success) {
-        toast.success("Case reassigned successfully", { id: toastId });
-        setReassignModal({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
-        fetchAssignments(currentPage);
-      }
+      toast.success("Case reassigned successfully", { id: toastId });
+      setReassignModal({ open: false, assignmentId: null, currentExecutiveId: null, newExecutiveId: "" });
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reassign case", { id: toastId });
     } finally {
@@ -155,13 +102,11 @@ const AssignmentList = () => {
             onClick={async () => {
               try {
                 toast.dismiss(t.id);
-                toast.promise(
-                  axios.delete(
-                    `${API}/assignments/${assignmentId}`
-                  ).then(() => fetchAssignments(currentPage)),
+                await toast.promise(
+                  deleteAssignment(assignmentId),
                   {
                     loading: "Deleting assignment...",
-                    success: false,
+                    success: "Assignment deleted successfully",
                     error: "Failed to delete assignment",
                   }
                 );
@@ -266,7 +211,7 @@ const AssignmentList = () => {
     );
   };
 
-  if (loading) {
+  if (assignmentsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -387,7 +332,7 @@ const AssignmentList = () => {
               filteredAssignments.map((assignment) => (
                 <tr key={assignment._id} className="hover:bg-gray-50 border-b border-gray-100 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <FirmCodeCell caseId={assignment.caseId?._id} />
+                    <FirmCodeCell firmId={assignment.caseId?.caseFirmId} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">

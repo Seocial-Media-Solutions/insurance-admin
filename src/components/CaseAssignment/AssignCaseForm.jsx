@@ -3,22 +3,49 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import * as Icons from "lucide-react";   // ✅ dynamic icon loader
 import { getVisitRoutes } from "../../utils/visit";
+import { API } from "../../utils/api";
+import { useAssignments } from "../../context/AssignmentContext";
+import { useFieldExecutives } from "../../context/FieldExecutiveContext";
 
- import { API } from "../../utils/api";
- const API_BASE = API;
+const ToggleButton = ({ label, active, onClick, icon, disabled }) => {
+  const IconComp = Icons[icon] || Icons.Circle;
 
-export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = null, initialCaseType = null }) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={!disabled ? onClick : undefined}
+      className={`
+      flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition
+      ${disabled
+          ? "bg-green-50 text-green-700 border-green-300 cursor-not-allowed opacity-80"
+          : active
+            ? "bg-blue-600 text-white border-blue-600 hover:scale-105"
+            : "bg-white text-gray-700 border-gray-300 hover:scale-105"
+        }
+      active:scale-95
+    `}
+    >
+      <IconComp size={16} />
+      {label}
+      {disabled && <Icons.CheckCircle2 size={16} className="text-green-600 ml-1" />}
+    </button>
+  );
+};
+
+const AssignCaseForm = ({ onAssignmentCreated, initialCaseId = null, initialCaseType = null }) => {
+  const { executives } = useFieldExecutives();
+  const { addAssignment } = useAssignments();
   const [step, setStep] = useState(initialCaseId ? 1 : 0);
   const [cases, setCases] = useState([]);
   const [alreadyVisits, setAlreadyVisits] = useState([]);
-  const [executives, setExecutives] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     caseId: initialCaseId || "",
     caseType: initialCaseType || "",
     fieldExecutiveId: "",
-    investigationVisits: [], // visit objects {visitKey, label, endpoint}
+    investigationVisits: [], 
     contactPersonName: "",
     contactPersonPhone: "",
     priority: "high",
@@ -26,31 +53,19 @@ export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = nu
 
   const [errors, setErrors] = useState({});
 
-  /* ---------------------------------------------------------
-     FETCH CASES + EXECUTIVES
-  --------------------------------------------------------- */
-  /* ---------------------------------------------------------
-     FETCH CASES + EXECUTIVES
-  --------------------------------------------------------- */
-  const fetchAllData = async () => {
+  const fetchCases = async () => {
     try {
       const caseRes = await axios.get(`${API}/cases`);
       if (caseRes.data.success) setCases(caseRes.data.data);
-
-      const execRes = await axios.get(`${API}/field-executives`);
-      if (execRes.data.success) setExecutives(execRes.data.data);
     } catch (err) {
-      toast.error("Failed loading data");
+      toast.error("Failed loading cases");
     }
   };
 
   useEffect(() => {
-    fetchAllData();
+    fetchCases();
   }, []);
 
-  /* ---------------------------------------------------------
-     CASE SELECTION
-  --------------------------------------------------------- */
   const handleCaseSelect = (e) => {
     const caseId = e.target.value;
     const selected = cases.find((c) => c._id === caseId);
@@ -66,25 +81,16 @@ export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = nu
     setErrors((prev) => ({ ...prev, caseId: "" }));
   };
 
-
-  /* ---------------------------------------------------------
-     INPUT CHANGE HANDLER
-  --------------------------------------------------------- */
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  /* ---------------------------------------------------------
-     TOGGLE VISIT LOGIC & COMPONENT
-  --------------------------------------------------------- */
   const toggleVisit = (visit) => {
     setFormData((prev) => {
       const exists = prev.investigationVisits.some((v) => v.visitKey === visit.key);
       let updated;
-
       if (exists) {
         updated = prev.investigationVisits.filter((v) => v.visitKey !== visit.key);
       } else {
@@ -93,56 +99,22 @@ export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = nu
           { visitKey: visit.key, label: visit.label, endpoint: visit.endpoint || "" },
         ];
       }
-
       return { ...prev, investigationVisits: updated };
     });
   };
 
-  const ToggleButton = ({ label, active, onClick, icon, disabled }) => {
-    const IconComp = Icons[icon] || Icons.Circle;
-
-    return (
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={!disabled ? onClick : undefined}
-        className={`
-        flex items-center gap-2 px-4 py-2 rounded-full border text-sm transition
-        ${disabled
-            ? "bg-green-50 text-green-700 border-green-300 cursor-not-allowed opacity-80"
-            : active
-              ? "bg-blue-600 text-white border-blue-600 hover:scale-105"
-              : "bg-white text-gray-700 border-gray-300 hover:scale-105"
-          }
-        active:scale-95
-      `}
-      >
-        <IconComp size={16} />
-        {label}
-        {disabled && <Icons.CheckCircle2 size={16} className="text-green-600 ml-1" />}
-      </button>
-    );
-  };
-
-
-  /* ---------------------------------------------------------
-     VALIDATION
-  --------------------------------------------------------- */
   const validateStep = () => {
     const e = {};
-
     if (step === 0 && !formData.caseId) e.caseId = "Select a case";
     if (step === 1 && !formData.fieldExecutiveId) e.fieldExecutiveId = "Select an executive";
     if (step === 2 && formData.investigationVisits.length === 0)
       e.investigationVisits = "Select at least one visit";
-
     if (step === 3) {
       if (!formData.contactPersonName) e.contactPersonName = "Required";
       if (!formData.contactPersonPhone) e.contactPersonPhone = "Required";
       else if (!/^\d{10}$/.test(formData.contactPersonPhone))
         e.contactPersonPhone = "Must be 10 digits";
     }
-
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -150,38 +122,35 @@ export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = nu
   const nextStep = () => validateStep() && setStep((s) => s + 1);
   const prevStep = () => setStep((s) => s - 1);
 
-  /* ---------------------------------------------------------
-     SUBMIT
-  --------------------------------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateStep()) return;
-
     setLoading(true);
 
     try {
-      const res = await axios.post(`${API}/assignments`, formData);
-
-      if (res.data.success) {
-
-
-        setFormData({
-          caseId: "",
-          caseType: "",
-          fieldExecutiveId: "",
-          investigationVisits: [],
-          contactPersonName: "",
-          contactPersonPhone: "",
-          priority: "high",
-        });
-
-        setStep(0);
-        fetchAllData(); // Refetch after assignment
-        onAssignmentCreated?.();
+      // Pass the promise to the parent if they want to handle the toast
+      const creationPromise = addAssignment(formData);
+      
+      if (onAssignmentCreated) {
+        await onAssignmentCreated(creationPromise);
+      } else {
+        await creationPromise;
       }
+
+      setFormData({
+        caseId: "",
+        caseType: "",
+        fieldExecutiveId: "",
+        investigationVisits: [],
+        contactPersonName: "",
+        contactPersonPhone: "",
+        priority: "high",
+      });
+      setStep(0);
+      fetchCases(); // Still need to refresh cases to see alreadyVisits correctly
     } catch (err) {
-      toast.error(err.response?.data?.message || "Error occurred");
+      // Handled by toast if promise passed, but good to catch here too
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -353,4 +322,6 @@ export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = nu
       </form>
     </div>
   );
-}
+};
+
+export default AssignCaseForm;
