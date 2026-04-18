@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Plus, Edit, Trash2, X } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useFirms } from "../context/FirmContext";
 import Pagination from "../components/Ui/Pagination";
 import {
@@ -25,9 +26,18 @@ function CaseFirmPage() {
     goToPage,
   } = useFirms();
 
+  const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [formData, setFormData] = useState({ ...CASE_FIRM_INITIAL_STATE });
   const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.openAddFirm) {
+      handleOpenDrawer();
+      // Clean up state to prevent opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   /* ---- helpers ---- */
   const setField = (key, value) =>

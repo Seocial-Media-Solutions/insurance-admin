@@ -1,12 +1,22 @@
 // FILE: src/pages/AssignmentManagement.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AssignCaseForm from "../../components/CaseAssignment/AssignCaseForm";
 import AssignmentList from "../../components/CaseAssignment/AssignmentList";
 import { Plus } from "lucide-react";
 import toast from "react-hot-toast";
+import { useLocation } from "react-router-dom";
 
 const AssignmentManagement = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("assignments");
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      // Clean up state to prevent opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const handleAssignmentCreated = async (
     assignmentPromise

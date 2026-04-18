@@ -17,7 +17,9 @@ import {
   ShieldCheck,
   Car,
   AlertOctagon,
-  ClipboardList
+  ClipboardList,
+  PlusCircle,
+  UserPlus
 } from "lucide-react";
 
 function Dashboard() {
@@ -188,8 +190,54 @@ function Dashboard() {
           </div>
         </div>
 
+        {/* Quick Actions Grid */}
+        <div className="mb-20">
+          <div className="flex items-center justify-between mb-8 px-2">
+            <div>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase tabular-nums">Quick Actions</h2>
+              <p className="text-gray-500 font-bold text-sm">Rapid access to core operations</p>
+            </div>
+            <div className="h-px flex-grow bg-gray-100 mx-8 opacity-50"></div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { to: "/cases/addcase", label: "Add New Case", icon: PlusCircle, color: "text-blue-300", bg: "bg-blue-50" },
+              { to: "/casefirm", label: "Add Case Firm", icon: Building2, color: "text-purple-300", bg: "bg-purple-50" },
+              { to: "/cases/assignments", label: "Assign Task", icon: ClipboardList, color: "text-orange-300", bg: "bg-orange-50" },
+              { to: "/field-executives/add", label: "Add Executive", icon: UserPlus, color: "text-green-300", bg: "bg-green-50" },
+            ].map((action, i) => (
+              <Link
+                key={i}
+                to={action.to}
+                state={
+                  action.to === "/casefirm" 
+                    ? { openAddFirm: true } 
+                    : action.to === "/cases/assignments" 
+                      ? { activeTab: "assign" } 
+                      : undefined
+                }
+                className="group p-6 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 flex flex-col items-center text-center gap-4"
+              >
+                <div className={`w-16 h-16 rounded-2xl ${action.bg} ${action.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm`}>
+                  <action.icon size={28} strokeWidth={2.5} />
+                </div>
+                <span className="font-black text-sm tracking-tight text-gray-800 uppercase tabular-nums">
+                  {action.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
         {/* Features Control Panel */}
         <div className="mb-16">
+          <div className="flex items-center justify-between mb-10 px-2 text-gray-900">
+            <div>
+              <h2 className="text-3xl font-black tracking-tighter uppercase">Management Modules</h2>
+              <p className="text-gray-500 font-bold text-sm">Advanced system controllers</p>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
@@ -206,21 +254,21 @@ function Dashboard() {
                   
                   <div className="relative z-10">
                     <div
-                      className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-2xl ${feature.color} text-white`}
+                      className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-2xl ${feature.color} text-white`}
                     >
-                      <IconComponent size={32} />
+                      <IconComponent size={28} />
                     </div>
-                    <h3 className="text-3xl font-black mb-3 group-hover:text-blue-600 transition-colors tracking-tighter text-gray-900">
+                    <h3 className="text-2xl font-black mb-3 group-hover:text-blue-600 transition-colors tracking-tighter text-gray-900">
                       {feature.title}
                     </h3>
-                    <p className="mb-8 font-bold text-lg leading-relaxed text-gray-500 opacity-80 tracking-tight">
+                    <p className="mb-8 font-bold text-base leading-relaxed text-gray-400 tracking-tight">
                       {feature.description}
                     </p>
                     <div
-                      className="flex items-center font-black text-xs tracking-[0.2em] uppercase group-hover:gap-6 transition-all duration-500 text-gray-900"
+                      className="flex items-center font-black text-[10px] tracking-[0.2em] uppercase group-hover:gap-6 transition-all duration-500 text-gray-900"
                     >
-                      <span>Initialize Module</span>
-                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-3 transition-transform duration-500" />
+                      <span>Explore Module</span>
+                      <ArrowRight className="w-4 h-4 transform group-hover:translate-x-3 transition-transform duration-500" />
                     </div>
                   </div>
                 </Link>
