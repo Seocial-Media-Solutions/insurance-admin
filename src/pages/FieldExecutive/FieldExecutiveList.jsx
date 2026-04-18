@@ -57,23 +57,12 @@ export default function FieldExecutiveList() {
     <div className="min-h-screen max-w-full mx-auto">
 
       {/* === Header === */}
-      <div className="bg-card rounded-lg shadow-lg p-6 mb-6 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="p-3 rounded-lg bg-black">
-            <Users className="text-white" size={28} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">Field Executive Management</h1>
-            <p className="text-gray-500">Manage your field executive team</p>
-          </div>
-        </div>
-        <button
+     <button
           onClick={() => navigate("/field-executives/add")}
-          className="flex items-center gap-2 px-6 py-3 rounded-lg shadow-md bg-black text-white hover:bg-gray-800 transition"
+          className="flex  fixed bottom-5 right-5 items-center gap-2 px-6 py-3 rounded-lg shadow-md bg-black text-white hover:bg-gray-800 transition"
         >
           <UserPlus size={20} /> Add New Executive
         </button>
-      </div>
 
 
 

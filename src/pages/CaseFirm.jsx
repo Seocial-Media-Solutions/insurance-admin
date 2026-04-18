@@ -108,26 +108,21 @@ function CaseFirmPage() {
   ================================================================ */
   return (
     <div
-      className="min-h-screen px-4 py-8 md:px-6 md:py-10 relative overflow-hidden"
+      className="min-h-screen px-4 py-4 md:px-6 relative overflow-hidden"
       style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
     >
       <div className="max-w-8xl mx-auto">
 
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
-            Case Firms
-          </h1>
-          <button
+       <button
             onClick={handleOpenDrawer}
-            className="px-4 py-2 rounded-lg flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 transition"
+            className=" fixed bottom-5 right-5 px-4 py-2 rounded-lg flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 transition"
             style={{ backgroundColor: "var(--primary)" }}
           >
             <Plus className="w-5 h-5" />
             <span className="hidden md:inline">Add Firm</span>
             <span className="md:hidden">Add</span>
           </button>
-        </div>
 
         {/* Table Section */}
         <div

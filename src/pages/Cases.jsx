@@ -71,13 +71,9 @@ export default function CaseManagement() {
      <div className="flex justify-between items-center">
   <Link
     to="/cases/addcase"
-    className="group fixed top-31 right-8 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
+    className="group fixed bottom-5 right-5 flex items-center gap-2 bg-black text-white px-4 py-2 rounded-lg shadow"
   >
-    <Plus size={18} />
-
-    <span className="hidden group-hover:inline text-lg font-semibold">
-      Add New Case
-    </span>
+    <Plus size={18} />  Add New Case
   </Link>
 </div>
 
