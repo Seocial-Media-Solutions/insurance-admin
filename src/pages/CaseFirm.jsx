@@ -8,6 +8,8 @@ import {
   CASE_FIRM_FIELDS,
   firmToFormData,
 } from "../utils/caseFirmForm.utils";
+import { INDIAN_STATES, STATE_CITIES } from "../utils/indianStates";
+
  
 function CaseFirmPage() {
   const {
@@ -258,6 +260,38 @@ function CaseFirmPage() {
                       rows={field.rows || 3}
                       required={field.required}
                     />
+                  ) : field.type === "select" && field.key === "state" ? (
+                    <select
+                      value={formData[field.key]}
+                      onChange={(e) => {
+                        setField(field.key, e.target.value);
+                        setField("city", ""); // Reset city when state changes
+                      }}
+                      className="w-full p-3 rounded-md border bg-transparent"
+                      required={field.required}
+                    >
+                      <option className="bg-white text-black dark:bg-gray-800 dark:text-white" value="" disabled>Select State</option>
+                      {INDIAN_STATES.map((state) => (
+                        <option className="bg-white text-black dark:bg-gray-800 dark:text-white" key={state} value={state}>
+                          {state}
+                        </option>
+                      ))}
+                    </select>
+                  ) : field.type === "select" && field.key === "city" ? (
+                    <select
+                      value={formData[field.key]}
+                      onChange={(e) => setField(field.key, e.target.value)}
+                      className="w-full p-3 rounded-md border bg-transparent"
+                      required={field.required}
+                      disabled={!formData.state}
+                    >
+                      <option className="bg-white text-black dark:bg-gray-800 dark:text-white" value="" disabled>Select City</option>
+                      {(STATE_CITIES[formData.state] || []).map((city) => (
+                        <option className="bg-white text-black dark:bg-gray-800 dark:text-white" key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
                   ) : (
                     <input
                       type={field.type}

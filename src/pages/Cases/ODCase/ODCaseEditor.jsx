@@ -4,7 +4,7 @@ import { toast } from "react-hot-toast";
 import { ArrowLeft, Loader2, FileText, PanelRight } from "lucide-react";
 
 // Hooks
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useIsMutating } from '@tanstack/react-query';
 import { useODCase } from "../../../hooks/useODCases";
 import { useODCaseDocx } from "../../../hooks/useODCaseDocx";
 
@@ -40,7 +40,8 @@ export default function OdCaseEditor() {
   };
 
   // Fetch case data using TanStack Query
-  const { data: caseResponse, isLoading, isError, error, refetch } = useODCase(caseId);
+  const { data: caseResponse, isLoading, isFetching, isError, error, refetch } = useODCase(caseId);
+  const isMutating = useIsMutating();
   const caseData = caseResponse?.data;
 
   // Use state data or fetch fallback
@@ -86,7 +87,7 @@ export default function OdCaseEditor() {
             const val = caseData[sectionKey][subKey];
             if (val !== undefined && val !== null) {
               let repairedVal = val;
-              
+
               // Corruption repair: Handle objects that are actually string characters
               if (typeof val === 'object' && !Array.isArray(val) && Object.keys(val).length > 0 && Object.keys(val).every(k => !isNaN(k))) {
                 repairedVal = Object.values(val).join('');
@@ -173,7 +174,12 @@ export default function OdCaseEditor() {
         }
       }
 
-      // 4. AUTO-FILL FROM FIRM DATA
+      // 4. SYNC makeAndModel from Vehicle Details → Claim Summary
+      if (newForm.odDetails?.claimSummary && newForm.odDetails?.vehicleDetails) {
+        newForm.odDetails.claimSummary.makeAndModel = newForm.odDetails.vehicleDetails.makeAndModel || newForm.odDetails.claimSummary.makeAndModel || "";
+      }
+
+      // 5. AUTO-FILL FROM FIRM DATA
       if (caseFirmData) {
         const cf = caseFirmData;
         newForm.letterDetails = {
@@ -370,8 +376,6 @@ export default function OdCaseEditor() {
       travelingFromTo: "",
       purposeOfTravel: "",
       accidentVersionLocationDetails: "",
-      accidentLocationLatitude: "",
-      accidentLocationLongitude: "",
       accidentDetailsAsPerDriver: "",
       accidentDetailsAsPerInsured: "",
       accidentDetailsAsPerOccupant: "",
@@ -451,7 +455,7 @@ export default function OdCaseEditor() {
     witnessDetails: [],
 
     gpsTimelineDriver: {
-      type: [],
+      persons: [],
     },
     insuredDocuments: {
       rcPhoto: [],
@@ -477,12 +481,12 @@ export default function OdCaseEditor() {
     {
       key: "odDetails.claimSummary",
       api: "od-details/claim-summary",
-      readonlyFields: ["vehicleNo", "insuredName", "insuredContactNo", "chassisNo", "engineNo", "claimNo"]
+      readonlyFields: ["vehicleNo", "insuredName", "insuredContactNo", "chassisNo", "engineNo", "claimNo", "makeAndModel"]
     },
     {
       key: "odDetails.insuredDetails",
       api: "od-details/insured-details",
-      readonlyFields: ["nameOfInsured", "addressAsPerRC"]
+      readonlyFields: ["nameOfInsured"]
     },
     {
       key: "odDetails.vehicleDetails",
@@ -533,9 +537,6 @@ export default function OdCaseEditor() {
     {
       key: "gpsTimelineDriver",
       api: "gps-timeline-driver",
-      files: {
-        type: "multiple",
-      },
     },
   ];
 
@@ -586,7 +587,25 @@ export default function OdCaseEditor() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden relative">
+      {/* GLOBAL LOADING / REPAINT OVERLAY */}
+      {(!isLoading && (isFetching || isMutating > 0)) && (
+        <div className="fixed inset-0 bg-white/40 backdrop-blur-[2px] z-[9999] flex items-center justify-center pointer-events-auto">
+          <div className="bg-white border border-indigo-100 shadow-xl rounded-2xl px-6 py-4 flex items-center gap-4">
+            <div className="bg-indigo-50 p-2 rounded-full">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-800 text-base">
+                {isMutating > 0 ? "Saving Section..." : "Syncing Data..."}
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                {isMutating > 0 ? "Please wait, applying changes to server." : "Repainting latest information."}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b z-20 shadow-sm flex-none transition-all">
         <div className="w-full px-6 py-4">
@@ -656,7 +675,7 @@ export default function OdCaseEditor() {
       <div className="flex flex-1 overflow-hidden">
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 custom-scrollbar">
-          <div className="max-w-5xl mx-auto">
+          <div className="w-full">
             {/* Disclaimer / Helper Text */}
             <div className="mb-6 flex items-center justify-between">
               <p className="text-gray-600">

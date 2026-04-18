@@ -10,19 +10,29 @@ export function FieldExecutiveProvider({ children }) {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [initialized, setInitialized] = useState(false);
-    const limit = 10;
+    const [search, setSearch] = useState("");
+    const limit = 50;
 
-    const loadExecutives = async (page = currentPage) => {
+    const loadExecutives = async (page = currentPage, currentSearch = search, force = false) => {
+        // Skip if already loaded with same parameters unless forced
+        if (initialized && page === currentPage && currentSearch === search && !force) {
+            return;
+        }
+
         setLoading(true);
         try {
-            const resp = await fieldExecutiveService.getAll({ page, limit });
+            const resp = await fieldExecutiveService.getAll({ 
+              page, 
+              limit, 
+              search: currentSearch 
+            });
             setExecutives(resp.data || []);
             setTotalPages(resp.totalPages || 1);
             setTotal(resp.total || 0);
             setCurrentPage(resp.currentPage || page);
+            setSearch(currentSearch);
         } catch (err) {
             console.error("Error loading Field Executives:", err);
-            // Service layer handles the error toast
         } finally {
             setLoading(false);
             setInitialized(true);
@@ -38,33 +48,30 @@ export function FieldExecutiveProvider({ children }) {
     const addExecutive = async (data) => {
         try {
             await fieldExecutiveService.create(data);
-            // No manual success toast needed as it's in the promise
-            loadExecutives(1);
+            await loadExecutives(1, search, true);
         } catch (err) {
             console.error(err);
-            // Service handles the error toast
+            throw err;
         }
     };
 
     const updateExecutive = async (id, data) => {
         try {
             await fieldExecutiveService.update({ id, executiveData: data });
-            // No manual success toast needed
-            loadExecutives();
+            await loadExecutives(currentPage, search, true);
         } catch (err) {
             console.error(err);
-            // Service handles error toast
+            throw err;
         }
     };
 
     const deleteExecutive = async (id) => {
         try {
             await fieldExecutiveService.delete(id);
-            // No manual success toast needed
-            loadExecutives();
+            await loadExecutives(currentPage, search, true);
         } catch (err) {
             console.error(err);
-            // Service handles error toast
+            throw err;
         }
     };
 

@@ -4,8 +4,8 @@
    OD ROUTES
 --------------------------------------------------------- */
 const OD_VISIT_ROUTES = [
-  { key: "letterDetails", label: "Letter Details", icon: "Mail", endpoint: "/letter-details" },
-  { key: "reportReference", label: "Report Reference", icon: "FileText", endpoint: "/report-reference" },
+  // { key: "letterDetails", label: "Letter Details", icon: "Mail", endpoint: "/letter-details" },
+  // { key: "reportReference", label: "Report Reference", icon: "FileText", endpoint: "/report-reference" },
   { key: "meetingDetails", label: "Meeting Details", icon: "Users", endpoint: "/meeting-details" },
   { key: "policyBreakInDetails", label: "Policy Break-In Details", icon: "ShieldAlert", endpoint: "/policy-break-in-details" },
   { key: "driverDetails", label: "Driver Details", icon: "User", endpoint: "/driver-details" },

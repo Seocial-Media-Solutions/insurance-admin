@@ -2,6 +2,7 @@
 // utils/caseFirmForm.utils.js
 // Utility helpers for the CaseFirm Add / Edit form
 // ============================================================
+import { INDIAN_STATES, STATE_CITIES } from "./indianStates";
 
 // ----------------------------------------------------------
 // 1. DEFAULT (empty) form state
@@ -24,17 +25,27 @@ export const CASE_FIRM_INITIAL_STATE = {
 // 2. Map an existing firm document to form state
 //    Used by the Edit handler.
 // ----------------------------------------------------------
-export const firmToFormData = (firm) => ({
-    recipientCompany: firm.recipientCompany || "",
-    city: firm.city || " ",
-    state: firm.state || "Rajasthan",
-    regionalOffice: firm.regionalOffice || "",
-    operationType: firm.operationType || "",
-    financialYear: firm.financialYear || "",
-    recipientDesignation: firm.recipientDesignation || "",
-    recipientDepartment: firm.recipientDepartment || "",
-    recipientAddress: firm.recipientAddress || "",
-});
+export const firmToFormData = (firm) => {
+    // Backend saves city/state as uppercase. Must match to exact Title Case option.
+    const dbState = firm.state || "";
+    const dbCity = firm.city || "";
+
+    const matchedState = INDIAN_STATES.find(s => s.toLowerCase() === dbState.toLowerCase()) || "Rajasthan";
+    const possibleCities = STATE_CITIES[matchedState] || [];
+    const matchedCity = possibleCities.find(c => c.toLowerCase() === dbCity.toLowerCase()) || "";
+
+    return {
+        recipientCompany: firm.recipientCompany || "",
+        city: matchedCity,
+        state: matchedState,
+        regionalOffice: firm.regionalOffice || "",
+        operationType: firm.operationType || "",
+        financialYear: firm.financialYear || "",
+        recipientDesignation: firm.recipientDesignation || "",
+        recipientDepartment: firm.recipientDepartment || "",
+        recipientAddress: firm.recipientAddress || "",
+    };
+};
 
 // ----------------------------------------------------------
 // 3. Field configuration array
@@ -60,17 +71,15 @@ export const CASE_FIRM_FIELDS = [
         required: true,
     },
     {
-        key: "city",
-        label: "City",
-        type: "text",
-        placeholder: "Enter city",
+        key: "state",
+        label: "State",
+        type: "select",
         required: true,
     },
     {
-        key: "state",
-        label: "State",
-        type: "text",
-        placeholder: "Enter State (Ex: Rajasthan)",
+        key: "city",
+        label: "City",
+        type: "select",
         required: true,
     },
     {

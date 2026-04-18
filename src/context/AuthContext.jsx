@@ -5,9 +5,17 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  /*
+  const [user, setUser] = useState({
+    _id: "dummy_id",
+    username: "Admin (Bypassed)",
+    role: "SUPER_ADMIN"
+  });
+  */
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if user is already logged in
     const checkAuth = async () => {
       try {
         const data = await authService.getCurrentUser();
@@ -15,7 +23,6 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
         }
       } catch (error) {
-        console.error("Auth check failed", error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -26,6 +33,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     const data = await authService.login(credentials);
+    if (data.success && !data.otpRequired) {
+      setUser(data.user);
+    }
     return data; // Return data so caller can check if otpRequired
   };
 

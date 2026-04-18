@@ -68,18 +68,21 @@ export default function CaseManagement() {
 
   return (
     <div className="max-w-full mx-auto space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Case Management</h1>
-        <Link
-          to="/cases/addcase"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
-        >
-          <Plus size={18} /> Add New Case
-        </Link>
-      </div>
+     <div className="flex justify-between items-center">
+  <Link
+    to="/cases/addcase"
+    className="group fixed top-31 right-8 flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
+  >
+    <Plus size={18} />
+
+    <span className="hidden group-hover:inline text-lg font-semibold">
+      Add New Case
+    </span>
+  </Link>
+</div>
 
       {/* Filter & Export */}
-      <div className="bg-white shadow rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-center">
+      {/* <div className="bg-white shadow rounded-lg p-4 flex flex-col sm:flex-row gap-4 items-center">
         <div className="flex items-center gap-2">
           <Filter size={18} className="text-gray-400" />
           <select
@@ -98,7 +101,7 @@ export default function CaseManagement() {
         >
           <Download size={18} /> Export CSV
         </button>
-      </div>
+      </div> */}
 
       {/* Table */}
       <CaseTable

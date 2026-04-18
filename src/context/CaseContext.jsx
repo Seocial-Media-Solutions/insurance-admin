@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { caseService } from '../services/caseService';
 
@@ -11,7 +11,34 @@ export function CaseProvider({ children }) {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [initialized, setInitialized] = useState(false);
+    const [dashboardStats, setDashboardStats] = useState({
+        total: 0,
+        paid: 0,
+        pending: 0,
+        rejected: 0,
+        caseFirms: 0,
+        fieldExecutives: 0,
+        assignments: 0,
+        odCases: 0,
+        theftCases: 0
+    });
+    const [statsLoading, setStatsLoading] = useState(false);
     const limit = 10;
+
+    const loadStats = async (force = false) => {
+        if (dashboardStats.total > 0 && !force) return;
+        setStatsLoading(true);
+        try {
+            const resp = await caseService.getStats();
+            if (resp && resp.success) {
+                setDashboardStats(resp.data);
+            }
+        } catch (err) {
+            console.error("Error loading stats:", err);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
 
     const loadCases = async (page = currentPage) => {
         setLoading(true);
@@ -84,7 +111,7 @@ export function CaseProvider({ children }) {
         // Initial load removed here and handled by hook
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         cases,
         loading,
         currentPage,
@@ -97,8 +124,14 @@ export function CaseProvider({ children }) {
         updateExistingCase,
         removeCase,
         getCaseById,
-        initialized
-    };
+        initialized,
+        dashboardStats,
+        statsLoading,
+        loadStats
+    }), [
+        cases, loading, currentPage, totalPages, total, initialized,
+        dashboardStats, statsLoading // loadCases and others are stable functions but good to include if not wrapped in useCallback
+    ]);
 
     return (
         <CaseContext.Provider value={value}>
@@ -118,7 +151,7 @@ export function useCases() {
         if (!context.initialized && !context.loading) {
             context.loadCases(1);
         }
-    }, [context]);
+    }, [context.initialized, context.loading, context.loadCases]);
 
     return context;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useUpdateTheftCaseSection } from "../../../../hooks/useTheftCases"; // Use correct hook
-import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../../utils/odCaseHelpers";
+import { formatLabel, getInputType, getNestedValue, setNestedValue, cleanNumericInput } from "../../../../utils/odCaseHelpers";
 import TheftImageGallery from "./TheftImageGallery";
 import TheftDocumentUpload from "./TheftDocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";
@@ -314,7 +314,13 @@ function SectionUnit({
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"
                                                     }`}
                                                 value={currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || ""}
-                                                onChange={(e) => updateField(field, e.target.value)}
+                                                onChange={(e) => {
+                                                    let val = e.target.value;
+                                                    if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
+                                                        val = cleanNumericInput(val);
+                                                    }
+                                                    updateField(field, val);
+                                                }}
                                                 placeholder={type === 'date' ? '' : `Enter ${formatLabel(field)}`}
                                             />
                                         )}

@@ -95,7 +95,7 @@ export default function CaseList() {
     try {
       // Fetch paginated investigation reports which represent all cases
       const res = await investigationService.getAll({ page, limit: 15 });
-      const reportsData = res.data?.caseDetails || res.data || [];
+      const reportsData = res.data || [];
       setData(reportsData);
       setTotalPages(res.totalPages || 1);
     } catch (error) {
@@ -207,7 +207,7 @@ export default function CaseList() {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Case Management</h1>
+           
             <p className="text-gray-500 text-sm mt-1">
               Manage / Edit your cases
             </p>
@@ -251,10 +251,23 @@ export default function CaseList() {
                         key={item._id}
                         className="hover:bg-gray-50 transition-colors group cursor-pointer"
                         onClick={() => {
-                          const route = "OD" === item.caseType
+                          if (!item.caseTypeId) {
+                            toast.error("First assign assignment for this case", {
+                              icon: "⚠️",
+                              duration: 4000
+                            });
+                            return;
+                          }
+
+                          const route = item.caseType === "OD"
                             ? `od-case/edit/${item.caseTypeId}`
                             : `theft-case/edit/${item.caseTypeId}`;
-                          navigate(route, { state: { parentCaseData: item.caseId } });
+                          
+                          navigate(route, { 
+                            state: { 
+                              parentCaseData: item.caseId 
+                            } 
+                          });
                         }}
                       >
                         <td className="px-6 py-4 text-gray-400 font-mono text-[10px] w-16">

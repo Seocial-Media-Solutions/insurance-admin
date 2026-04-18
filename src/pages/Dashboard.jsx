@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useCases } from "../context/useCases";
-import { caseService } from "../services/caseService";
+import { useAuth } from "../context/AuthContext";
+import { useCases } from "../context/CaseContext";
 import {
   FileText,
-  BarChart3,
   Briefcase,
   TrendingUp,
   CheckCircle,
@@ -13,224 +12,215 @@ import {
   ArrowRight,
   Activity,
   User,
+  Users,
+  Building2,
+  ShieldCheck,
+  Car,
+  AlertOctagon,
+  ClipboardList
 } from "lucide-react";
 
 function Dashboard() {
   const [time, setTime] = useState(new Date());
   const [mounted, setMounted] = useState(false);
-  const { loading: casesLoading } = useCases();
-  const [dashboardStats, setDashboardStats] = useState({
-    total: 0,
-    paid: 0,
-    pending: 0,
-    rejected: 0
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
+  const { user } = useAuth();
+  const { dashboardStats, statsLoading, loadStats } = useCases();
 
   useEffect(() => {
     setMounted(true);
     const timer = setInterval(() => setTime(new Date()), 1000);
-
-    const fetchStats = async () => {
-      try {
-        setStatsLoading(true);
-        const response = await caseService.getStats();
-        if (response && response.success) {
-          setDashboardStats(response.data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch dashboard stats", err);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-    fetchStats();
+    
+    // Use the context method to load stats (it handles caching)
+    loadStats();
 
     return () => clearInterval(timer);
   }, []);
-
-  const greeting = () => {
-    const hour = time.getHours();
-    if (hour < 12) return "Good Morning";
-    if (hour < 17) return "Good Afternoon";
-    return "Good Evening";
-  };
 
   const features = [
     {
       to: "/cases",
       icon: FileText,
       title: "Case Management",
-      description: "Register, edit, and track all insurance claim cases in one place",
+      description: "Register and track all insurance claim cases",
+      color: "bg-black"
     },
     {
-      to: "/analytics",
-      icon: BarChart3,
-      title: "Analytics",
-      description: "View detailed statistics and insights about your cases",
+      to: "/case",
+      icon: Car,
+      title: "Active Cases",
+      description: "Detailed OD and Theft case management and editors",
+      color: "bg-black"
+    },
+    {
+      to: "/casefirm",
+      icon: Building2,
+      title: "Case Firms",
+      description: "Manage insurance companies and corporate clients",
+      color: "bg-black"
     },
     {
       to: "/field-executives",
-      icon: User,
-      title: "Field Executive",
-      description: "Manage field executives",
+      icon: Users,
+      title: "Field Executives",
+      description: "Manage and track field investigation staff",
+      color: "bg-black"
     },
     {
       to: "/cases/assignments",
-      icon: User,
+      icon: ClipboardList,
       title: "Assignments",
-      description: "Manage case assignments",
-    },
-    {
-      to: "/investigations",
-      icon: User,
-      title: "Investigations",
-      description: "Manage cases investigations",
+      description: "Assign and monitor cases to field executives",
+      color: "bg-black"
     },
   ];
 
-  const stats = [
-    { value: dashboardStats.total, label: "Total Cases", icon: TrendingUp },
-    { value: dashboardStats.paid, label: "Paid Cases", icon: CheckCircle },
-    { value: dashboardStats.pending, label: "Pending Cases", icon: Clock },
-    { value: dashboardStats.rejected, label: "Rejected Cases", icon: XCircle },
+  // Add Admin specific feature
+ 
+  const primaryStats = [
+    { value: dashboardStats.total, label: "Total Cases", icon: TrendingUp, color: "#000000ff", to: "/cases" },
+    { value: dashboardStats.odCases, label: "OD Cases", icon: Car, color: "#000000ff", to: "/case" },
+    { value: dashboardStats.theftCases, label: "Theft Cases", icon: AlertOctagon, color: "#000000ff", to: "/case" },
+    { value: dashboardStats.paid, label: "Paid Cases", icon: CheckCircle, color: "#000000ff", to: "/cases" },
+  ];
+
+  const secondaryStats = [
+    { value: dashboardStats.caseFirms, label: "Case Firms", icon: Building2, to: "/casefirm" },
+    { value: dashboardStats.fieldExecutives, label: "Field Executives", icon: Users, to: "/field-executives" },
+    { value: dashboardStats.assignments, label: "Assignments", icon: ClipboardList, to: "/cases/assignments" },
+    { value: dashboardStats.pending, label: "Pending Review", icon: Clock, to: "/cases" },
   ];
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden"
+      className="min-h-screen relative overflow-hidden pb-12"
       style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
     >
-
+      {/* Premium Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] rounded-full bg-black/5 blur-[120px] animate-pulse"></div>
+        <div className="absolute top-[20%] -right-[5%] w-[30%] h-[30%] rounded-full bg-black/5 blur-[100px] animate-pulse delay-700"></div>
+        <div className="absolute -bottom-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-black/5 blur-[110px] animate-pulse delay-1000"></div>
+      </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Header */}
         <div
-          className={`mb-12 transition-all duration-700 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
+          className={`mb-10 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
             }`}
         >
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: "var(--primary)" }}
-                >
-                  <Briefcase className="w-6 h-6" style={{ color: "white" }} />
-                </div>
-                <h1 className="text-4xl sm:text-5xl font-bold">{greeting()}!</h1>
-              </div>
-              <p style={{ color: "var(--secondary)" }}>
-                {time.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <div
-                className="rounded-xl shadow-lg px-6 py-3 border"
-                style={{
-                  backgroundColor: "var(--card)",
-                  borderColor: "var(--border)",
-                }}
-              >
-                <p
-                  className="text-2xl font-bold font-mono"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  {time.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
+          
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            {stats.map((stat, index) => {
+          {/* Primary Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {primaryStats.map((stat, index) => {
               const IconComponent = stat.icon;
               return (
                 <Link
-                  to="/cases"
+                  to={stat.to}
                   key={index}
-                  className="rounded-xl shadow-lg border p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group animate-fadeInUp"
+                  className="rounded-[2.5rem] shadow-xl border p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group overflow-hidden relative bg-white/60 backdrop-blur-sm"
                   style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "var(--border)",
-                    animationDelay: `${index * 100}ms`,
+                    borderColor: "rgba(229, 231, 235, 0.5)",
+                    animationDelay: `${index * 150}ms`,
                   }}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <IconComponent
-                      className="w-8 h-8 transition-transform duration-300 group-hover:scale-125"
-                      style={{ color: "var(--primary)" }}
-                    />
+                  <div 
+                    className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-150 transition-all duration-1000"
+                    style={{ color: stat.color }}
+                  >
+                    <IconComponent size={128} />
+                  </div>
+                  
+                  <div className="flex items-center justify-between mb-6 relative z-10">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110"
+                      style={{ background: `linear-gradient(135deg, ${stat.color} 0%, ${stat.color}dd 100%)`, boxShadow: `0 10px 20px -5px ${stat.color}44` }}
+                    >
+                      <IconComponent
+                        size={28}
+                        className="text-white"
+                      />
+                    </div>
                     <div
-                      className="text-3xl font-bold transition-transform duration-300 group-hover:scale-110"
-                      style={{ color: "var(--primary)" }}
+                      className="text-5xl font-black tabular-nums tracking-tighter"
+                      style={{ color: "#111827" }}
                     >
                       {statsLoading ? (
-                        <div className="w-8 h-8 border-2 border-gray-300 rounded-full animate-spin"></div>
+                        <div className="w-10 h-10 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin"></div>
                       ) : (
                         stat.value
                       )}
                     </div>
                   </div>
-                  <p style={{ color: "var(--secondary)" }}>{stat.label}</p>
+                  <div>
+                    <p className="font-extrabold text-xl text-gray-900 tracking-tight">{stat.label}</p>
+                    <div className="w-8 h-1 bg-gray-100 rounded-full mt-2 group-hover:w-16 transition-all duration-500" style={{ backgroundColor: `${stat.color}44` }}></div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Secondary Stats Strip */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {secondaryStats.map((stat, index) => {
+              const IconComponent = stat.icon;
+              return (
+                <Link
+                  to={stat.to}
+                  key={index}
+                  className="rounded-2xl border border-white/40 p-5 hover:border-blue-400/50 hover:bg-white/80 transition-all duration-300 flex items-center gap-5 shadow-sm hover:shadow-md bg-white/30 backdrop-blur-[2px]"
+                >
+                  <div className="p-3 rounded-xl bg-gray-50 group-hover:bg-blue-50 transition-colors shadow-inner">
+                    <IconComponent size={22} className="text-gray-700" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">
+                      {stat.label}
+                    </p>
+                    <p className="text-2xl font-black tabular-nums text-gray-900">
+                      {statsLoading ? "•••" : stat.value}
+                    </p>
+                  </div>
                 </Link>
               );
             })}
           </div>
         </div>
 
-        {/* Features */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <span
-              className="w-1 h-8 rounded-full"
-              style={{ backgroundColor: "var(--primary)" }}
-            ></span>
-            Features & Tools
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Features Control Panel */}
+        <div className="mb-16">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const IconComponent = feature.icon;
               return (
                 <Link
                   key={index}
                   to={feature.to}
-                  className="rounded-2xl shadow-xl border p-6 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden animate-fadeInUp"
-                  style={{
-                    backgroundColor: "var(--card)",
-                    borderColor: "var(--border)",
-                    animationDelay: `${(index + 4) * 100}ms`,
-                  }}
+                  className="rounded-[2.5rem] shadow-2xl border border-white/10 p-10 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] hover:-translate-y-3 transition-all duration-500 group relative overflow-hidden bg-white"
                 >
                   <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300"
-                    style={{ backgroundColor: "var(--primary)" }}
+                    className={`absolute -bottom-10 -right-10 w-48 h-48 rounded-full opacity-[0.03] group-hover:scale-150 transition-transform duration-1000 ${feature.color}`}
                   ></div>
+                  
                   <div className="relative z-10">
                     <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-lg"
-                      style={{ backgroundColor: "var(--primary)" }}
+                      className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-2xl ${feature.color} text-white`}
                     >
-                      <IconComponent className="w-8 h-8" style={{ color: "white" }} />
+                      <IconComponent size={32} />
                     </div>
-                    <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                    <p style={{ color: "var(--secondary)" }}>{feature.description}</p>
+                    <h3 className="text-3xl font-black mb-3 group-hover:text-blue-600 transition-colors tracking-tighter text-gray-900">
+                      {feature.title}
+                    </h3>
+                    <p className="mb-8 font-bold text-lg leading-relaxed text-gray-500 opacity-80 tracking-tight">
+                      {feature.description}
+                    </p>
                     <div
-                      className="flex items-center font-semibold group-hover:gap-3 transition-all duration-300"
-                      style={{ color: "var(--primary)" }}
+                      className="flex items-center font-black text-xs tracking-[0.2em] uppercase group-hover:gap-6 transition-all duration-500 text-gray-900"
                     >
-                      <span>Get Started</span>
-                      <ArrowRight className="w-4 h-4 transform group-hover:translate-x-2 transition-transform duration-300" />
+                      <span>Initialize Module</span>
+                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-3 transition-transform duration-500" />
                     </div>
                   </div>
                 </Link>
@@ -239,50 +229,22 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Activity Section */}
-        <div
-          className="rounded-2xl shadow-xl border p-8 hover:shadow-2xl transition-all duration-300"
-          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-        >
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <span
-              className="w-1 h-8 rounded-full"
-              style={{ backgroundColor: "var(--accent)" }}
-            ></span>
-            Recent Activity
-          </h2>
-          <div className="text-center py-12">
-            <div
-              className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-4 animate-bounce-slow"
-              style={{ backgroundColor: "var(--border)" }}
-            >
-              <Activity className="w-12 h-12" style={{ color: "var(--secondary)" }} />
-            </div>
-            <p style={{ color: "var(--secondary)" }}>No recent activity</p>
-            <p style={{ color: "var(--secondary)", opacity: 0.7 }}>
-              Your activity will appear here
-            </p>
-          </div>
-        </div>
+   
       </div>
 
       {/* Animations */}
       <style>{`
         @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
+          from { opacity: 0; transform: translateY(40px); }
           to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.4; }
         }
         @keyframes bounceSlow {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          50% { transform: translateY(-20px); }
         }
-        .animate-fadeInUp { animation: fadeInUp 0.6s ease-out backwards; }
-        .delay-animation { animation: pulse 4s ease-in-out infinite; animation-delay: 1s; }
-        .animate-bounce-slow { animation: bounceSlow 3s ease-in-out infinite; }
+        .animate-bounce-slow { animation: bounceSlow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .delay-700 { animation-delay: 700ms; }
+        .delay-1000 { animation-delay: 1000ms; }
       `}</style>
     </div>
   );

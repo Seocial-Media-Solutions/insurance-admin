@@ -77,12 +77,12 @@ export default function CaseForm({
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       const data = { ...initialData };
-      
+
       // Map caseFirmId (populated or ID) correctly
       if (data.caseFirmId) {
         const firmId = typeof data.caseFirmId === 'object' ? data.caseFirmId._id : data.caseFirmId;
         data.caseFirmId = firmId;
-        
+
         // Sync City/State from the firm if it's already populated
         if (typeof initialData.caseFirmId === 'object') {
           if (initialData.caseFirmId.city) setCity(initialData.caseFirmId.city);
@@ -114,7 +114,7 @@ export default function CaseForm({
   useEffect(() => {
     const fetchFirmById = async () => {
       if (!form.caseFirmId || form.ourFileNo) return;
-      
+
       // Check if already in options
       if (caseFirmOptions.some(f => f._id === form.caseFirmId)) return;
 
@@ -122,8 +122,8 @@ export default function CaseForm({
         const res = await fetch(`${API}/casefirm/${form.caseFirmId}`);
         const data = await res.json();
         if (data.success && data.data) {
-          setForm(prev => ({ 
-            ...prev, 
+          setForm(prev => ({
+            ...prev,
             ourFileNo: data.data.code || "",
             recordNumber: data.data.recordNumber || prev.recordNumber
           }));
@@ -209,6 +209,9 @@ export default function CaseForm({
     e.preventDefault();
     if (!form.caseType) return alert("Select case type");
     if (!form.recordNumber) return alert("Select CaseFirm");
+    if (form.contactNo && form.contactNo.length < 10) {
+      return alert("Contact number must be exactly 10 digits");
+    }
 
     // Compose policyPeriod as "startDate to endDate" string
     const composedPolicyPeriod =
@@ -312,6 +315,27 @@ export default function CaseForm({
                 </select>
               </div>
             </div>
+            {/* Case Type */}
+            <div>
+              <label className="block mb-1">Case Type</label>
+              <select
+                name="caseType"
+                value={form.caseType}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Clear firm selection when case type changes
+                  setForm(prev => ({ ...prev, ourFileNoId: "", ourFileNo: "", recordNumber: 0 }));
+                }}
+                className="w-full p-3 border rounded-md"
+              >
+                <option value="">Select Case Type</option>
+                <option value="OD">OD (Own Damage)</option>
+                <option value="THEFT">THEFT</option>
+                <option value="TP">TP</option>
+                <option value="FIRE">Fire</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
 
             {/* CaseFirm Dropdown */}
             <label className="block text-sm font-bold mb-2.5">
@@ -354,27 +378,6 @@ export default function CaseForm({
               <div className="space-y-8">
                 <h3 className="text-lg font-bold">Case Information</h3>
 
-                {/* Case Type */}
-                <div>
-                  <label className="block mb-1">Case Type</label>
-                  <select
-                    name="caseType"
-                    value={form.caseType}
-                    onChange={(e) => {
-                      handleChange(e);
-                      // Clear firm selection when case type changes
-                      setForm(prev => ({ ...prev, ourFileNoId: "", ourFileNo: "", recordNumber: 0 }));
-                    }}
-                    className="w-full p-3 border rounded-md"
-                  >
-                    <option value="">Select Case Type</option>
-                    <option value="OD">OD (Own Damage)</option>
-                    <option value="THEFT">THEFT</option>
-                    <option value="TP">TP</option>
-                    <option value="FIRE">Fire</option>
-                    <option value="OTHER">Other</option>
-                  </select>
-                </div>
 
                 {/* Our File No (Generated) */}
                 <div>
@@ -453,18 +456,40 @@ export default function CaseForm({
                 {/* Policy Period — Two Date Pickers */}
                 <div>
                   <label className="block mb-1">Policy Period</label>
+
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        Start Date
+                      </label>
                       <input
                         type="date"
                         value={policyPeriodStart}
-                        onChange={(e) => setPolicyPeriodStart(e.target.value)}
+                        onChange={(e) => {
+                          const start = e.target.value;
+
+                          setPolicyPeriodStart(start);
+
+                          if (!start) {
+                            setPolicyPeriodEnd("");
+                            return;
+                          }
+
+                          const date = new Date(start);
+                          date.setFullYear(date.getFullYear() + 1);
+
+                          const endDate = date.toISOString().split("T")[0];
+
+                          setPolicyPeriodEnd(endDate);
+                        }}
                         className="w-full p-3 border rounded-md"
                       />
                     </div>
+
                     <div>
-                      <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        End Date
+                      </label>
                       <input
                         type="date"
                         value={policyPeriodEnd}
@@ -473,9 +498,13 @@ export default function CaseForm({
                       />
                     </div>
                   </div>
+
                   {policyPeriodStart && policyPeriodEnd && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Will be saved as: <strong>{policyPeriodStart} to {policyPeriodEnd}</strong>
+                      Will be saved as:{" "}
+                      <strong>
+                        {policyPeriodStart} to {policyPeriodEnd}
+                      </strong>
                     </p>
                   )}
                 </div>
@@ -491,7 +520,7 @@ export default function CaseForm({
                   "chassisNo",
                   "dateOfLoss",
                   "nameOfInsured",
-                  "addressOfInsured",
+                 
                 ].map((key) => (
                   <div key={key}>
                     <label className="block mb-1">{formatLabel(key)}</label>
@@ -504,19 +533,32 @@ export default function CaseForm({
                     />
                   </div>
                 ))}
-
+                  <div >
+                    <label className="block mb-1">addressOfInsured</label>
+                    <textarea
+                      type={"textArea"}
+                      name={"addressOfInsured"}
+                      value={form["addressOfInsured"]}
+                      onChange={handleChange} 
+                      className="w-full p-3 border rounded-md"
+                    />
+                  </div>
                 {/* Contact No — input type number, passed as String */}
                 <div>
                   <label className="block mb-1">Contact No</label>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="numeric"
                     name="contactNo"
                     value={form.contactNo}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, contactNo: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                      setForm((prev) => ({ ...prev, contactNo: val }));
+                    }}
                     className="w-full p-3 border rounded-md"
                     placeholder="Enter Contact Number"
+                    minLength="10"
+                    maxLength="10"
                   />
                 </div>
               </div>

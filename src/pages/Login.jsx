@@ -30,11 +30,16 @@ const LoginPage = () => {
     setIsSubmitting(true);
     try {
       const response = await login(data);
-      if (response.success && response.otpRequired) {
-        setOtpRequired(true);
-        setOtpToken(response.otpToken);
-        resetField('otp');
-        toast.success('OTP sent to your email');
+      if (response.success) {
+        if (response.otpRequired) {
+          setOtpRequired(true);
+          setOtpToken(response.otpToken);
+          resetField('otp');
+          toast.success('OTP sent to your email');
+        } else {
+          toast.success('Welcome back!');
+          navigate('/');
+        }
       } else {
         toast.error(response.message || 'Login failed');
       }
@@ -94,7 +99,7 @@ const LoginPage = () => {
               {otpRequired ? 'Verify Access' : 'Portal Login'}
             </h1>
             <p className="text-gray-500 font-medium">
-              {otpRequired ? 'Verification code sent to email' : 'Management & Administrative Access'}
+              {otpRequired ? 'Verification code sent to email ' : 'Management & Administrative Access'}
             </p>
           </div>
 
@@ -163,7 +168,7 @@ const LoginPage = () => {
           ) : (
             <form onSubmit={handleSubmit(handleVerifyOTP)} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Verification Code</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Verification Code (otp will expire in 60 seconds)</label>
                 
                 {/* Dummy input to catch browser autofill (hidden from screen readers as well) */}
                 <input type="text" style={{ display: 'none' }} aria-hidden="true" autoComplete="username" />

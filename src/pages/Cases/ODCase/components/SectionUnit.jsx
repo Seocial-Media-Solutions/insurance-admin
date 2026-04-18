@@ -1,12 +1,14 @@
-import React, { useState } from "react";
-import { useUpdateODCaseSection } from "../../../../hooks/useODCases";
-import { formatLabel, getInputType, getNestedValue, setNestedValue } from "../../../../utils/odCaseHelpers";
+import React, { useState, useRef } from "react";
+import { useUpdateODCaseSection, useODCase } from "../../../../hooks/useODCases";
+import { odCaseApi } from "../../../../services/api";
+import { formatLabel, getInputType, getNestedValue, setNestedValue, cleanNumericInput } from "../../../../utils/odCaseHelpers";
 import ImageGallery from "./ImageGallery";
 import DocumentUpload from "./DocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";
 import { toast } from "react-hot-toast";
-import { ChevronDown, ChevronUp, Trash2, CreditCard, FileText, Shield } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, CreditCard, FileText, Shield ,Loader2 } from "lucide-react";
 import { INDIAN_STATES, STATE_CITIES } from "../../../../utils/indianStates";
+import { confirmToast } from "../../../../components/Ui/ConfirmToast";
 
 function SectionUnit({
     id,
@@ -25,9 +27,10 @@ function SectionUnit({
 }) {
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
-
-    // Use TanStack Query mutation
-    const { mutateAsync: updateSection, isLoading: loading } = useUpdateODCaseSection({
+    const [isSaving, setIsSaving] = useState(false);
+    const submittingRef = useRef(false);
+    // Use TanStack Query mutation (v5: isLoading → isPending)
+    const { mutateAsync: updateSection, isPending: mutationPending } = useUpdateODCaseSection({
         onSuccess: () => {
             setFileMetadata({}); // Clear metadata on success
         },
@@ -35,6 +38,21 @@ function SectionUnit({
             // Suppress default error toast, handled by toast.promise
         }
     });
+
+    // Combined loading flag: mutation in-flight OR local submit guard
+    const loading = mutationPending || isSaving;
+
+    // Wrap handleSubmit calls so isSaving is always toggled
+    const withSaving = async (fn) => {
+        if (isSaving) return;
+        setIsSaving(true);
+        try {
+            return await fn();
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     const handleRefreshFromFirm = () => {
         if (!firmData) {
@@ -77,16 +95,88 @@ function SectionUnit({
         return true;
     };
 
+
+    //     if (!validate()) {
+    //         toast.error("Please fill all required fields in this section.");
+    //         return;
+    //     }
+
+    //     // Clone data to avoid mutating state
+    //     const data = { ...getNestedValue(form, sectionKey) };
+
+    //     // Merge default values if missing
+    //     if (defaultFieldValues) {
+    //         Object.keys(defaultFieldValues).forEach(key => {
+    //             if (!data[key]) {
+    //                 data[key] = defaultFieldValues[key];
+    //             }
+    //         });
+    //     }
+
+    //     const hasFiles = Object.keys(fileFields).length > 0;
+
+    //     let formData;
+
+    //     if (hasFiles) {
+    //         const fd = new FormData();
+
+    //         // Non-file fields
+    //         Object.entries(data).forEach(([key, val]) => {
+    //             if (!fileFields[key]) {
+    //                 // Handle nested objects and arrays (like jobCardDetails, vehicleStatusAfter24Hrs, towingVendorDetails)
+    //                 if (val && typeof val === 'object') {
+    //                     fd.append(key, JSON.stringify(val));
+    //                 } else {
+    //                     fd.append(key, val ?? "");
+    //                 }
+    //             }
+    //         });
+
+    //         // File fields
+    //         Object.entries(data).forEach(([key, val]) => {
+    //             if (!fileFields[key]) return;
+    //             if (!val) return; // Skip empty files
+
+    //             const fieldName = `${sectionKey}.${key}`;
+
+    //             if (Array.isArray(val)) {
+    //                 val.forEach((f) => fd.append(fieldName, f));
+    //             } else {
+    //                 fd.append(fieldName, val);
+    //             }
+    //         });
+
+    //         // Append metadata if available
+    //         if (Object.keys(fileMetadata).length > 0) {
+    //             fd.append('imageMetadata', JSON.stringify(fileMetadata));
+    //         }
+
+    //         formData = fd;
+    //     } else {
+    //         formData = data;
+    //     }
+
+    //     // Use toast.promise with mutateAsync
+    //     await toast.promise(
+    //         updateSection({
+    //             caseId,
+    //             sectionPath: apiPath,
+    //             formData,
+    //         }),
+    //         {
+    //             loading: "Saving...",
+    //             success: "Section saved successfully!",
+    //             error: (err) => err.response?.data?.message || err.message || "Save failed",
+    //         }
+    //     );
+    // };
     const handleSubmit = async () => {
         if (!validate()) {
-            toast.error("Please fill all required fields in this section.");
-            return;
+            throw new Error("Please fill all required fields in this section.");
         }
 
-        // Clone data to avoid mutating state
         const data = { ...getNestedValue(form, sectionKey) };
 
-        // Merge default values if missing
         if (defaultFieldValues) {
             Object.keys(defaultFieldValues).forEach(key => {
                 if (!data[key]) {
@@ -102,10 +192,8 @@ function SectionUnit({
         if (hasFiles) {
             const fd = new FormData();
 
-            // Non-file fields
             Object.entries(data).forEach(([key, val]) => {
                 if (!fileFields[key]) {
-                    // Handle nested objects and arrays (like jobCardDetails, vehicleStatusAfter24Hrs, towingVendorDetails)
                     if (val && typeof val === 'object') {
                         fd.append(key, JSON.stringify(val));
                     } else {
@@ -114,21 +202,25 @@ function SectionUnit({
                 }
             });
 
-            // File fields
             Object.entries(data).forEach(([key, val]) => {
                 if (!fileFields[key]) return;
-                if (!val) return; // Skip empty files
+                if (!val) return;
 
                 const fieldName = `${sectionKey}.${key}`;
 
                 if (Array.isArray(val)) {
-                    val.forEach((f) => fd.append(fieldName, f));
+                    val.forEach((f) => {
+                        if (f instanceof File) {
+                            fd.append(fieldName, f);
+                        }
+                    });
                 } else {
-                    fd.append(fieldName, val);
+                    if (val instanceof File) {
+                        fd.append(fieldName, val);
+                    }
                 }
             });
 
-            // Append metadata if available
             if (Object.keys(fileMetadata).length > 0) {
                 fd.append('imageMetadata', JSON.stringify(fileMetadata));
             }
@@ -138,20 +230,119 @@ function SectionUnit({
             formData = data;
         }
 
-        // Use toast.promise with mutateAsync
-        await toast.promise(
-            updateSection({
-                caseId,
-                sectionPath: apiPath,
-                formData,
-            }),
-            {
-                loading: "Saving...",
-                success: "Section saved successfully!",
-                error: (err) => err.response?.data?.message || err.message || "Save failed",
+        // ✅ Return promise for toast support, sync state in .then
+        return updateSection({
+            caseId,
+            sectionPath: apiPath,
+            formData,
+        }).then(res => {
+            if (res?.success && res?.data) {
+                setForm(prev => {
+                    const newForm = { ...prev };
+                    return setNestedValue(newForm, sectionKey, res.data);
+                });
             }
-        );
+            return res;
+        });
     };
+    // Custom Logic for Meeting Details (Manual Form)
+    if (sectionKey === "meetingDetails") {
+        const meetingFields = [
+            { key: "insuredIntroduction", label: "Insured Introduction" },
+            { key: "vehicleInformation", label: "Vehicle Information" },
+            { key: "dateAndTimeOfLoss", label: "Date and Time of Loss" },
+            { key: "travelingFromTo", label: "Traveling From To" },
+            { key: "purposeOfTravel", label: "Purpose of Travel" },
+            { key: "accidentVersionLocationDetails", label: "Exact Location" },
+            { key: "accidentDetailsAsPerDriver", label: "Accident Details As Per Insured Cum Driver" },
+            { key: "accidentDetailsAsPerInsured", label: "Accident Details As Per Insured" },
+            { key: "accidentDetailsAsPerOccupant", label: "Accident Details As Per Occupant" },
+            { key: "rehabilitationDetails", label: "Rehabilitation Details" },
+            { key: "firstContactAfterAccident", label: "First Contact After Accident" },
+        ];
+
+        const currentSection = getNestedValue(form, sectionKey) || {};
+
+        return (
+            <div id={id} className={`scroll-mt-48 border rounded-xl bg-white shadow-sm mb-8 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-100' : ''}`}>
+                <div
+                    onClick={onToggle}
+                    className="w-full flex justify-between items-center p-6 bg-gray-50 rounded-t-xl border-b hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                    <div className="flex items-center gap-3">
+                        {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                        <h2 className="text-xl font-bold text-gray-800 uppercase">MEETING DETAILS</h2>
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-500 uppercase tracking-wide">
+                        {sectionKey}
+                    </span>
+                </div>
+
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="p-6 space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {meetingFields.map((f) => {
+                                const type = getInputType(f.key);
+                                const error = errors[f.key];
+                                return (
+                                    <div key={f.key} className={type === "textarea" ? "col-span-1 md:col-span-2 lg:col-span-3" : "col-span-1"}>
+                                        <label className="block">
+                                            <span className="text-sm font-semibold text-gray-700 mb-1 block">{f.label}</span>
+                                            {type === "textarea" ? (
+                                                <textarea
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${loading ? "bg-gray-50 text-gray-500" : ""}`}
+                                                    rows={3}
+                                                    disabled={loading}
+                                                    value={currentSection[f.key] || ""}
+                                                    onChange={(e) => updateField(f.key, e.target.value)}
+                                                    placeholder={`Enter ${f.label}...`}
+                                                />
+                                            ) : (
+                                                <input
+                                                    type={type}
+                                                    className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${loading ? "bg-gray-50 text-gray-500" : ""}`}
+                                                    disabled={loading}
+                                                    value={currentSection[f.key] || ""}
+                                                    onChange={(e) => updateField(f.key, e.target.value)}
+                                                    placeholder={`Enter ${f.label}`}
+                                                />
+                                            )}
+                                            {error && <span className="text-xs text-red-500 mt-1 block font-medium">{error}</span>}
+                                        </label>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <div className="p-6 bg-gray-50 border-t flex justify-end">
+                        <button
+                            onClick={() => withSaving(() => toast.promise(
+                                handleSubmit(),
+                                {
+                                    loading: "Saving meeting details...",
+                                    success: "Meeting details saved successfully!",
+                                    error: (err) => err.message || "Save failed",
+                                }
+                            ))}
+                            disabled={loading}
+                            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center ${loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        >
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </>
+                            ) : "Save Changes"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     // Custom Logic for Name of DL Holders (dlParticulars)
     if (sectionKey === "dlParticulars") {
@@ -188,14 +379,18 @@ function SectionUnit({
             updateList(newList);
         };
 
-        const handleDLSubmit = async () => {
-            await updateSection({
+        const handleDLSubmit = () => withSaving(() => toast.promise(
+            updateSection({
                 caseId,
                 sectionPath: apiPath,
                 formData: list,
-            });
-            toast.success("DL Particulars saved successfully!");
-        };
+            }),
+            {
+                loading: "Saving DL Particulars...",
+                success: "DL Particulars saved successfully!",
+                error: (err) => err.response?.data?.message || err.message || "Failed to save DL Particulars",
+            }
+        ));
 
         return (
             <div id={id} className={`scroll-mt-48 border rounded-xl bg-white shadow-sm mb-8 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-100' : ''}`}>
@@ -250,8 +445,8 @@ function SectionUnit({
                                         { key: "dlNumber", label: "DL Number" },
                                         { key: "driverDob", label: "Driver DOB", type: "date" },
                                         { key: "rtoName", label: "RTO Name" },
-                                        { key: "validityNonTransport", label: "Validity (Non-Transport)", type: "text" },
-                                        { key: "validityTransport", label: "Validity (Transport)", type: "text" },
+                                        { key: "validityNonTransport", label: "Validity (Non-Transport)", type: "date" },
+                                        { key: "validityTransport", label: "Validity (Transport)", type: "date" },
                                         { key: "driverAddress", label: "Driver Address" },
                                         { key: "dlStatus", label: "DL Status" }
                                     ].map((f) => (
@@ -275,9 +470,257 @@ function SectionUnit({
                         <button
                             onClick={handleDLSubmit}
                             disabled={loading}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50"
+                            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                         >
-                            {loading ? "Saving..." : "Save Changes"}
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </>
+                            ) : "Save Changes"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Custom Logic for GPS Timeline Driver (Persons with Images)
+    if (sectionKey === "gpsTimelineDriver") {
+        const persons = Array.isArray(fieldsObj?.persons) ? fieldsObj.persons : [];
+
+        const updatePersons = (newPersons) => {
+            const newForm = { ...form };
+            setNestedValue(newForm, sectionKey, { persons: newPersons });
+            setForm(newForm);
+        };
+
+        const addPerson = () => {
+            updatePersons([...persons, { personName: "", images: [] }]);
+        };
+
+        const removePerson = (idx) => {
+            updatePersons(persons.filter((_, i) => i !== idx));
+        };
+
+        const updatePersonName = (idx, name) => {
+            const newPersons = [...persons];
+            newPersons[idx] = { ...newPersons[idx], personName: name };
+            updatePersons(newPersons);
+        };
+
+        const handleDeletePerson = (idx) => {
+            const name = persons[idx]?.personName || `Person ${idx + 1}`;
+            confirmToast(
+                `Are you sure you want to delete ${name} and all their data?`,
+                async () => {
+                    // If the index exists in the last-synced data, it's in the DB
+                    const isSavedInDb = idx < (fieldsObj?.persons?.length || 0);
+
+                    if (isSavedInDb) {
+                        await odCaseApi.deleteAllGpsPersonImages({ caseId, personIndex: idx });
+                    }
+
+                    // Remove locally
+                    removePerson(idx);
+                    toast.success("Person deleted successfully!");
+                }
+            );
+        };
+
+        const updatePersonImages = (idx, images) => {
+            const newPersons = [...persons];
+            newPersons[idx] = { ...newPersons[idx], images };
+            updatePersons(newPersons);
+        };
+
+        const handleGpsSubmit = () => withSaving(async () => {
+            const hasNewFiles = persons.some(p => Array.isArray(p.images) && p.images.some(img => img instanceof File));
+
+            let formData;
+
+            if (hasNewFiles) {
+                const fd = new FormData();
+
+                // Build persons metadata (without File objects)
+                const personsMeta = persons.map(p => ({
+                    personName: p.personName || "",
+                    images: Array.isArray(p.images) ? p.images.filter(img => !(img instanceof File)) : []
+                }));
+                fd.append("persons", JSON.stringify(personsMeta));
+
+                // Append image files per person
+                persons.forEach((person, pIdx) => {
+                    if (Array.isArray(person.images)) {
+                        person.images.forEach((img) => {
+                            if (img instanceof File) {
+                                fd.append(`gpsTimelineDriver.persons_${pIdx}_images`, img);
+                            }
+                        });
+                    }
+                });
+
+                formData = fd;
+            } else {
+                formData = {
+                    persons: persons.map(p => ({
+                        personName: p.personName || "",
+                        images: Array.isArray(p.images) ? p.images.filter(img => !(img instanceof File)) : []
+                    }))
+                };
+            }
+
+            // ✅ Return promise for toast support, sync state in .then
+            return updateSection({
+                caseId,
+                sectionPath: apiPath,
+                formData,
+            }).then(res => {
+                if (res?.success && res?.data) {
+                    setForm(prev => {
+                        const newForm = { ...prev };
+                        return setNestedValue(newForm, sectionKey, res.data);
+                    });
+                }
+                return res;
+            });
+        });
+
+        return (
+            <div id={id} className={`scroll-mt-48 border rounded-xl bg-white shadow-sm mb-8 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-100' : ''}`}>
+                <div
+                    onClick={onToggle}
+                    className="w-full flex justify-between items-center p-6 bg-gray-50 rounded-t-xl border-b hover:bg-gray-100 transition-colors cursor-pointer"
+                >
+                    <div className="flex items-center gap-3">
+                        {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                        <h2 className="text-xl font-bold text-gray-800 uppercase">GPS TIMELINE DRIVER</h2>
+                    </div>
+                    <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-500 uppercase tracking-wide">
+                        {sectionKey}
+                    </span>
+                </div>
+
+                <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                    <div className="p-6 space-y-6">
+                        <div className="flex justify-end">
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); addPerson(); }}
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2"
+                            >
+                                <span>+ Add Person</span>
+                            </button>
+                        </div>
+
+                        {persons.length === 0 && (
+                            <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                                <p className="text-gray-500 italic">No persons added yet.</p>
+                                <button type="button" onClick={addPerson} className="mt-2 text-indigo-600 font-medium hover:underline">Add one now</button>
+                            </div>
+                        )}
+
+                        {persons.map((person, idx) => (
+                            <div key={idx} className="border border-gray-200 rounded-lg bg-white shadow-sm overflow-hidden">
+                                <div className="bg-gray-50 px-4 py-3 border-b flex justify-between items-center">
+                                    <h3 className="font-semibold text-gray-700 text-sm">Person #{idx + 1}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeletePerson(idx)}
+                                            className="text-red-500 hover:text-red-700 px-3 py-1 rounded-md hover:bg-red-50 transition-colors text-xs font-semibold border border-red-200 flex items-center gap-1.5"
+                                            title="Delete Person"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                            Delete Person
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="p-4 space-y-4">
+                                    {/* Person Name */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1">Name of Person</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border px-3 py-2 rounded-lg border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            value={person.personName || ""}
+                                            onChange={(e) => updatePersonName(idx, e.target.value)}
+                                            placeholder="Enter person name (e.g., Ram, Babu)"
+                                        />
+                                    </div>
+
+                                    {/* Images Upload */}
+                                    <div>
+                                        <DragDropUpload
+                                            id={`gps-person-${idx}-images`}
+                                            accept="image/*"
+                                            multiple={true}
+                                            value={person.images}
+                                            isOptional={true}
+                                            title={`${person.personName || `Person ${idx + 1}`}'s GPS Timeline Photos`}
+                                            onChange={(e) => {
+                                                const files = e.target.files;
+
+                                                if (!files || files.length === 0) {
+                                                    updatePersonImages(idx, []);
+                                                    return;
+                                                }
+
+                                                if (Array.isArray(files)) {
+                                                    updatePersonImages(idx, files);
+                                                    return;
+                                                }
+
+                                                const newFiles = Array.from(files);
+                                                updatePersonImages(idx, [...(person.images || []), ...newFiles]);
+                                            }}
+                                        />
+
+                                        {/* Display existing uploaded images */}
+                                        {person.images && person.images.length > 0 && person.images.some(img => !(img instanceof File)) && (
+                                            <ImageGallery
+                                                images={person.images.filter(img => !(img instanceof File))}
+                                                title={`${person.personName || `Person ${idx + 1}`}'s Photos`}
+                                                caseId={caseId}
+                                                sectionPath={apiPath}
+                                                fieldName={`persons.${idx}.images`}
+                                                setForm={setForm}
+                                                sectionKey={sectionKey}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="p-6 bg-gray-50 border-t flex justify-end">
+                        <button
+                            onClick={() => {
+                                toast.promise(
+                                    handleGpsSubmit(),
+                                    {
+                                        loading: "Saving GPS Timeline...",
+                                        success: "GPS Timeline saved successfully!",
+                                        error: (err) => err.response?.data?.message || err.message || "Failed to save GPS Timeline",
+                                    }
+                                );
+                            }}
+                            disabled={loading}
+                            className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
+                        >
+                            {loading ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Saving...
+                                </>
+                            ) : "Save Changes"}
                         </button>
                     </div>
                 </div>
@@ -405,11 +848,34 @@ function SectionUnit({
                         {/* Save Button */}
                         <div className="pt-4 border-t flex justify-end">
                             <button
-                                onClick={handleSubmit}
+                                onClick={async () => {
+                                    if (submittingRef.current) return;
+                                    submittingRef.current = true;
+                                    try {
+                                        await toast.promise(
+                                            handleSubmit(),
+                                            {
+                                                loading: "Saving observations...",
+                                                success: "Observations saved successfully!",
+                                                error: (err) => err.message || "Save failed",
+                                            }
+                                        );
+                                    } finally {
+                                        submittingRef.current = false;
+                                    }
+                                }}
                                 disabled={loading}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-50"
+                                className={`bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center ${loading ? "opacity-70 cursor-not-allowed" : ""}`}
                             >
-                                {loading ? "Saving..." : "Save Changes"}
+                                {loading ? (
+                                    <>
+                                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Saving...
+                                    </>
+                                ) : "Save Changes"}
                             </button>
                         </div>
                     </div>
@@ -488,6 +954,8 @@ function SectionUnit({
 
                             const customLabels = {
                                 bloodOrBodyTraceInspection: "Found any blood marks or body parts",
+                                type: sectionKey === "gpsTimelineDriver" ? "GPS Timeline Photos" : "Type",
+                                accidentVersionLocationDetails: "Exact Location"
                             };
 
                             const uiLabel = customLabels[field] || formatLabel(field);
@@ -839,6 +1307,50 @@ function SectionUnit({
 
                                 if (purchaseDependentFields.includes(field)) {
                                     if (!isPurchaseAvailable) return null;
+
+                                    // Custom rendering for fitnessDetail: Yes/No + Calendar
+                                    if (field === "fitnessDetail") {
+                                        const fitnessVal = currentSection.fitnessDetail || "";
+                                        const isFitnessYes = fitnessVal !== "" && fitnessVal !== "No";
+                                        const dateValue = fitnessVal === "Yes" ? "" : fitnessVal;
+
+                                        return (
+                                            <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <label className="block">
+                                                        <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Detail</span>
+                                                        <select
+                                                            disabled={readonlyFields.includes(field)}
+                                                            className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
+                                                            value={isFitnessYes ? "Yes" : fitnessVal}
+                                                            onChange={(e) => {
+                                                                updateField("fitnessDetail", e.target.value);
+                                                            }}
+                                                        >
+                                                            <option value="">Select Option</option>
+                                                            <option value="Yes">Yes</option>
+                                                            <option value="No">No</option>
+                                                        </select>
+                                                        {error && <span className="text-xs text-red-500 mt-1 block font-medium">{error}</span>}
+                                                    </label>
+
+                                                    {isFitnessYes && (
+                                                        <label className="block">
+                                                            <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Valid Upto</span>
+                                                            <input
+                                                                type="date"
+                                                                disabled={readonlyFields.includes(field)}
+                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
+                                                                value={dateValue}
+                                                                onChange={(e) => updateField("fitnessDetail", e.target.value || "Yes")}
+                                                            />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
                                     // If available, let it fall through to default rendering below
                                 }
                             }
@@ -1409,15 +1921,16 @@ function SectionUnit({
                                                             </div>
                                                             <div>
                                                                 <label className="block text-xs font-medium text-gray-500 mb-1">Answer/Value</label>
-                                                                <input
-                                                                    type="text"
-                                                                    readOnly={readonlyFields.includes(field)}
+                                                                <select
                                                                     disabled={readonlyFields.includes(field)}
                                                                     value={doc.answer || ""}
                                                                     onChange={(e) => updateDoc(idx, "answer", e.target.value)}
-                                                                    className={`w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
-                                                                    placeholder="e.g. Verified"
-                                                                />
+                                                                    className={`w-full border px-2 py-1.5 rounded text-sm border-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-500 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : "bg-white"}`}
+                                                                >
+                                                                    <option value="" disabled>Select status</option>
+                                                                    <option value="Enclosed">Enclosed</option>
+                                                                    <option value="Not Enclosed">Not Enclosed</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                         {!readonlyFields.includes(field) && (
@@ -1528,9 +2041,23 @@ function SectionUnit({
                                     "anyClaimInPreviousPolicy",
                                     "previousClaimPhotosAvailable"
                                 ];
-                                const isPrevPolicyNo = (currentSection.previousPolicyNo || "").toLowerCase() === "no";
+                                const prevPolicyStatus = (currentSection.previousPolicyNo || "").toLowerCase();
+                                const isPrevPolicyNo = prevPolicyStatus === "no";
+                                const isNewVehicle = prevPolicyStatus === "new vehicle";
 
-                                if (prevPolicyDependentFields.includes(field) && isPrevPolicyNo) {
+                                // Fields associated with breakout / break-in details
+                                const breakInFields = [
+                                    "breakIn",
+                                    "breakInInspectionDate",
+                                    "odometerReadingAtBreakIn",
+                                    "breakInDiscrepancy"
+                                ];
+
+                                if (prevPolicyDependentFields.includes(field) && (isPrevPolicyNo || isNewVehicle)) {
+                                    return null;
+                                }
+
+                                if (breakInFields.includes(field) && isNewVehicle) {
                                     return null;
                                 }
 
@@ -1549,23 +2076,25 @@ function SectionUnit({
                                                     <select
                                                         disabled={readonlyFields.includes(field)}
                                                         className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all border-gray-300 ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
-                                                        value={isAvailable ? "yes" : "no"}
+                                                        value={isNewVehicle ? "new" : (isPrevPolicyNo ? "no" : "yes")}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
                                                             if (val === "no") {
                                                                 updateField("previousPolicyNo", "No");
+                                                            } else if (val === "new") {
+                                                                updateField("previousPolicyNo", "New Vehicle");
                                                             } else {
-                                                                if ((currentSection.previousPolicyNo || "").toLowerCase() === "no") {
-                                                                    updateField("previousPolicyNo", "");
-                                                                }
+                                                                // If switching away from No/New, clear the field so user can enter a number
+                                                                updateField("previousPolicyNo", "");
                                                             }
                                                         }}
                                                     >
                                                         <option value="yes">Yes</option>
                                                         <option value="no">No</option>
+                                                        <option value="new">New Vehicle</option>
                                                     </select>
 
-                                                    {isAvailable && (
+                                                    {(prevPolicyStatus !== "no" && prevPolicyStatus !== "new vehicle") && (
                                                         <input
                                                             type="text"
                                                             readOnly={readonlyFields.includes(field)}
@@ -1594,7 +2123,8 @@ function SectionUnit({
                                         // HH.mm.ss is not needed, user asked according to DD.MM.YYYY
                                         const toInputDate = (dateStr) => {
                                             if (!dateStr) return "";
-                                            const parts = dateStr.split(".");
+                                            const cleanStr = dateStr.trim().split(" ")[0]; // Take only the date part if time exists
+                                            const parts = cleanStr.split(".");
                                             if (parts.length !== 3) return "";
                                             const [day, month, year] = parts;
                                             return `${year}-${month}-${day}`;
@@ -2135,58 +2665,109 @@ function SectionUnit({
                             if (sectionKey === "insuredDocuments" && field === Object.keys(fieldsObj || {})[0]) {
                                 // We render the ENTIRE section at once for the first field, then return null for others
                                 const docs = fieldsObj || {};
-                                
+
                                 const renderDocCard = (title, items, icon) => (
-                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm mb-6 last:mb-0 transition-all hover:shadow-md">
-                                        <div className="bg-gray-50 border-b border-gray-100 px-5 py-3 flex items-center gap-3">
-                                            <div className="p-1.5 bg-blue-100 text-blue-600 rounded-lg">
-                                                {icon}
+                                    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm mb-8 last:mb-0 transition-all hover:shadow-md">
+                                        <div className="bg-gray-50 border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg shadow-sm">
+                                                    {icon}
+                                                </div>
+                                                <h3 className="font-bold text-gray-800 uppercase tracking-wider text-sm">{title}</h3>
                                             </div>
-                                            <h3 className="font-bold text-gray-800 uppercase tracking-wide text-sm">{title}</h3>
+                                            <span className="text-[10px] font-bold text-gray-400 bg-white px-2 py-1 rounded border border-gray-100 uppercase">Documents Group</span>
                                         </div>
-                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-10">
                                             {items.map(itemKey => {
                                                 const currentFileConfig = fileFields[itemKey];
-                                                const currentUiLabel = itemKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                                const currentUiLabel = itemKey
+                                                    .replace(/rcPhoto/i, "RC Photo")
+                                                    .replace(/rcverification/i, "RC Verification")
+                                                    .replace(/dlPhoto/i, "DL Photo")
+                                                    .replace(/dlverification/i, "DL Verification")
+                                                    .replace(/insuredPanCardPhoto/i, "PAN Card Photo")
+                                                    .replace(/insuredAadharCardPhoto/i, "Aadhar Card Photo")
+                                                    .replace(/([A-Z])/g, ' $1')
+                                                    .replace(/^./, str => str.toUpperCase())
+                                                    .trim();
+
                                                 const existingImgs = docs[itemKey];
+                                                const isMultiple = currentFileConfig === "multiple" || currentFileConfig === "max-2";
+                                                const limit = currentFileConfig === "max-2" ? 2 : (currentFileConfig === "max-1" ? 1 : null);
 
                                                 return (
-                                                    <div key={itemKey} className="space-y-4">
+                                                    <div key={itemKey} className="space-y-5">
+                                                        <div className="flex items-center justify-between">
+                                                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">{currentUiLabel}</h4>
+                                                            {limit && (
+                                                                <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                                                                    Max {limit} {limit > 1 ? 'Files' : 'File'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
                                                         <DragDropUpload
                                                             id={`${sectionKey}-${itemKey}`}
                                                             accept="image/*"
-                                                            multiple={currentFileConfig === "multiple" || currentFileConfig === "max-2"}
+                                                            multiple={isMultiple}
                                                             value={currentSection[itemKey]}
                                                             isOptional={true}
-                                                            title={currentUiLabel}
+                                                            title="" // Clearing title as we have custom h4 above
+                                                            limit={limit}
                                                             onMetadataChange={(metadata) => {
                                                                 setFileMetadata(prev => ({ ...prev, [itemKey]: metadata }));
                                                             }}
-                                                                onChange={(e) => {
-                                                                    const sFiles = e.target.files;
-                                                                    if (!sFiles || sFiles.length === 0) {
-                                                                        updateField(itemKey, currentFileConfig === "multiple" ? [] : null);
+                                                            onChange={(e) => {
+                                                                const sFiles = e.target.files;
+
+                                                                // Removal: sFiles is null/empty
+                                                                if (!sFiles || sFiles.length === 0) {
+                                                                    updateField(itemKey, isMultiple ? [] : null);
+                                                                    return;
+                                                                }
+
+                                                                // Pre-array (from internal removal or something)
+                                                                if (Array.isArray(sFiles)) {
+                                                                    updateField(itemKey, sFiles);
+                                                                    return;
+                                                                }
+
+                                                                // Selection append logic
+                                                                const newFiles = Array.from(sFiles);
+
+                                                                // Limit Enforcement
+                                                                if (limit) {
+                                                                    const currentCount = Array.isArray(currentSection[itemKey])
+                                                                        ? currentSection[itemKey].length
+                                                                        : (currentSection[itemKey] ? 1 : 0);
+
+                                                                    if (currentCount + newFiles.length > limit) {
+                                                                        toast.error(`Maximum ${limit} ${limit > 1 ? 'photos' : 'photo'} allowed for ${currentUiLabel}`);
                                                                         return;
                                                                     }
+                                                                }
 
-                                                                    // If files is already an array (from remove operation), just set it
-                                                                    if (Array.isArray(sFiles)) {
-                                                                        updateField(itemKey, sFiles);
-                                                                        return;
-                                                                    }
-
-                                                                    const listedFiles = Array.from(sFiles);
-                                                                    updateField(itemKey, (currentFileConfig === "multiple" || currentFileConfig === "max-2") ? [...(currentSection[itemKey] || []), ...listedFiles] : listedFiles[0]);
-                                                                }}
+                                                                updateField(
+                                                                    itemKey,
+                                                                    isMultiple
+                                                                        ? [...(currentSection[itemKey] || []), ...newFiles]
+                                                                        : newFiles[0]
+                                                                );
+                                                            }}
                                                         />
+
                                                         {existingImgs && (
-                                                            <ImageGallery
-                                                                images={existingImgs}
-                                                                title={currentUiLabel}
-                                                                caseId={caseId}
-                                                                sectionPath={apiPath}
-                                                                fieldName={itemKey}
-                                                            />
+                                                            <div className="pt-2 border-t border-gray-50">
+                                                                <ImageGallery
+                                                                    images={existingImgs}
+                                                                    title={currentUiLabel}
+                                                                    caseId={caseId}
+                                                                    sectionPath={apiPath}
+                                                                    fieldName={itemKey}
+                                                                    setForm={setForm}
+                                                                    sectionKey={sectionKey}
+                                                                />
+                                                            </div>
                                                         )}
                                                     </div>
                                                 );
@@ -2198,13 +2779,13 @@ function SectionUnit({
                                 return (
                                     <React.Fragment key="insured-docs-overide-wrapper">
                                         {/* GROUP 1: RC DETAILS */}
-                                        {renderDocCard("1. Registration Certificate (RC)", ["rcPhoto", "rcverification"], <CreditCard className="w-4 h-4" />)}
-                                        
+                                        {renderDocCard("1. Registration Certificate (RC)", ["rcPhoto", "rcverification"], <CreditCard className="w-5 h-5" />)}
+
                                         {/* GROUP 2: DL DETAILS */}
-                                        {renderDocCard("2. Driving License (DL)", ["dlPhoto", "dlverification"], <FileText className="w-4 h-4" />)}
-                                        
+                                        {renderDocCard("2. Driving License (DL)", ["dlPhoto", "dlverification"], <FileText className="w-5 h-5" />)}
+
                                         {/* GROUP 3: PERSONAL IDS */}
-                                        {renderDocCard("3. Identification Documents", ["insuredPanCardPhoto", "insuredAadharCardPhoto"], <Shield className="w-4 h-4" />)}
+                                        {renderDocCard("3. Identification Documents", ["insuredPanCardPhoto", "insuredAadharCardPhoto"], <Shield className="w-5 h-5" />)}
                                     </React.Fragment>
                                 );
                             } else if (sectionKey === "insuredDocuments") {
@@ -2300,6 +2881,8 @@ function SectionUnit({
                                                 caseId={caseId}
                                                 sectionPath={apiPath}
                                                 fieldName={field}
+                                                setForm={setForm}
+                                                sectionKey={sectionKey}
                                             />
                                         )}
                                     </div>
@@ -2318,9 +2901,12 @@ function SectionUnit({
                                         {type === "textarea" ? (
                                             <textarea
                                                 readOnly={readonlyFields.includes(field)}
-                                                disabled={readonlyFields.includes(field)}
-                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"
-                                                    } ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
+                                                disabled={loading || readonlyFields.includes(field)}
+                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all 
+                                                    ${error ? "border-red-500 bg-red-50" : "border-gray-300"} 
+                                                    ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}
+                                                    ${loading ? "bg-gray-50 text-gray-500" : ""}
+                                                `}
                                                 rows={3}
                                                 value={currentSection[field] || ""}
                                                 onChange={(e) => updateField(field, e.target.value)}
@@ -2330,15 +2916,16 @@ function SectionUnit({
                                             <input
                                                 type={type}
                                                 readOnly={readonlyFields.includes(field)}
-                                                disabled={readonlyFields.includes(field)}
+                                                disabled={loading || readonlyFields.includes(field)}
                                                 step={type === 'number' ? "any" : undefined}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all 
                                                     ${error ? "border-red-500 bg-red-50" : "border-gray-300"}
+                                                    ${loading ? "bg-gray-50 text-gray-500" : ""}
                                                 `}
                                                 value={
-                                                    (type === 'datetime-local' && currentSection[field]) 
-                                                        ? (typeof currentSection[field] === 'string' 
-                                                            ? currentSection[field].slice(0, 16) 
+                                                    (type === 'datetime-local' && currentSection[field])
+                                                        ? (typeof currentSection[field] === 'string'
+                                                            ? currentSection[field].slice(0, 16)
                                                             : (currentSection[field].$date ? currentSection[field].$date.slice(0, 16) : ""))
                                                         : (type === 'date' && currentSection[field])
                                                             ? (typeof currentSection[field] === 'string'
@@ -2346,7 +2933,13 @@ function SectionUnit({
                                                                 : (currentSection[field].$date ? currentSection[field].$date.slice(0, 10) : ""))
                                                             : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")
                                                 }
-                                                onChange={(e) => updateField(field, e.target.value)}
+                                                onChange={(e) => {
+                                                    let val = e.target.value;
+                                                    if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
+                                                        val = cleanNumericInput(val);
+                                                    }
+                                                    updateField(field, val);
+                                                }}
                                                 placeholder={type === 'date' ? '' : `Enter ${uiLabel}`}
                                             />
                                         )}
@@ -2364,14 +2957,24 @@ function SectionUnit({
 
                     <div className="mt-6 flex justify-end pb-2">
                         <button
-                            onClick={handleSubmit}
+                            onClick={() => withSaving(() => toast.promise(
+                                handleSubmit(),
+                                {
+                                    loading: "Saving section...",
+                                    success: "Section saved successfully!",
+                                    error: (err) =>
+                                        err?.response?.data?.message ||
+                                        err.message ||
+                                        "Failed to save section",
+                                }
+                            ))}
                             disabled={loading}
-                            className={`px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition-colors flex items-center ${loading ? "opacity-70 cursor-not-allowed" : ""
+                            className={`px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow transition-colors flex items-center gap-2 ${loading ? "opacity-70 cursor-not-allowed" : ""
                                 }`}
                         >
                             {loading ? (
                                 <>
-                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>

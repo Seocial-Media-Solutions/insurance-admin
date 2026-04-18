@@ -49,6 +49,12 @@ export const odCaseApi = {
         const { data } = await apiClient.delete(`/od-cases/${caseId}`);
         return data;
     },
+
+    // Delete all images for a GPS timeline person
+    deleteAllGpsPersonImages: async ({ caseId, personIndex }) => {
+        const { data } = await apiClient.delete(`/od-cases/${caseId}/gps-timeline-driver/${personIndex}/images`);
+        return data;
+    },
 };
 
 // ============================================

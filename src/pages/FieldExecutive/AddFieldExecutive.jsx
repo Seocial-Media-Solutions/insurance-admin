@@ -2,22 +2,16 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import FieldExecutiveForm from "../../components/FieldExecutiveForm";
 import toast from "react-hot-toast";
-import { fieldExecutiveService } from "../../services/fieldExecutiveService";
+import { useFieldExecutives } from "../../context/FieldExecutiveContext";
 
 export default function AddFieldExecutive() {
   const navigate = useNavigate();
+  const { addExecutive } = useFieldExecutives();
 
-  const handleSubmit = async (formData) => {
-    try {
-      const result = await fieldExecutiveService.create(formData);
-      if (result.success) {
-        // toast.success handled by service toast.promise
-        navigate("/field-executives");
-      }
-    } catch (err) {
-      console.error("Error creating executive:", err);
-      // toast.error handled by service toast.promise
-    }
+  const handleSubmit = (formData) => {
+    return addExecutive(formData).then(() => {
+      navigate("/field-executives");
+    });
   };
 
   return (

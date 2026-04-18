@@ -45,6 +45,26 @@ export default function Sidebar({
     }
   };
 
+  // Determine the most specific active link
+  const getActivePath = () => {
+    let bestMatch = null;
+    for (const link of navLinks) {
+      if (link.path === "/") {
+        if (location.pathname === "/") bestMatch = link;
+      } else if (
+        location.pathname === link.path ||
+        location.pathname.startsWith(link.path + "/")
+      ) {
+        if (!bestMatch || link.path.length > bestMatch.path.length) {
+          bestMatch = link;
+        }
+      }
+    }
+    return bestMatch?.path;
+  };
+
+  const activePath = getActivePath();
+
   return (
     <>
       <aside
@@ -83,10 +103,7 @@ export default function Sidebar({
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
             {navLinks.map((link) => {
               const IconComponent = link.icon;
-              // Active if current pathname matches link.path
-              const active = link.path === "/"
-                ? location.pathname === "/"
-                : location.pathname === link.path || location.pathname.startsWith(link.path + "/");
+              const active = activePath === link.path;
 
               return (
                 <Link

@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import {
   Eye, EyeOff, User, Mail, Phone, CreditCard, FileText,
-  MapPin, Shield, CheckCircle, AlertCircle, Briefcase, Lock
+  MapPin, Shield, CheckCircle, AlertCircle, Briefcase, Lock, Loader2
 } from "lucide-react";
 import useDebounce from "../hooks/useDebounce";
+import toast from "react-hot-toast";
 
 // Helper component for input fields
 const InputField = ({ label, name, type = "text", icon: IconComponent, placeholder, registerProps, error, required = true, maxLength, currentValue, isBoxed = false }) => (
@@ -30,6 +31,7 @@ const InputField = ({ label, name, type = "text", icon: IconComponent, placehold
       <input
         type={type}
         {...registerProps}
+        maxLength={maxLength}
         onInput={(e) => {
           if (type === "tel") {
             e.target.value = e.target.value.replace(/[^0-9]/g, '');
@@ -56,6 +58,7 @@ const InputField = ({ label, name, type = "text", icon: IconComponent, placehold
 
 export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -118,16 +121,29 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     }
   }, [initialData, reset]);
 
-  const onFormSubmit = (data) => {
+  const onFormSubmit = async (data) => {
     if (mode === 'edit' && !data.password) {
       delete data.password;
     }
-    onSubmit(data);
+    setIsSubmitting(true);
+    try {
+      await toast.promise(
+        Promise.resolve(onSubmit(data)),
+        {
+          loading: mode === 'edit' ? 'Updating executive...' : 'Creating executive account...',
+          success: mode === 'edit' ? 'Executive updated successfully!' : 'Executive account created!',
+          error: (err) => err?.message || 'Something went wrong',
+        }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const validationRules = {
     fullName: { 
       required: "Full Name is required",
+      maxLength: { value: 50, message: "Max 50 characters" },
       pattern: {
         value: /^[a-zA-Z\s]+$/,
         message: "Only letters and spaces"
@@ -136,6 +152,7 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     username: {
       required: "Username is required",
       minLength: { value: 3, message: "Min 3 chars required" },
+      maxLength: { value: 20, message: "Max 20 characters" },
       pattern: {
         value: /^[a-zA-Z0-9_]+$/,
         message: "Letters, numbers & underscore only"
@@ -144,6 +161,7 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     password: {
       required: mode === 'add' ? "Password is required" : false,
       minLength: { value: 8, message: "Min 8 chars required" },
+      maxLength: { value: 32, message: "Max 32 characters" },
       pattern: {
         value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/,
         message: "Weak password (Need A-Z, a-z, 0-9, #@$)"
@@ -151,6 +169,7 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     },
     email: {
       required: "Email is required",
+      maxLength: { value: 100, message: "Max 100 characters" },
       pattern: {
         value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         message: "Invalid email format"
@@ -179,9 +198,16 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
     },
     address: { 
       required: "Address is required",
-      minLength: { value: 10, message: "Please provide full address (min 10 chars)" }
+      minLength: { value: 10, message: "Please provide full address (min 10 chars)" },
+      maxLength: { value: 200, message: "Max 200 characters" }
     },
   };
+
+  // Watch for counters
+  const fullNameStr = watch("fullName");
+  const usernameStr = watch("username");
+  const emailStr = watch("email");
+  const addressStr = watch("address");
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -210,6 +236,8 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
               placeholder="e.g. John Doe"
               registerProps={register("fullName", validationRules.fullName)}
               error={errors.fullName}
+              maxLength={50}
+              currentValue={fullNameStr}
             />
             <InputField
               label="Contact Number"
@@ -235,6 +263,8 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
               placeholder="john@insurance.com"
               registerProps={register("email", validationRules.email)}
               error={errors.email}
+              maxLength={100}
+              currentValue={emailStr}
             />
             <InputField
               label="Current Address"
@@ -243,6 +273,8 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
               placeholder="Full residential address"
               registerProps={register("address", validationRules.address)}
               error={errors.address}
+              maxLength={200}
+              currentValue={addressStr}
             />
           </div>
         </div>
@@ -304,12 +336,19 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
               placeholder="Create a unique username"
               registerProps={register("username", validationRules.username)}
               error={errors.username}
+              maxLength={20}
+              currentValue={usernameStr}
             />
 
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                 Password {mode === 'edit' ? <span className="text-gray-400 font-normal text-xs">(Optional)</span> : <span className="text-red-500 font-bold">*</span>}
-                {errors.password && <span className="text-red-500 text-xs font-normal ml-auto flex items-center gap-1"><AlertCircle size={12} /> {errors.password.message}</span>}
+                <div className="ml-auto flex items-center gap-2">
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded transition-colors ${debouncedPassword?.length >= 32 ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
+                    {debouncedPassword?.length || 0}/32
+                  </span>
+                  {errors.password && <span className="text-red-500 text-xs font-normal flex items-center gap-1"><AlertCircle size={12} /> {errors.password.message}</span>}
+                </div>
               </label>
               <div className="relative group">
                 <div className="absolute left-3 top-2.5 text-gray-400 group-focus-within:text-purple-600 transition-colors">
@@ -318,6 +357,7 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
                 <input
                   type={showPassword ? "text" : "password"}
                   {...register("password", validationRules.password)}
+                  maxLength={32}
                   placeholder={mode === 'edit' ? "Leave blank to keep current" : "Create a strong password"}
                   className={`w-full pl-10 pr-10 py-2.5 bg-gray-50 border ${errors.password ? 'border-red-300 ring-2 ring-red-50' : 'border-gray-200'} rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-100 focus:border-purple-500 outline-none transition-all duration-200`}
                 />
@@ -375,10 +415,20 @@ export default function FieldExecutiveForm({ initialData, onSubmit, mode }) {
         <div className="flex justify-end pt-4 pb-12">
           <button
             type="submit"
-            className="px-8 py-3 bg-gray-900 hover:bg-black text-white rounded-xl font-semibold shadow-lg shadow-gray-200 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+            disabled={isSubmitting}
+            className={`px-8 py-3 bg-gray-900 hover:bg-black text-white rounded-xl font-semibold shadow-lg shadow-gray-200 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <CheckCircle size={20} />
-            {mode === "edit" ? "Save Changes" : "Create Executive Account"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                ...
+              </>
+            ) : (
+              <>
+                <CheckCircle size={20} />
+                {mode === "edit" ? "Save Changes" : "Create Executive Account"}
+              </>
+            )}
           </button>
         </div>
       </form>

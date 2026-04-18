@@ -7,16 +7,16 @@ import { getVisitRoutes } from "../../utils/visit";
  import { API } from "../../utils/api";
  const API_BASE = API;
 
-export default function AssignCaseForm({ onAssignmentCreated }) {
-  const [step, setStep] = useState(0);
+export default function AssignCaseForm({ onAssignmentCreated, initialCaseId = null, initialCaseType = null }) {
+  const [step, setStep] = useState(initialCaseId ? 1 : 0);
   const [cases, setCases] = useState([]);
   const [alreadyVisits, setAlreadyVisits] = useState([]);
   const [executives, setExecutives] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    caseId: "",
-    caseType: "",
+    caseId: initialCaseId || "",
+    caseType: initialCaseType || "",
     fieldExecutiveId: "",
     investigationVisits: [], // visit objects {visitKey, label, endpoint}
     contactPersonName: "",

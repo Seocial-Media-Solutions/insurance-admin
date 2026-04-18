@@ -3,7 +3,7 @@ import { Loader2, Trash2, ExternalLink } from "lucide-react";
 import { useDeleteODCaseImage } from "../../../../hooks/useODCases";
 import { confirmToast } from "../../../../components/Ui/ConfirmToast";
 
-const ImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
+const ImageGallery = ({ images, title, caseId, sectionPath, fieldName, setForm, sectionKey }) => {
     const [deletingId, setDeletingId] = useState(null);
     const { mutate: deleteImage, isLoading: isDeleting } = useDeleteODCaseImage();
 
@@ -28,6 +28,43 @@ const ImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
                         publicId,
                     },
                     {
+                        onSuccess: () => {
+                            // Update local state if setForm is provided
+                            if (setForm && sectionKey) {
+                                setForm(prev => {
+                                    const newForm = { ...prev };
+                                    const section = { ...(newForm[sectionKey] || {}) };
+                                    
+                                    // Handle nested fieldNames like "persons.0.images"
+                                    if (fieldName.includes('.')) {
+                                        const parts = fieldName.split('.');
+                                        let current = section;
+                                        for (let i = 0; i < parts.length - 1; i++) {
+                                            const part = parts[i];
+                                            if (Array.isArray(current)) {
+                                                current = current[parseInt(part, 10)];
+                                            } else {
+                                                current = current[part];
+                                            }
+                                        }
+                                        const lastPart = parts[parts.length - 1];
+                                        if (Array.isArray(current[lastPart])) {
+                                            current[lastPart] = current[lastPart].filter(img => img.publicId !== publicId);
+                                        }
+                                    } else {
+                                        // Simple field
+                                        if (Array.isArray(section[fieldName])) {
+                                            section[fieldName] = section[fieldName].filter(img => img.publicId !== publicId);
+                                        } else if (section[fieldName] && section[fieldName].publicId === publicId) {
+                                            section[fieldName] = null;
+                                        }
+                                    }
+
+                                    newForm[sectionKey] = section;
+                                    return newForm;
+                                });
+                            }
+                        },
                         onSettled: () => {
                             setDeletingId(null);
                         },
@@ -42,7 +79,7 @@ const ImageGallery = ({ images, title, caseId, sectionPath, fieldName }) => {
             <h4 className="text-sm font-semibold text-gray-700 mb-3">
                 Uploaded {title}
             </h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {imageArray.map((img, idx) => (
                     <div
                         key={idx}

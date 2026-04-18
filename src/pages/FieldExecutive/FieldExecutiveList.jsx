@@ -7,84 +7,45 @@ import {
   XCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
-import { fieldExecutiveService } from "../../services/fieldExecutiveService";
+import toast from "react-hot-toast";
 import Pagination from "../../components/Ui/Pagination";
-import { API } from "../../utils/api";
 import { useGlobalSearch } from "../../context/SearchContext";
+import { useFieldExecutives } from "../../context/FieldExecutiveContext";
+import { confirmToast } from "../../components/Ui/ConfirmToast";
 
 export default function FieldExecutiveList() {
-  const [fieldExecutives, setFieldExecutives] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    executives: fieldExecutives, 
+    loading, 
+    loadExecutives, 
+    currentPage, 
+    totalPages, 
+    total, 
+    limit, 
+    goToPage, 
+    deleteExecutive 
+  } = useFieldExecutives();
   const { globalSearch } = useGlobalSearch();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const limit = 10;
   const navigate = useNavigate();
 
-  // === Fetch page of field executives ===
-  const fetchExecutives = async (page = 1) => {
-    setLoading(true);
-    try {
-      const data = await fieldExecutiveService.getAll({ page, limit });
-      if (data.success) {
-        setFieldExecutives(data.data);
-        setTotalPages(data.totalPages || 1);
-        setTotal(data.total || 0);
-        setCurrentPage(data.currentPage || page);
-      } else {
-        toast.error("Failed to fetch executives");
-      }
-    } catch (err) {
-      toast.error("Error loading executives");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // === Sync search with context ===
   useEffect(() => {
-    fetchExecutives(1);
-  }, []);
-
-  const goToPage = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      fetchExecutives(page);
-    }
-  };
+    loadExecutives(1, globalSearch);
+  }, [globalSearch]);
 
   // === Delete executive ===
   const handleDelete = async (id) => {
-    toast((t) => (
-      <div>
-        <p className="text-sm mb-2">Are you sure you want to delete?</p>
-        <div className="flex gap-2">
-          <button
-    onClick={async () => {
+    confirmToast("Are you sure you want to delete this field executive?", async () => {
       try {
-        const result = await fieldExecutiveService.delete(id);
-        if (result.success) {
-          fetchExecutives(currentPage);
-        }
+        await toast.promise(deleteExecutive(id), {
+          loading: 'Deleting executive...',
+          success: 'Executive deleted successfully',
+          error: (err) => err?.message || 'Failed to delete executive'
+        });
       } catch (err) {
-        console.error("Delete error:", err);
+        console.error(err);
       }
-      toast.dismiss(t.id);
-    }}
-
-            className="bg-red-600 text-white px-3 py-1 rounded-md text-xs"
-          >
-            Confirm
-          </button>
-          <button
-            onClick={() => toast.dismiss(t.id)}
-            className="bg-gray-200 px-3 py-1 rounded-md text-xs"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    ));
+    });
   };
 
   // === Edit executive ===
@@ -92,20 +53,8 @@ export default function FieldExecutiveList() {
     navigate(`/field-executives/edit/${exec._id}`);
   };
 
-  // Client-side search filter on current page data
-  const filteredExecutives = fieldExecutives.filter((e) => {
-    if (!globalSearch) return true;
-    const query = globalSearch.toLowerCase();
-    return (
-      e.fullName?.toLowerCase().includes(query) ||
-      e.username?.toLowerCase().includes(query) ||
-      e.email?.toLowerCase().includes(query)
-    );
-  });
-
   return (
     <div className="min-h-screen max-w-full mx-auto">
-      <Toaster position="top-right" />
 
       {/* === Header === */}
       <div className="bg-card rounded-lg shadow-lg p-6 mb-6 flex justify-between items-center">
@@ -157,7 +106,7 @@ export default function FieldExecutiveList() {
                     Loading...
                   </td>
                 </tr>
-              ) : filteredExecutives.length === 0 ? (
+              ) : fieldExecutives.length === 0 ? (
                 <tr>
                   <td
                     colSpan="8"
@@ -167,7 +116,7 @@ export default function FieldExecutiveList() {
                   </td>
                 </tr>
               ) : (
-                filteredExecutives.map((exec) => (
+                  fieldExecutives.map((exec) => (
                   <tr
                     key={exec._id}
                     onClick={() => handleEdit(exec)}

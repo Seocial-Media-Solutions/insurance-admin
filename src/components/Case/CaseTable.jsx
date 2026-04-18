@@ -23,12 +23,17 @@ import {
   Car,
   User,
   AlertCircle,
+  UserPlus
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import Drawer from "../Ui/Drawer";
+import AssignCaseForm from "../CaseAssignment/AssignCaseForm";
+import { Link, useNavigate } from "react-router-dom";
 import { useGlobalSearch } from "../../context/SearchContext";
 
 export default function CaseTable({ cases, onEdit, onDelete }) {
+  const navigate = useNavigate();
   const [viewingCase, setViewingCase] = useState(null);
+  const [assigningCase, setAssigningCase] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: "createdAt", direction: "desc" });
   const { globalSearch } = useGlobalSearch();
@@ -274,8 +279,22 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                   return (
                     <tr
                       key={c._id}
-                      className="border-b border-b-gray-200 hover:bg-black/5 transition-all duration-150"
+                      className="border-b border-b-gray-200 hover:bg-black/5 transition-all duration-150 cursor-pointer"
+                      onClick={() => {
+                        if (!c.caseTypeId) {
+                          toast.error("First assign assignment for this case", {
+                            icon: "⚠️",
+                            duration: 4000
+                          });
+                          return;
+                        }
 
+                        const route = c.caseType === "OD"
+                          ? `/case/od-case/edit/${c.caseTypeId}`
+                          : `/case/theft-case/edit/${c.caseTypeId}`;
+                        
+                        navigate(route);
+                      }}
                     >
                       <td className="px-3 sm:px-6 py-4" style={{ color: "var(--secondary)" }}>
                         {startIndex + index + 1}
@@ -317,6 +336,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                         <div className="flex justify-center items-center gap-1.5">
                           <Link
                             to={`/cases/view/${c._id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
                             style={{ backgroundColor: "#10b981" }}
                             title="View case"
@@ -325,6 +345,7 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                           </Link>
                           <Link
                             to={`/cases/edit/${c._id}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
                             style={{ backgroundColor: "#6366f1" }}
                             title="Edit case"
@@ -332,12 +353,27 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
                             <Edit className="w-4 h-4" />
                           </Link>
                           <button
-                            onClick={() => handleDelete(c._id, c.recordNumber)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(c._id, c.recordNumber);
+                            }}
                             className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
                             style={{ backgroundColor: "#ef4444" }}
                             title="Delete case"
                           >
                             <Trash2 className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAssigningCase(c);
+                            }}
+                            className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
+                            style={{ backgroundColor: "#f59e0b" }}
+                            title="Assign case"
+                          >
+                            <UserPlus className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -348,6 +384,36 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
             </tbody>
           </table>
         </div>
+
+        {/* Drawer for Case Assignment */}
+        <Drawer
+          isOpen={!!assigningCase}
+          onClose={() => setAssigningCase(null)}
+          title="Direct Case Assignment"
+        >
+          {assigningCase && (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-semibold text-blue-900">Assigning Case:</p>
+                <p className="text-lg font-bold text-blue-700">{assigningCase.ourFileNo || assigningCase.recordNumber}</p>
+                <div className="flex gap-4 mt-1 text-xs text-blue-800 opacity-80">
+                  <span>Vehicle: {assigningCase.vehicleNo}</span>
+                  <span>Type: {assigningCase.caseType}</span>
+                </div>
+              </div>
+
+              <AssignCaseForm
+                initialCaseId={assigningCase._id}
+                initialCaseType={assigningCase.caseType}
+                onAssignmentCreated={() => {
+                  toast.success("Case assigned successfully");
+                  setAssigningCase(null);
+                  // Optional: trigger refresh if parent allows
+                }}
+              />
+            </div>
+          )}
+        </Drawer>
 
         {/* Pagination */}
         {totalPages > 1 && (
