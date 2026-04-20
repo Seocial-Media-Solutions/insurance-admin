@@ -15,6 +15,9 @@ import {
   X,
 } from "lucide-react";
 import { useGlobalSearch } from "../../context/SearchContext";
+import { useInvestigations } from "../../context/InvestigationContext";
+import TableSkeleton from "../../components/Ui/TableSkeleton";
+
 const ALL_COLUMNS = [
   { header: "Vehicle No", accessor: "caseId.vehicleNo" },
   { header: "Insured Name", accessor: "caseId.nameOfInsured" },
@@ -74,40 +77,23 @@ const FirmCell = ({ firmId, firmData, caseFileNo }) => {
 ------------------------------------------------- */
 export default function CaseList() {
   const navigate = useNavigate();
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const { 
+    investigations: data, 
+    loading, 
+    currentPage: page, 
+    totalPages, 
+    goToPage, 
+    deleteInvestigation 
+  } = useInvestigations();
+  
   const { globalSearch } = useGlobalSearch();
   const [showAssignmentsModal, setShowAssignmentsModal] = useState(false);
   const [assignments, setAssignments] = useState([]);
   const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState(null);
   const { getFirmById } = useFirms();
- 
-  
-  
+
   const columns = ALL_COLUMNS;
-
-  // Fetch Data
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Fetch paginated investigation reports which represent all cases
-      const res = await investigationService.getAll({ page, limit: 15 });
-      const reportsData = res.data || [];
-      setData(reportsData);
-      setTotalPages(res.totalPages || 1);
-    } catch (error) {
-      console.error("Error fetching data", error);
-      toast.error("Failed to fetch data");
-    }
-    setLoading(false);
-  }, [page]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   // Handle Delete
   const handleDelete = async (id, e) => {
@@ -135,13 +121,12 @@ export default function CaseList() {
               const loadingToast = toast.loading("Deleting investigation...");
 
               try {
-                await investigationService.delete(id);
+                await deleteInvestigation(id);
                 toast.dismiss(loadingToast);
                 toast.success("Investigation deleted successfully!", {
                   duration: 3000,
                   icon: "🗑️",
                 });
-                fetchData();
               } catch (error) {
                 toast.dismiss(loadingToast);
                 console.error("Error deleting:", error);
@@ -219,10 +204,7 @@ export default function CaseList() {
         {/* Table Section */}
         <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
           {loading ? (
-            <div className="p-12 text-center text-gray-500 flex flex-col items-center">
-              <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-              Loading cases...
-            </div>
+            <TableSkeleton columns={6} rows={10} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -348,14 +330,14 @@ export default function CaseList() {
               <span className="text-sm text-gray-500">Page {page} of {totalPages}</span>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => goToPage(page - 1)}
                   disabled={page === 1}
                   className="p-2 border rounded-md hover:bg-white disabled:opacity-50 transition"
                 >
                   <ChevronLeft className="w-4 h-4 text-gray-600" />
                 </button>
                 <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => goToPage(page + 1)}
                   disabled={page === totalPages}
                   className="p-2 border rounded-md hover:bg-white disabled:opacity-50 transition"
                 >

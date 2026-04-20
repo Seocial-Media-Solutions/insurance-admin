@@ -8,8 +8,8 @@ import {
     PageBreak,
     AlignmentType,
     HeadingLevel,
-} from "https://esm.sh/docx@8.5.0";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
+} from "docx";
+import saveAs from "file-saver";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 

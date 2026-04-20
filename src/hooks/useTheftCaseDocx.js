@@ -15,15 +15,29 @@ import {
     PageNumber,
     BorderStyle,
     VerticalAlign,
-} from "https://esm.sh/docx@8.5.0";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
+} from "docx";
 import { useCallback, useState } from "react";
 import { convertImageToBase64, getCurrentDate } from "../utils/helper";
 import { toast } from "react-hot-toast";
 
-// Helper: Standard Row
+// Helper for consistent table rows
 const createStandardRow = (label, value, labelPercent = 40, align = AlignmentType.LEFT) => {
     const valuePercent = 100 - labelPercent;
+
+    // Safety check for objects
+    let displayValue = value;
+    if (typeof value === 'object' && value !== null) {
+        if (value.$date) {
+            displayValue = new Date(value.$date).toLocaleDateString('en-GB');
+        } else if (Object.keys(value).every(k => !isNaN(k))) {
+            displayValue = Object.values(value).join('');
+        } else {
+            displayValue = String(value);
+        }
+    } else if (value === undefined || value === null) {
+        displayValue = "";
+    }
+
     return new TableRow({
         children: [
             new TableCell({
@@ -39,7 +53,7 @@ const createStandardRow = (label, value, labelPercent = 40, align = AlignmentTyp
             new TableCell({
                 children: [
                     new Paragraph({
-                        children: [new TextRun({ text: String(value || "-"), size: 24, color: "000000" })],
+                        children: [new TextRun({ text: String(displayValue || ""), size: 24, color: "000000" })],
                         alignment: align,
                     })
                 ],
@@ -55,16 +69,22 @@ const createStandardRow = (label, value, labelPercent = 40, align = AlignmentTyp
     });
 };
 
-// Helper: Heading
-const createHeading = (text) =>
+// Helper for Shaded Headings (OD Style)
+const createShadedHeading = (text) =>
     new Paragraph({
-        children: [new TextRun({ text: String(text) })],
-        heading: HeadingLevel.HEADING_2,
+        children: [
+            new TextRun({
+                text: `  ${text}  `,
+                bold: true,
+                size: 32, // 16pt
+                shading: {
+                    type: "clear",
+                    fill: "D9D9D9",
+                }
+            })
+        ],
         alignment: AlignmentType.CENTER,
         spacing: { before: 400, after: 200 },
-        border: {
-            bottom: { color: "000000", space: 1, style: BorderStyle.SINGLE, size: 6 },
-        },
     });
 
 export const useTheftCaseDocx = () => {
@@ -73,7 +93,7 @@ export const useTheftCaseDocx = () => {
     const generateDocx = useCallback(async (data) => {
         if (!data) {
             toast.error("No data available to generate document");
-            return;
+            return null;
         }
 
         setIsGenerating(true);
@@ -82,12 +102,12 @@ export const useTheftCaseDocx = () => {
         try {
             const children = [];
 
-            // --- NEW HEADER SECTION (Matching design) ---
+            // --- HEADER SECTION (Matching OD Design) ---
             const headerTable = new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 borders: {
-                    top: { style: BorderStyle.SINGLE, size: 15, color: "888888" },
-                    bottom: { style: BorderStyle.NIL },
+                    top: { style: BorderStyle.NIL },
+                    bottom: { style: BorderStyle.SINGLE, size: 12, color: "000000" },
                     left: { style: BorderStyle.NIL },
                     right: { style: BorderStyle.NIL },
                     insideHorizontal: { style: BorderStyle.NIL },
@@ -97,69 +117,69 @@ export const useTheftCaseDocx = () => {
                     new TableRow({
                         children: [
                             new TableCell({
-                                width: { size: 55, type: WidthType.PERCENTAGE },
+                                width: { size: 50, type: WidthType.PERCENTAGE },
                                 children: [
                                     new Paragraph({
                                         children: [
                                             new TextRun({
                                                 text: "Satyendra Kumar Garg",
-                                                size: 32,
-                                                bold: true,
+                                                size: 44,
                                                 font: "Times New Roman",
-                                                color: "333333",
+                                                color: "767676",
                                             }),
                                         ],
-                                        spacing: { before: 200 },
+                                        spacing: { before: 50, after: 10 },
                                     }),
                                     new Paragraph({
                                         children: [
                                             new TextRun({
                                                 text: "(Insurance Claim Investigation Service)",
-                                                size: 20,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "555555",
+                                                color: "767676",
                                             }),
                                         ],
+                                        spacing: { after: 10 },
                                     }),
                                     new Paragraph({
                                         children: [
                                             new TextRun({
                                                 text: `Contact: +91 9610339955`,
-                                                size: 20,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "555555",
+                                                color: "767676",
                                             }),
                                         ],
                                     }),
                                 ],
                                 borders: {
                                     top: { style: BorderStyle.NIL },
-                                    bottom: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.SINGLE, size: 12, color: "000000" },
                                     left: { style: BorderStyle.NIL },
                                     right: { style: BorderStyle.NIL },
                                 },
                             }),
                             new TableCell({
-                                width: { size: 45, type: WidthType.PERCENTAGE },
+                                width: { size: 60, type: WidthType.PERCENTAGE },
                                 children: [
                                     new Paragraph({
                                         children: [
                                             new TextRun({
                                                 text: "Flat No. H-207, Hanging Gardens,",
-                                                size: 19,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "333333",
+                                                color: "767676",
                                             }),
                                         ],
-                                        spacing: { before: 200 },
+                                        spacing: { before: 50 },
                                     }),
                                     new Paragraph({
                                         children: [
                                             new TextRun({
                                                 text: "Jaisinghpura Road, Bhankrota,",
-                                                size: 19,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "333333",
+                                                color: "767676",
                                             }),
                                         ],
                                     }),
@@ -167,9 +187,9 @@ export const useTheftCaseDocx = () => {
                                         children: [
                                             new TextRun({
                                                 text: "Jaipur – 302026. (Raj)",
-                                                size: 19,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "333333",
+                                                color: "767676",
                                             }),
                                         ],
                                     }),
@@ -177,13 +197,13 @@ export const useTheftCaseDocx = () => {
                                         children: [
                                             new TextRun({
                                                 text: "Email: ",
-                                                size: 19,
+                                                size: 30,
                                                 font: "Times New Roman",
-                                                color: "333333",
+                                                color: "767676",
                                             }),
                                             new TextRun({
                                                 text: "invthirdeye@gmail.com",
-                                                size: 19,
+                                                size: 30,
                                                 font: "Times New Roman",
                                                 color: "0000FF",
                                                 underline: { type: "single", color: "0000FF" },
@@ -193,7 +213,7 @@ export const useTheftCaseDocx = () => {
                                 ],
                                 borders: {
                                     top: { style: BorderStyle.NIL },
-                                    bottom: { style: BorderStyle.NIL },
+                                    bottom: { style: BorderStyle.SINGLE, size: 12, color: "000000" },
                                     left: { style: BorderStyle.NIL },
                                     right: { style: BorderStyle.NIL },
                                 },
@@ -215,45 +235,36 @@ export const useTheftCaseDocx = () => {
                     spacing: { after: 200 },
                 }),
                 new Paragraph({
-                    children: [new TextRun({ text: `Ref No: ${refNo}`, bold: true })],
-                    spacing: { after: 200 },
+                    children: [new TextRun({ text: `Our Ref. No.: ${refNo}`, bold: true })],
+                    spacing: { after: 100 },
                 }),
                 new Paragraph({ children: [new TextRun({ text: "To," })], spacing: { after: 50 } }),
-                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDesignation || "The Manager,") })], spacing: { after: 50 } }),
-                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDepartment || "Claim Department,") })], spacing: { after: 50 } }),
-                new Paragraph({ children: [new TextRun({ text: String(letter.recipientCompany || "Insurance Co. Ltd.,") })], spacing: { after: 50 } }),
-                new Paragraph({ children: [new TextRun({ text: String(letter.recipientAddress || "") })], spacing: { after: 300 } })
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDesignation || "N/A,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientDepartment || "N/A,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientCompany || "N/A,") })], spacing: { after: 50 } }),
+                new Paragraph({ children: [new TextRun({ text: String(letter.recipientAddress || "N/A") })], spacing: { after: 300 } })
             );
-
             // Subject
             const policyCheck = data.policyAndIncidentDetails || {};
-            const insuredName = policyCheck.insuredName || "Unknown";
-            const vehicleNo = policyCheck.vehicleRegistrationNumber || "Unknown";
-            const claimNo = data.summaryOfTheClaim?.claimNo || "Unknown";
+            const insured = data.insuredDetails || {};
+            const insuredName = policyCheck.insuredName || insured.insuredName || "N/A";
+            const vehicleNo = policyCheck.vehicleRegistrationNumber || insured.vehicleRegistrationNumber || "N/A";
 
             children.push(
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Sub: Theft Investigation Report`,
+                            text: `Sub: Investigation Report of Theft Claim of Vehicle No. ${vehicleNo} (Insured: ${insuredName}).`,
                             bold: true,
                             underline: { type: "single" },
                         }),
-                        new TextRun({ text: `\nInsured: ${insuredName}` }),
-                        new TextRun({ text: `\nVehicle No: ${vehicleNo}` }),
-                        new TextRun({ text: `\nClaim No: ${claimNo}` }),
                     ],
-                    spacing: { after: 300 },
+                    spacing: { after: 200 },
                 })
             );
-
             children.push(
                 new Paragraph({
-                    children: [new TextRun({ text: "Dear Sir/Madam," })],
-                    spacing: { after: 100 },
-                }),
-                new Paragraph({
-                    children: [new TextRun({ text: "As per your instructions, we have visited the insured, local police station, and RTO to investigate the subject theft claim. Please find our detailed report below:" })],
+                    children: [new TextRun({ text: `In reference to the subject theft claim of ${insuredName} vehicle number ${vehicleNo}, we have been appointed as an Investigator to investigate the subject claim. Please find our investigative report as follows:` })],
                     alignment: AlignmentType.JUSTIFIED,
                     spacing: { after: 200 },
                 })
@@ -261,24 +272,44 @@ export const useTheftCaseDocx = () => {
 
             // 2. Summary of Claim
             const summary = data.summaryOfTheClaim || {};
-            children.push(createHeading("1. Summary of Claim"));
-            const summaryRows = [
-                createStandardRow("Claim No", summary.claimNo),
-                createStandardRow("Policy No", summary.policyNo),
-                createStandardRow("Date of Appointment", summary.dateOfAppointmentForInvestigation),
-                createStandardRow("Date of First Contact", summary.dateOfFirstContactWithClaimant),
-            ].filter(row => row !== null);
-
-            if (summaryRows.length > 0) {
+            if (summary && Object.keys(summary).length > 0) {
+                children.push(createShadedHeading("Summary of Claim"));
                 children.push(new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: summaryRows
+                    rows: [
+                        createStandardRow("Claim No.", summary.claimNo),
+                        createStandardRow("Insured Name", insuredName),
+                        createStandardRow("Vehicle No.", vehicleNo),
+                        createStandardRow("Make & Model", policyCheck.makeAndModel),
+                        createStandardRow("Date of Appointment", summary.dateOfAppointmentForInvestigation),
+                        createStandardRow("First Contact with Claimant", summary.dateOfFirstContactWithClaimant),
+                    ]
+                }));
+            }
+
+            // 2.5 New Insured Details
+            if (insured && (insured.insuredName || insured.contactNumber || insured.aadharNumber)) {
+                children.push(createShadedHeading("Insured Details"));
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        createStandardRow("Name of Insured", insured.insuredName),
+                        createStandardRow("Contact Number", insured.contactNumber),
+                        createStandardRow("Current Address", insured.currentAddress),
+                        createStandardRow("Permanent Address", insured.permanentAddress),
+                        createStandardRow("Aadhar Card No", insured.aadharNumber),
+                        createStandardRow("PAN Card No", insured.panNumber),
+                        createStandardRow("DL Number", insured.drivingLicenceNumber),
+                        createStandardRow("DL Valid For", insured.drivingLicenceValidFor),
+                        createStandardRow("DL Validity", insured.drivingLicenceValidityPeriod),
+                        createStandardRow("Vehicle Reg No", insured.vehicleRegistrationNumber),
+                    ]
                 }));
             }
 
             // 3. Policy & Incident Details
             const policy = data.policyAndIncidentDetails || {};
-            children.push(createHeading("2. Policy & Incident Details"));
+            children.push(createShadedHeading("Policy & Incident Details"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -301,7 +332,7 @@ export const useTheftCaseDocx = () => {
 
             // 4. Purchase & Registration
             const purchase = data.purchaseAndRegistrationParticulars || {};
-            children.push(createHeading("3. Purchase & Registration Particulars"));
+            children.push(createShadedHeading("Purchase & Registration Particulars"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -311,7 +342,7 @@ export const useTheftCaseDocx = () => {
                     createStandardRow("Owner Name", purchase.ownerName),
                     createStandardRow("Date of Registration", purchase.registrationDate),
                     createStandardRow("RTO Authority", purchase.registrationAuthority),
-                    createStandardRow("Vehicle Type/Class", `${purchase.vehicleType} / ${purchase.vehicleClass}`),
+                    createStandardRow("Vehicle Type/Class", `${purchase.vehicleType || ""} / ${purchase.vehicleClass || ""}`),
                     createStandardRow("Tax Valid Upto", purchase.roadTaxClearTo),
                     createStandardRow("Finance Details", purchase.financeDetails),
                 ]
@@ -319,7 +350,7 @@ export const useTheftCaseDocx = () => {
 
             // 5. FIR Details
             const fir = data.firDetails || {};
-            children.push(createHeading("4. FIR Details"));
+            children.push(createShadedHeading("FIR Details"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -335,7 +366,7 @@ export const useTheftCaseDocx = () => {
 
             // 6. Visit to Insured
             const visit = data.visitToInsured || {};
-            children.push(createHeading("5. Visit details to the Insured"));
+            children.push(createShadedHeading("Visit details to the Insured"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -350,7 +381,7 @@ export const useTheftCaseDocx = () => {
 
             // 7. Loss Site Inspection
             const lossSite = data.lossSiteInspection || {};
-            children.push(createHeading("6. Loss Site Inspection"));
+            children.push(createShadedHeading("Loss Site Inspection"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -361,7 +392,7 @@ export const useTheftCaseDocx = () => {
 
             // 8. Keys Remark
             const keys = data.keysRemark || {};
-            children.push(createHeading("7. Keys Remark"));
+            children.push(createShadedHeading("Keys Remark"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -374,7 +405,7 @@ export const useTheftCaseDocx = () => {
 
             // 9. Feedback from Location
             const feedback = data.feedBackFromLocationOfTheft || {};
-            children.push(createHeading("8. Feedback from Location"));
+            children.push(createShadedHeading("Feedback from Location"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
@@ -386,7 +417,7 @@ export const useTheftCaseDocx = () => {
 
             // 10. Documents Verified
             const docs = data.documentsSubmittedAndVerified || {};
-            children.push(createHeading("9. Documents Verified"));
+            children.push(createShadedHeading("Documents Verified"));
             const docRows = Object.entries(docs).map(([key, val]) => {
                 // Formatting key to label (camelCase to Title Case)
                 const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
@@ -408,7 +439,7 @@ export const useTheftCaseDocx = () => {
             }
 
             // 11. Findings & Conclusion
-            children.push(createHeading("10. Findings"));
+            children.push(createShadedHeading("Findings"));
             if (data.findings) {
                 const f = data.findings;
                 children.push(new Paragraph({
@@ -418,7 +449,7 @@ export const useTheftCaseDocx = () => {
                 }));
             }
 
-            children.push(createHeading("11. Conclusion"));
+            children.push(createShadedHeading("Conclusion"));
             if (data.conclusion && Array.isArray(data.conclusion.conclusion)) {
                 data.conclusion.conclusion.forEach(line => {
                     children.push(new Paragraph({
@@ -429,33 +460,55 @@ export const useTheftCaseDocx = () => {
             }
 
             // 12. Photographs
-            // Gather images
+            children.push(createShadedHeading("Photographs"));
+
+            // Gather images robustly
             let allImages = [];
-            // Spot Visit
-            if (data.spotVisit) allImages = [...allImages, ...data.spotVisit.map(img => ({ ...img, category: 'Spot Visit' }))];
-            // Insured Docs
+            
+            // 1. Specific sections images
+            if (data.spotVisit && Array.isArray(data.spotVisit)) {
+                allImages = [...allImages, ...data.spotVisit.map(img => ({ ...img, category: 'Spot Visit' }))];
+            }
+
+            // 2. Insured Documents (mixed arrays and objects)
             const iDocs = data.insuredDocuments || {};
-            ['rcPhoto', 'dlPhoto', 'insuredPanCardPhoto', 'insuredAadharCardPhoto'].forEach(key => {
-                if (iDocs[key] && Array.isArray(iDocs[key])) {
-                    allImages = [...allImages, ...iDocs[key].map(img => ({ ...img, category: key }))];
+            const docFields = [
+                { key: 'rcPhoto', label: 'RC Photo' },
+                { key: 'rcverification', label: 'RC Verification' },
+                { key: 'dlPhoto', label: 'DL Photo' },
+                { key: 'dlverification', label: 'DL Verification' },
+                { key: 'insuredPanCardPhoto', label: 'PAN Card' },
+                { key: 'insuredAadharCardPhoto', label: 'Aadhar Card' },
+                { key: 'bankPassbookDetails', label: 'Bank Passbook' }
+            ];
+
+            docFields.forEach(({ key, label }) => {
+                const val = iDocs[key];
+                if (val) {
+                    if (Array.isArray(val)) {
+                        allImages = [...allImages, ...val.map(img => ({ ...img, category: label }))];
+                    } else if (typeof val === 'object' && (val.imageUrl || val.url || val.secure_url)) {
+                        allImages.push({ ...val, category: label });
+                    }
                 }
             });
-            // Witness Docs
-            if (data.witnessDetails) {
+
+            // 3. Witness Details
+            if (data.witnessDetails && Array.isArray(data.witnessDetails)) {
                 data.witnessDetails.forEach(w => {
-                    if (w.witnessPhoto) allImages = [...allImages, ...w.witnessPhoto.map(img => ({ ...img, category: `Witness: ${w.witnessName}` }))];
-                    if (w.witnessDocument) {
+                    if (w.witnessPhoto && Array.isArray(w.witnessPhoto)) {
+                        allImages = [...allImages, ...w.witnessPhoto.map(img => ({ ...img, category: `Witness: ${w.witnessName}` }))];
+                    }
+                    if (w.witnessDocument && Array.isArray(w.witnessDocument)) {
                         w.witnessDocument.forEach(d => {
-                            if (d.front) allImages.push({ ...d.front, category: `${w.witnessName} ${d.title} Front` });
-                            if (d.back) allImages.push({ ...d.back, category: `${w.witnessName} ${d.title} Back` });
+                            if (d.front) allImages.push({ ...d.front, category: `${w.witnessName} ${d.title || "ID"} Front` });
+                            if (d.back) allImages.push({ ...d.back, category: `${w.witnessName} ${d.title || "ID"} Back` });
                         });
                     }
                 });
             }
 
             if (allImages.length > 0) {
-                children.push(createHeading("12. Photographs"));
-
                 // Process images in batches to prevent memory overflow
                 const BATCH_SIZE = 10;
                 const processedImages = [];
@@ -464,34 +517,42 @@ export const useTheftCaseDocx = () => {
                     const batch = allImages.slice(i, i + BATCH_SIZE);
                     const batchResults = await Promise.all(
                         batch.map(async (img) => {
-                            if (img.imageUrl) {
+                            const url = img.imageUrl || img.url || img.secure_url;
+                            if (url) {
                                 try {
-                                    const b64 = await convertImageToBase64(img.imageUrl);
-                                    return { ...img, b64 };
+                                    const b64 = await convertImageToBase64(url);
+                                    if (!b64) return null;
+
+                                    // DOCX needs Uint8Array for browser
+                                    const binaryString = atob(b64);
+                                    const uint8Array = new Uint8Array(binaryString.length);
+                                    for (let j = 0; j < binaryString.length; j++) {
+                                        uint8Array[j] = binaryString.charCodeAt(j);
+                                    }
+                                    return { ...img, uint8Array };
                                 } catch (e) {
-                                    console.error(`Failed to process image: ${img.imageUrl}`, e);
+                                    console.error(`Failed to process image: ${url}`, e);
                                     return null;
                                 }
                             }
                             return null;
                         })
                     );
-                    processedImages.push(...batchResults);
+                    processedImages.push(...batchResults.filter(i => i !== null));
 
-                    // Allow garbage collection between batches
                     if (i + BATCH_SIZE < allImages.length) {
                         await new Promise(resolve => setTimeout(resolve, 100));
                     }
                 }
 
-                const validImages = processedImages.filter(i => i && i.b64);
+                const validImages = processedImages.filter(i => i && i.uint8Array);
 
                 const imageRows = [];
                 let rowCells = [];
                 validImages.forEach((img, idx) => {
                     const imgPara = new Paragraph({
                         children: [new ImageRun({
-                            data: img.b64,
+                            data: img.uint8Array,
                             transformation: { width: 250, height: 180 }
                         })],
                         alignment: AlignmentType.CENTER
@@ -505,7 +566,7 @@ export const useTheftCaseDocx = () => {
                     rowCells.push(new TableCell({
                         children: [imgPara, txtPara],
                         width: { size: 50, type: WidthType.PERCENTAGE },
-                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } } // Clean look
+                        borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                     }));
 
                     if (rowCells.length === 2) {
@@ -513,10 +574,7 @@ export const useTheftCaseDocx = () => {
                         rowCells = [];
                     }
                 });
-                // Leftover
-                if (rowCells.length > 0) {
-                    imageRows.push(new TableRow({ children: rowCells }));
-                }
+                if (rowCells.length > 0) imageRows.push(new TableRow({ children: rowCells }));
 
                 if (imageRows.length > 0) {
                     children.push(new Table({
@@ -534,16 +592,16 @@ export const useTheftCaseDocx = () => {
                 }
             }
 
-            // Footer Design
+            // Footer Design (Matching OD)
             const footerTable = new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 borders: {
-                    top: { style: BorderStyle.SINGLE, size: 4, color: "CCCCCC" },
-                    bottom: { style: BorderStyle.NONE },
-                    left: { style: BorderStyle.NONE },
-                    right: { style: BorderStyle.NONE },
-                    insideHorizontal: { style: BorderStyle.NONE },
-                    insideVertical: { style: BorderStyle.NONE },
+                    top: { style: BorderStyle.SINGLE, size: 12, color: "000000" },
+                    bottom: { style: BorderStyle.NIL },
+                    left: { style: BorderStyle.NIL },
+                    right: { style: BorderStyle.NIL },
+                    insideHorizontal: { style: BorderStyle.NIL },
+                    insideVertical: { style: BorderStyle.NIL },
                 },
                 rows: [
                     new TableRow({
@@ -553,7 +611,7 @@ export const useTheftCaseDocx = () => {
                                     new Paragraph({
                                         children: [
                                             new TextRun({
-                                                children: [PageNumber.CURRENT],
+                                                children: ["Page ", PageNumber.CURRENT],
                                                 color: "70a1d7",
                                                 size: 24,
                                                 bold: true,
@@ -594,6 +652,15 @@ export const useTheftCaseDocx = () => {
             });
 
             const doc = new Document({
+                styles: {
+                    default: {
+                        document: {
+                            run: {
+                                size: 24, // 12pt
+                            },
+                        },
+                    },
+                },
                 sections: [{
                     properties: {
                         page: {
@@ -604,6 +671,9 @@ export const useTheftCaseDocx = () => {
                                 right: 1000,
                                 header: 500,
                                 footer: 500,
+                            },
+                            size: {
+                                orientation: "portrait",
                             },
                         },
                     },
@@ -618,12 +688,12 @@ export const useTheftCaseDocx = () => {
             });
 
             const blob = await Packer.toBlob(doc);
-            saveAs(blob, `Theft_Report_${data.summaryOfTheClaim?.claimNo || "Draft"}.docx`);
-            toast.success("Report generated successfully!");
+            return blob;
 
         } catch (error) {
             console.error("Doc Gen Error:", error);
             toast.error("Failed to generate report.");
+            return null;
         } finally {
             setIsGenerating(false);
             toast.dismiss(toastId);

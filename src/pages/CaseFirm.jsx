@@ -4,14 +4,15 @@ import { Plus, Edit, Trash2, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useFirms } from "../context/FirmContext";
 import Pagination from "../components/Ui/Pagination";
+import TableSkeleton from "../components/Ui/TableSkeleton";
 import {
   CASE_FIRM_INITIAL_STATE,
   CASE_FIRM_FIELDS,
   firmToFormData,
 } from "../utils/caseFirmForm.utils";
 import { INDIAN_STATES, STATE_CITIES } from "../utils/indianStates";
+import { useGlobalSearch } from "../context/SearchContext";
 
- 
 function CaseFirmPage() {
   const {
     firms,
@@ -23,23 +24,29 @@ function CaseFirmPage() {
     totalPages,
     total,
     limit,
+    loadFirms,
     goToPage,
+    initialized,
   } = useFirms();
+  const { globalSearch } = useGlobalSearch();
 
   const location = useLocation();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [formData, setFormData] = useState({ ...CASE_FIRM_INITIAL_STATE });
   const [editingId, setEditingId] = useState(null);
 
+  // Data fetching is handled by the context's loadFirms method
+  useEffect(() => {
+    loadFirms(currentPage, globalSearch);
+  }, [currentPage, globalSearch, loadFirms]);
+
   useEffect(() => {
     if (location.state?.openAddFirm) {
       handleOpenDrawer();
-      // Clean up state to prevent opening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  /* ---- helpers ---- */
   const setField = (key, value) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
 
@@ -48,7 +55,6 @@ function CaseFirmPage() {
     setEditingId(null);
   };
 
-  /* ---- drawer ---- */
   const handleOpenDrawer = () => {
     resetForm();
     setIsDrawerOpen(true);
@@ -59,37 +65,38 @@ function CaseFirmPage() {
     setIsDrawerOpen(false);
   };
 
-  /* ---- submit ---- */
+  const [submitting, setSubmitting] = useState(false);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = editingId
-      ? await updateFirm(editingId, formData)
-      : await addFirm(formData);
-    if (success) handleCloseDrawer();
+    setSubmitting(true);
+    try {
+      const success = editingId
+        ? await updateFirm(editingId, formData)
+        : await addFirm(formData);
+      if (success) handleCloseDrawer();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  /* ---- edit ---- */
   const handleEdit = (firm) => {
     setFormData(firmToFormData(firm));
     setEditingId(firm._id);
     setIsDrawerOpen(true);
   };
 
-  /* ---- delete ---- */
   const handleDelete = (id) => {
     toast(
       (t) => (
-        <div className="flex flex-col gap-3 pointer-events-auto">
-          <div>
-            <p className="font-semibold text-gray-900">Delete Case Firm?</p>
-            <p className="text-sm text-gray-600 mt-1">
-              This action cannot be undone.
-            </p>
-          </div>
-          <div className="flex gap-2 justify-end">
+        <div className="p-4 bg-white">
+          <p className="font-bold text-gray-900 border-b pb-2 mb-3">Confirm Deletion</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Are you sure you want to permanently delete this firm record?
+          </p>
+          <div className="flex gap-3 justify-end">
             <button
               onClick={() => toast.dismiss(t.id)}
-              className="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200"
             >
               Cancel
             </button>
@@ -98,9 +105,9 @@ function CaseFirmPage() {
                 toast.dismiss(t.id);
                 await deleteFirm(id);
               }}
-              className="px-3 py-1.5 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded hover:bg-red-700"
             >
-              Delete
+              Delete Firm
             </button>
           </div>
         </div>
@@ -108,95 +115,95 @@ function CaseFirmPage() {
       {
         duration: Infinity,
         position: "top-center",
-        style: { zIndex: 9999, pointerEvents: "auto" },
+        style: { padding: 0, borderRadius: '4px', overflow: 'hidden' }
       }
     );
   };
 
-  /* ================================================================
-     RENDER
-  ================================================================ */
   return (
-    <div
-      className="min-h-screen px-4 py-4 md:px-6 relative overflow-hidden"
-      style={{ backgroundColor: "var(--background)", color: "var(--foreground)" }}
-    >
-      <div className="max-w-8xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-6 font-sans">
+      <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* Page Header */}
-       <button
-            onClick={handleOpenDrawer}
-            className=" fixed bottom-5 right-5 px-4 py-2 rounded-lg flex items-center gap-2 text-white bg-blue-600 hover:bg-blue-700 transition"
-            style={{ backgroundColor: "var(--primary)" }}
-          >
-            <Plus className="w-5 h-5" />
-            <span className="hidden md:inline">Add Firm</span>
-            <span className="md:hidden">Add</span>
-          </button>
-
-        {/* Table Section */}
-        <div
-          className="rounded-xl border shadow-lg p-4 md:p-6 h-full flex flex-col w-full"
-          style={{ backgroundColor: "var(--card)", borderColor: "var(--border)" }}
-        >
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">All Case Firms</h2>
+        {/* Header Section */}
+        <div className="flex justify-between items-end border-b border-gray-300 pb-4">
+          <div>
+            {/* <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Case Firms</h1> */}
+            <p className="text-sm text-gray-500">Manage agency partners and firm codes</p>
           </div>
+          <button
+            onClick={handleOpenDrawer}
+            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded hover:bg-gray-800 transition shadow-sm"
+          >
+            <Plus size={18} />
+            <span>New Firm</span>
+          </button>
+        </div>
 
+        {/* Content Area */}
+        <div className="bg-white border border-gray-200 shadow-sm rounded-md overflow-hidden">
           {loading ? (
-            <p>Loading...</p>
+            <TableSkeleton columns={7} rows={10} />
           ) : firms.length === 0 ? (
-            <p>No Case Firms Found</p>
+            <div className="py-20 text-center">
+              <p className="text-gray-400 font-medium">No firm records found in the system.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
+              <table className="w-full text-sm text-left border-collapse">
                 <thead>
-                  <tr style={{ backgroundColor: "var(--border)" }}>
-                    <th className="p-3 text-left whitespace-nowrap">Name</th>
-                    <th className="p-3 text-left whitespace-nowrap">City</th>
-                    <th className="p-3 text-left whitespace-nowrap">Regional Office</th>
-                    <th className="p-3 text-left whitespace-nowrap">Operation Type</th>
-                    <th className="p-3 text-left whitespace-nowrap">Financial Year</th>
-                    <th className="p-3 text-left whitespace-nowrap">Generated Code</th>
-                    <th className="p-3 text-left whitespace-nowrap">Recipient Company</th>
-                    <th className="p-3 text-left whitespace-nowrap">Recipient Designation</th>
-                    <th className="p-3 text-left whitespace-nowrap">Recipient Dept.</th>
-                    <th className="p-3 text-left whitespace-nowrap">Recipient Address</th>
-                    <th className="p-3 text-left whitespace-nowrap">Actions</th>
+                  <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 font-semibold uppercase tracking-wider text-[11px]">
+                    <th className="px-6 py-4">Firm Name</th>
+                    <th className="px-6 py-4">City</th>
+                    <th className="px-6 py-4">Regional Office</th>
+                    <th className="px-6 py-4">Operation</th>
+                    <th className="px-6 py-4">FY</th>
+                    <th className="px-6 py-4">Firm Code</th>
+                    <th className="px-6 py-4 text-right">Options</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200">
                   {firms.map((firm) => (
-                    <tr key={firm._id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <td className="p-3 whitespace-nowrap font-medium">{firm.name || firm.recipientCompany || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.city || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.regionalOffice || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.operationType || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.financialYear || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">
-                        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-mono text-xs">
+                    <tr
+                      key={firm._id}
+                      className="hover:bg-gray-50 transition-colors group"
+                    >
+                      <td className="px-6 py-4 font-semibold text-gray-900">
+                        {firm.name || firm.recipientCompany || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">
+                        {firm.city || "—"}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600 text-xs">
+                        {firm.regionalOffice || "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
+                          {firm.operationType || "—"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-gray-500 font-mono text-xs">
+                        {firm.financialYear || "—"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm font-bold text-blue-700 font-mono">
                           {firm.code || "—"}
                         </span>
                       </td>
-                      <td className="p-3 whitespace-nowrap">{firm.recipientCompany || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.recipientDesignation || "—"}</td>
-                      <td className="p-3 whitespace-nowrap">{firm.recipientDepartment || "—"}</td>
-                      <td className="p-3 max-w-[180px] truncate" title={firm.recipientAddress}>{firm.recipientAddress || "—"}</td>
-                      <td className="p-3">
-                        <div className="flex gap-3">
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex justify-end gap-4">
                           <button
-                            className="text-blue-500 hover:text-blue-700 transition"
                             onClick={() => handleEdit(firm)}
+                            className="text-gray-400 hover:text-blue-600 transition"
                             title="Edit"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit size={16} />
                           </button>
                           <button
-                            className="text-red-500 hover:text-red-700 transition"
                             onClick={() => handleDelete(firm._id)}
+                            className="text-gray-400 hover:text-red-600 transition"
                             title="Delete"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 size={16} />
                           </button>
                         </div>
                       </td>
@@ -207,128 +214,120 @@ function CaseFirmPage() {
             </div>
           )}
 
-          {/* Pagination */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            total={total}
-            limit={limit}
-            onPageChange={goToPage}
-          />
+          {/* Pagination Bar */}
+          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center text-xs text-gray-500">
+            <span>Total Records: {total}</span>
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={goToPage}
+            />
+          </div>
         </div>
       </div>
 
-      {/* ---- Right Side Drawer ---- */}
+      {/* Slide-out Panel */}
       {isDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end">
-          {/* Backdrop */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+            className="absolute inset-0 bg-gray-900/30"
             onClick={handleCloseDrawer}
           />
-
-          {/* Drawer Panel */}
-          <div
-            className="relative w-full max-w-md h-full shadow-2xl p-6 overflow-y-auto transform transition-transform duration-300 ease-in-out"
-            style={{ backgroundColor: "var(--card)", color: "var(--foreground)" }}
-          >
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">
-                {editingId ? "Edit Case Firm" : "Add New Case Firm"}
-              </h2>
+          <div className="relative w-full max-w-lg bg-white shadow-2xl flex flex-col h-full border-l border-gray-200">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {editingId ? "Update Firm Details" : "Record New Firm"}
+                </h2>
+                <p className="text-xs text-gray-500">Enter information accurately</p>
+              </div>
               <button
                 onClick={handleCloseDrawer}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                className="text-gray-400 hover:text-gray-600 transition"
               >
-                <X className="w-6 h-6" />
+                <X size={24} />
               </button>
             </div>
 
-            {/* Dynamic Form — driven by CASE_FIRM_FIELDS util */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {CASE_FIRM_FIELDS.map((field) => (
-                <div key={field.key} className="space-y-1">
-                  <label className="text-sm font-medium opacity-70">
-                    {field.label}
-                    {field.required && (
-                      <span className="text-red-500 ml-1">*</span>
+            <div className="flex-1 overflow-y-auto p-6">
+              <form onSubmit={handleSubmit} id="firm-form" className="grid grid-cols-2 gap-4">
+                {CASE_FIRM_FIELDS.map((field) => (
+                  <div
+                    key={field.key}
+                    className={`${field.type === "textarea" ? "col-span-2" : "col-span-2 sm:col-span-1"}`}
+                  >
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                      {field.label} {field.required && <span className="text-red-500">*</span>}
+                    </label>
+
+                    {field.type === "textarea" ? (
+                      <textarea
+                        value={formData[field.key]}
+                        onChange={(e) => setField(field.key, e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 focus:border-gray-900 text-sm"
+                        rows={3}
+                        required={field.required}
+                      />
+                    ) : field.type === "select" && field.key === "state" ? (
+                      <select
+                        value={formData[field.key]}
+                        onChange={(e) => {
+                          setField(field.key, e.target.value);
+                          setField("city", "");
+                        }}
+                        className="w-full p-2.5 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-gray-900"
+                        required={field.required}
+                      >
+                        <option value="" disabled>Select state</option>
+                        {INDIAN_STATES.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    ) : field.type === "select" && field.key === "city" ? (
+                      <select
+                        value={formData[field.key]}
+                        onChange={(e) => setField(field.key, e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded bg-white text-sm disabled:bg-gray-50"
+                        required={field.required}
+                        disabled={!formData.state}
+                      >
+                        <option value="" disabled>Select city</option>
+                        {(STATE_CITIES[formData.state] || []).map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type={field.type}
+                        value={formData[field.key]}
+                        onChange={(e) => setField(field.key, e.target.value)}
+                        className="w-full p-2.5 border border-gray-300 rounded focus:ring-1 focus:ring-gray-900 text-sm"
+                        required={field.required}
+                      />
                     )}
-                  </label>
+                  </div>
+                ))}
+              </form>
+            </div>
 
-                  {field.type === "textarea" ? (
-                    <textarea
-                      placeholder={field.placeholder}
-                      value={formData[field.key]}
-                      onChange={(e) => setField(field.key, e.target.value)}
-                      className="w-full p-3 rounded-md border bg-transparent resize-none"
-                      rows={field.rows || 3}
-                      required={field.required}
-                    />
-                  ) : field.type === "select" && field.key === "state" ? (
-                    <select
-                      value={formData[field.key]}
-                      onChange={(e) => {
-                        setField(field.key, e.target.value);
-                        setField("city", ""); // Reset city when state changes
-                      }}
-                      className="w-full p-3 rounded-md border bg-transparent"
-                      required={field.required}
-                    >
-                      <option className="bg-white text-black dark:bg-gray-800 dark:text-white" value="" disabled>Select State</option>
-                      {INDIAN_STATES.map((state) => (
-                        <option className="bg-white text-black dark:bg-gray-800 dark:text-white" key={state} value={state}>
-                          {state}
-                        </option>
-                      ))}
-                    </select>
-                  ) : field.type === "select" && field.key === "city" ? (
-                    <select
-                      value={formData[field.key]}
-                      onChange={(e) => setField(field.key, e.target.value)}
-                      className="w-full p-3 rounded-md border bg-transparent"
-                      required={field.required}
-                      disabled={!formData.state}
-                    >
-                      <option className="bg-white text-black dark:bg-gray-800 dark:text-white" value="" disabled>Select City</option>
-                      {(STATE_CITIES[formData.state] || []).map((city) => (
-                        <option className="bg-white text-black dark:bg-gray-800 dark:text-white" key={city} value={city}>
-                          {city}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type}
-                      placeholder={field.placeholder}
-                      value={formData[field.key]}
-                      onChange={(e) => setField(field.key, e.target.value)}
-                      className="w-full p-3 rounded-md border bg-transparent"
-                      required={field.required}
-                    />
-                  )}
-                </div>
-              ))}
-
-              {/* Actions */}
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={handleCloseDrawer}
-                  className="flex-1 px-5 py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-5 py-3 rounded-lg flex items-center justify-center gap-2 text-white"
-                  style={{ backgroundColor: "var(--primary)" }}
-                >
-                  <Plus className="w-5 h-5" />
-                  {editingId ? "Update" : "Create"}
-                </button>
-              </div>
-            </form>
+            <div className="p-6 bg-gray-50 border-t border-gray-200 flex gap-3">
+              <button
+                type="button"
+                onClick={handleCloseDrawer}
+                className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-gray-600 bg-white border border-gray-300 rounded hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                form="firm-form"
+                type="submit"
+                className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest text-white bg-gray-900 rounded hover:bg-black transition"
+              >
+                {editingId ? "Update Firm" : "Save Firm"}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -18,7 +18,7 @@ import {
     BorderStyle,
     VerticalAlign,
     TableLayoutType,
-} from "https://esm.sh/docx@8.5.0";
+} from "docx";
 import { useCallback, useState } from "react";
 import { convertImageToBase64, getCurrentDate, formatDate, formatDateTime } from "../utils/helper";
 import { toast } from "react-hot-toast";

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { theftCaseService } from '../services/theftCaseService';
 
@@ -9,7 +9,7 @@ export function TheftCaseProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
-    const loadTheftCases = async () => {
+    const loadTheftCases = useCallback(async () => {
         setLoading(true);
         try {
             const resp = await theftCaseService.getAll();
@@ -21,9 +21,9 @@ export function TheftCaseProvider({ children }) {
             setLoading(false);
             setInitialized(true);
         }
-    };
+    }, []);
 
-    const deleteTheftCase = async (id) => {
+    const deleteTheftCase = useCallback(async (id) => {
         try {
             await theftCaseService.delete(id);
             toast.success("Theft Case deleted successfully");
@@ -32,13 +32,9 @@ export function TheftCaseProvider({ children }) {
             console.error(err);
             toast.error("Failed to delete Theft case");
         }
-    };
+    }, [loadTheftCases]);
 
-    useEffect(() => {
-        // Initial fetch is now lazy-loaded by the hook
-    }, []);
-
-    const getTheftCaseById = async (id) => {
+    const getTheftCaseById = useCallback(async (id) => {
         try {
             const resp = await theftCaseService.getById(id);
             return resp.data;
@@ -47,16 +43,25 @@ export function TheftCaseProvider({ children }) {
             toast.error("Failed to get Theft case details");
             return null;
         }
-    };
+    }, []);
 
-    const value = {
+    // Initial fetch guard
+    const initRef = useRef(false);
+    useEffect(() => {
+        if (!initRef.current) {
+            initRef.current = true;
+            loadTheftCases();
+        }
+    }, [loadTheftCases]);
+
+    const value = useMemo(() => ({
         theftCases,
         loading,
         loadTheftCases,
         deleteTheftCase,
         getTheftCaseById,
         initialized
-    };
+    }), [theftCases, loading, loadTheftCases, deleteTheftCase, getTheftCaseById, initialized]);
 
     return (
         <TheftCaseContext.Provider value={value}>
@@ -65,19 +70,10 @@ export function TheftCaseProvider({ children }) {
     );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useTheftCases() {
     const context = useContext(TheftCaseContext);
     if (!context) {
         throw new Error('useTheftCases must be used within a TheftCaseProvider');
     }
-
-    // Lazy load when hook is used
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadTheftCases();
-        }
-    }, [context]);
-
     return context;
 }

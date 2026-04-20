@@ -21,6 +21,8 @@ import {
   PlusCircle,
   UserPlus
 } from "lucide-react";
+import CardSkeleton from "../components/Ui/CardSkeleton";
+import Skeleton from "../components/Ui/Skeleton";
 
 function Dashboard() {
   const [time, setTime] = useState(new Date());
@@ -114,79 +116,91 @@ function Dashboard() {
 
           {/* Primary Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            {primaryStats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <Link
-                  to={stat.to}
-                  key={index}
-                  className="rounded-[2.5rem] shadow-xl border p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group overflow-hidden relative bg-white/60 backdrop-blur-sm"
-                  style={{
-                    borderColor: "rgba(229, 231, 235, 0.5)",
-                    animationDelay: `${index * 150}ms`,
-                  }}
-                >
-                  <div 
-                    className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-150 transition-all duration-1000"
-                    style={{ color: stat.color }}
+            {statsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
+            ) : (
+              primaryStats.map((stat, index) => {
+                const IconComponent = stat.icon;
+                return (
+                  <Link
+                    to={stat.to}
+                    key={index}
+                    className="rounded-[2.5rem] shadow-xl border p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group overflow-hidden relative bg-white/60 backdrop-blur-sm"
+                    style={{
+                      borderColor: "rgba(229, 231, 235, 0.5)",
+                      animationDelay: `${index * 150}ms`,
+                    }}
                   >
-                    <IconComponent size={128} />
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-6 relative z-10">
                     <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 bg-black"
-                      style={{ boxShadow: `0 10px 20px -5px ${stat.color}44` }}
+                      className="absolute top-0 right-0 w-32 h-32 -mr-10 -mt-10 opacity-[0.03] group-hover:opacity-10 group-hover:scale-150 transition-all duration-1000"
+                      style={{ color: stat.color }}
                     >
-                      <IconComponent
-                        size={28}
-                        className="text-white"
-                      />
+                      <IconComponent size={128} />
                     </div>
-                    <div
-                      className="text-5xl font-black tabular-nums tracking-tighter"
-                      style={{ color: "#111827" }}
-                    >
-                      {statsLoading ? (
-                        <div className="w-10 h-10 border-4 border-gray-100 border-t-blue-600 rounded-full animate-spin"></div>
-                      ) : (
-                        stat.value
-                      )}
+                    
+                    <div className="flex items-center justify-between mb-6 relative z-10">
+                      <div 
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 bg-black"
+                        style={{ boxShadow: `0 10px 20px -5px ${stat.color}44` }}
+                      >
+                        <IconComponent
+                          size={28}
+                          className="text-white"
+                        />
+                      </div>
+                      <div
+                        className="text-5xl font-black tabular-nums tracking-tighter"
+                        style={{ color: "#111827" }}
+                      >
+                        {stat.value}
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-xl text-gray-900 tracking-tight">{stat.label}</p>
-                    <div className="w-8 h-1 bg-gray-100 rounded-full mt-2 group-hover:w-16 transition-all duration-500" style={{ backgroundColor: `${stat.color}44` }}></div>
-                  </div>
-                </Link>
-              );
-            })}
+                    <div>
+                      <p className="font-extrabold text-xl text-gray-900 tracking-tight">{stat.label}</p>
+                      <div className="w-8 h-1 bg-gray-100 rounded-full mt-2 group-hover:w-16 transition-all duration-500" style={{ backgroundColor: `${stat.color}44` }}></div>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
           </div>
 
           {/* Secondary Stats Strip */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {secondaryStats.map((stat, index) => {
-              const IconComponent = stat.icon;
-              return (
-                <Link
-                  to={stat.to}
-                  key={index}
-                  className="rounded-2xl border border-white/40 p-5 hover:border-blue-400/50 hover:bg-white/80 transition-all duration-300 flex items-center gap-5 shadow-sm hover:shadow-md bg-white/30 backdrop-blur-[2px]"
-                >
-                  <div className="p-3 rounded-xl bg-gray-50 group-hover:bg-blue-50 transition-colors shadow-inner">
-                    <IconComponent size={22} className="text-gray-700" />
+            {statsLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-2xl border border-white/40 p-5 flex items-center gap-5 bg-white/30 backdrop-blur-[2px]">
+                  <Skeleton width="3rem" height="3rem" borderRadius="0.75rem" />
+                  <div className="flex-1">
+                    <Skeleton width="60%" height="0.5rem" className="mb-2" />
+                    <Skeleton width="40%" height="1.5rem" />
                   </div>
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">
-                      {stat.label}
-                    </p>
-                    <p className="text-2xl font-black tabular-nums text-gray-900">
-                      {statsLoading ? "•••" : stat.value}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
+                </div>
+              ))
+            ) : (
+              secondaryStats.map((stat, index) => {
+                const IconComponent = stat.icon;
+                return (
+                  <Link
+                    to={stat.to}
+                    key={index}
+                    className="rounded-2xl border border-white/40 p-5 hover:border-blue-400/50 hover:bg-white/80 transition-all duration-300 flex items-center gap-5 shadow-sm hover:shadow-md bg-white/30 backdrop-blur-[2px]"
+                  >
+                    <div className="p-3 rounded-xl bg-gray-50 group-hover:bg-blue-50 transition-colors shadow-inner">
+                      <IconComponent size={22} className="text-gray-700" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">
+                        {stat.label}
+                      </p>
+                      <p className="text-2xl font-black tabular-nums text-gray-900">
+                        {stat.value}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
           </div>
         </div>
 

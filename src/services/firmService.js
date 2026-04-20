@@ -3,8 +3,8 @@ import apiClient from './apiClient';
 
 export const firmService = {
     // Get all firms
-    getAll: async ({ page = 1, limit = 10 } = {}) => {
-        return toast.promise(apiClient.get('/casefirm', { params: { page, limit } }).then(res => res.data), {
+    getAll: async ({ page = 1, limit = 10, search = "" } = {}) => {
+        return toast.promise(apiClient.get('/casefirm', { params: { page, limit, search } }).then(res => res.data), {
             loading: 'Fetching firms...',
             success: false,
             error: (err) => err?.response?.data?.message || err?.message || 'Failed to fetch firms',

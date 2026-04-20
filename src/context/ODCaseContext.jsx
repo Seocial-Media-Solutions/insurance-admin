@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { odCaseService } from '../services/odCaseService';
 
@@ -9,7 +9,7 @@ export function ODCaseProvider({ children }) {
     const [loading, setLoading] = useState(false);
     const [initialized, setInitialized] = useState(false);
 
-    const loadODCases = async (force = false) => {
+    const loadODCases = useCallback(async (force = false) => {
         if (!force && (loading || initialized)) return; // Prevent duplicate or redundant calls
         setLoading(true);
         try {
@@ -22,9 +22,9 @@ export function ODCaseProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [loading, initialized]);
 
-    const deleteODCase = async (id) => {
+    const deleteODCase = useCallback(async (id) => {
         try {
             await odCaseService.delete(id);
             // Force re-fetch the list after deletion
@@ -33,22 +33,21 @@ export function ODCaseProvider({ children }) {
         } catch (err) {
             console.error("Delete error:", err);
         }
-    };
+    }, [loadODCases]);
 
-    const updateODSection = async (caseId, sectionPath, formData) => {
+    const updateODSection = useCallback(async (caseId, sectionPath, formData) => {
         try {
             await odCaseService.updateSection({ caseId, sectionPath, formData });
             toast.success("Section updated successfully");
-            // Invalidate/Refresh details if needed - usually done via refetch in editor
             return true;
         } catch (err) {
             console.error("Update error:", err);
             toast.error("Failed to update section");
             return false;
         }
-    };
+    }, []);
 
-    const deleteODImage = async (caseId, sectionPath, fieldName, publicId) => {
+    const deleteODImage = useCallback(async (caseId, sectionPath, fieldName, publicId) => {
         try {
             await odCaseService.deleteImage({ caseId, sectionPath, fieldName, publicId });
             return true;
@@ -56,26 +55,28 @@ export function ODCaseProvider({ children }) {
             console.error("Image delete error:", err);
             return false;
         }
-    };
+    }, []);
 
-    // Add more methods as needed (updateSection, etc.)
-
-    const getODCaseById = async (id) => {
+    const getODCaseById = useCallback(async (id) => {
         try {
             const resp = await odCaseService.getById(id);
             return resp.data;
         } catch (err) {
             console.error(err);
-            // Service layer already showed the error toast
             return null;
         }
-    };
-
-    useEffect(() => {
-        // Initial fetch is now lazy-loaded by the hook
     }, []);
 
-    const value = {
+    // Initial fetch guard
+    const initRef = useRef(false);
+    useEffect(() => {
+        if (!initRef.current) {
+            initRef.current = true;
+            loadODCases();
+        }
+    }, [loadODCases]);
+
+    const value = useMemo(() => ({
         odCases,
         loading,
         loadODCases,
@@ -84,7 +85,10 @@ export function ODCaseProvider({ children }) {
         updateODSection,
         deleteODImage,
         initialized
-    };
+    }), [
+        odCases, loading, loadODCases, deleteODCase, getODCaseById, 
+        updateODSection, deleteODImage, initialized
+    ]);
 
     return (
         <ODCaseContext.Provider value={value}>
@@ -98,13 +102,5 @@ export function useODCases() {
     if (!context) {
         throw new Error('useODCases must be used within an ODCaseProvider');
     }
-
-    // Lazy load: fetch data only when component uses this context
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadODCases();
-        }
-    }, [context]);
-
     return context;
 }

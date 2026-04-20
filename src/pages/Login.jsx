@@ -168,7 +168,7 @@ const LoginPage = () => {
           ) : (
             <form onSubmit={handleSubmit(handleVerifyOTP)} className="space-y-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Verification Code (otp will expire in 60 seconds)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2 ml-1">Verification Code (otp will expire in 5 minutes)</label>
                 
                 {/* Dummy input to catch browser autofill (hidden from screen readers as well) */}
                 <input type="text" style={{ display: 'none' }} aria-hidden="true" autoComplete="username" />

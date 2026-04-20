@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { API } from '../utils/api';
+import apiClient from '../services/apiClient';
 
 const ImageUploadTest = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -8,7 +7,7 @@ const ImageUploadTest = () => {
   const [uploadResult, setUploadResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const API_BASE = API;
+
 
   // Upload Single Image
   const handleSingleUpload = async () => {
@@ -22,9 +21,7 @@ const ImageUploadTest = () => {
     formData.append('image', selectedFile);
 
     try {
-      const response = await axios.post(`${API_BASE}/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await apiClient.post('/upload', formData);
       setUploadResult(response.data);
       console.log('Upload Success:', response.data);
     } catch (error) {
@@ -52,9 +49,7 @@ const ImageUploadTest = () => {
     });
 
     try {
-      const response = await axios.post(`${API_BASE}/upload/multiple`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = await apiClient.post('/upload/multiple', formData);
       setUploadResult(response.data);
       console.log('Multiple Upload Success:', response.data);
     } catch (error) {
@@ -76,7 +71,7 @@ const ImageUploadTest = () => {
     }
 
     try {
-      const response = await axios.delete(`${API_BASE}/upload`, {
+      const response = await apiClient.delete('/upload', {
         data: { publicId }
       });
       setUploadResult(response.data);

@@ -66,19 +66,9 @@ function SectionUnit({
     };
 
     const validate = () => {
-        const newErrors = {};
-        Object.keys(fieldsObj).forEach((field) => {
-            // Skip file fields (handled separately or optional)
-            if (fileFields[field]) return;
-
-            const currentSection = getNestedValue(form, sectionKey) || {};
-            const value = currentSection[field];
-            if (!value || (typeof value === "string" && !value.trim())) {
-                newErrors[field] = `${formatLabel(field)} is required`;
-            }
-        });
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        // Validation removed as per user request to make all fields optional
+        setErrors({});
+        return true;
     };
 
     const handleSubmit = async () => {
@@ -195,6 +185,77 @@ function SectionUnit({
                             const error = errors[field];
                             const currentSection = getNestedValue(form, sectionKey) || {};
 
+                            if (field === "riskCoverPeriod") {
+                                const currentVal = currentSection[field] || "";
+                                const [fromStr, toStr] = currentVal.includes(" to ") ? currentVal.split(" to ") : ["", ""];
+
+                                // Convert DD/MM/YYYY to YYYY-MM-DD for input
+                                const toInputDate = (str) => {
+                                    if (!str) return "";
+                                    const parts = str.trim().split("/");
+                                    if (parts.length !== 3) return "";
+                                    return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                                };
+
+                                // Convert YYYY-MM-DD to DD/MM/YYYY for saving
+                                const toStringDate = (val) => {
+                                    if (!val) return "";
+                                    const parts = val.split("-");
+                                    if (parts.length !== 3) return "";
+                                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                };
+
+                                return (
+                                    <div key={field} className="col-span-1 md:col-span-2">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Risk Cover Period</label>
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 relative">
+                                                    <input
+                                                        type="date"
+                                                        className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                        value={toInputDate(fromStr)}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value;
+                                                            if (!val) {
+                                                                updateField(field, "");
+                                                                return;
+                                                            }
+                                                            const newFrom = toStringDate(val);
+                                                            
+                                                            // Auto-calculate end date (1 year - 1 day)
+                                                            const startDate = new Date(val);
+                                                            const endDate = new Date(startDate);
+                                                            endDate.setFullYear(startDate.getFullYear() + 1);
+                                                            endDate.setDate(startDate.getDate() - 1);
+                                                            
+                                                            const ey = endDate.getFullYear();
+                                                            const em = String(endDate.getMonth() + 1).padStart(2, '0');
+                                                            const ed = String(endDate.getDate()).padStart(2, '0');
+                                                            const newTo = toStringDate(`${ey}-${em}-${ed}`);
+                                                            updateField(field, `${newFrom} to ${newTo}`);
+                                                        }}
+                                                    />
+                                                    <span className="absolute -top-2 left-2 px-1 bg-white text-[10px] font-bold text-indigo-500 uppercase">Starts</span>
+                                                </div>
+                                                <span className="text-gray-400 font-bold">→</span>
+                                                <div className="flex-1 relative border-none">
+                                                    <input
+                                                        type="date"
+                                                        className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-gray-50/50"
+                                                        value={toInputDate(toStr)}
+                                                        onChange={(e) => {
+                                                            const newTo = toStringDate(e.target.value);
+                                                            updateField(field, `${fromStr || ""} to ${newTo || ""}`);
+                                                        }}
+                                                    />
+                                                    <span className="absolute -top-2 left-2 px-1 bg-white text-[10px] font-bold text-indigo-500 uppercase">Ends</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
 
                             if (isFile) {
                                 // Get existing uploaded images from fieldsObj (API data)
@@ -295,7 +356,7 @@ function SectionUnit({
                                     <label className="block">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-sm font-semibold text-gray-700">
-                                                {formatLabel(field)} <span className="text-red-500">*</span>
+                                                {formatLabel(field)}
                                             </span>
                                         </div>
 
@@ -313,10 +374,21 @@ function SectionUnit({
                                                 type={type}
                                                 className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"
                                                     }`}
-                                                value={currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || ""}
+                                                value={type === 'date' ? (() => {
+                                                    const val = currentSection[field] || "";
+                                                    if (!val) return "";
+                                                    const parts = val.split("/");
+                                                    if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                                                    return val; // Fallback if already in wrong format
+                                                })() : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")}
                                                 onChange={(e) => {
                                                     let val = e.target.value;
-                                                    if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
+                                                    if (type === 'date' && val) {
+                                                        const parts = val.split("-");
+                                                        if (parts.length === 3) {
+                                                            val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                                        }
+                                                    } else if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
                                                         val = cleanNumericInput(val);
                                                     }
                                                     updateField(field, val);

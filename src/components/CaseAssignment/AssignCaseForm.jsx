@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../../services/apiClient";
 import toast from "react-hot-toast";
 import * as Icons from "lucide-react";   // ✅ dynamic icon loader
 import { getVisitRoutes } from "../../utils/visit";
@@ -55,7 +55,7 @@ const AssignCaseForm = ({ onAssignmentCreated, initialCaseId = null, initialCase
 
   const fetchCases = async () => {
     try {
-      const caseRes = await axios.get(`${API}/cases`);
+      const caseRes = await apiClient.get('/cases');
       if (caseRes.data.success) setCases(caseRes.data.data);
     } catch (err) {
       toast.error("Failed loading cases");

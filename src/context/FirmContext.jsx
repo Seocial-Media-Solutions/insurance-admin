@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { firmService } from '../services/firmService';
 
@@ -12,33 +12,60 @@ export function FirmProvider({ children }) {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [initialized, setInitialized] = useState(false);
+    const [currentSearch, setCurrentSearch] = useState("");
     const limit = 10;
 
-    // Fetch firms list (paginated)
-    const loadFirms = useCallback(async (page = currentPage) => {
-        setLoading(true);
-        try {
-            const resp = await firmService.getAll({ page, limit });
-            setFirms(resp.data || []);
-            setTotalPages(resp.totalPages || 1);
-            setTotal(resp.total || 0);
-            setCurrentPage(resp.currentPage || page);
+    // Use refs to track current data for stability
+    const stateRef = useRef({ currentPage: 1, currentSearch: "", initialized: false });
 
-            // Also fetch a "Lookup" version for all IDs if the list is small or just use the current data to build the cache
-            setAllFirms(prev => {
-                const newAll = [...prev];
-                (resp.data || []).forEach(f => {
-                    if (!newAll.some(ef => ef._id === f._id)) newAll.push(f);
+    useEffect(() => {
+      stateRef.current = { currentPage, currentSearch, initialized };
+    }, [currentPage, currentSearch, initialized]);
+
+    // Fetch firms list (paginated)
+    const loadFirms = useCallback(async (page, search = "", force = false) => {
+        const targetPage = page || 1;
+        const targetSearch = search || "";
+        const { currentPage: cp, currentSearch: cs, initialized: init } = stateRef.current;
+
+        // Skip if already loaded (and not forced) and not currently loading
+        if (!force && init && targetPage === cp && targetSearch === cs) {
+          return;
+        }
+
+        setLoading(true);
+        const requestId = Date.now();
+        stateRef.current.lastRequestId = requestId;
+
+        try {
+            const resp = await firmService.getAll({ page: targetPage, limit, search: targetSearch });
+            
+            // Only update state if this is the most recent request
+            if (stateRef.current.lastRequestId === requestId) {
+                setFirms(resp.data || []);
+                setTotalPages(resp.totalPages || 1);
+                setTotal(resp.total || 0);
+                setCurrentPage(resp.currentPage || targetPage);
+                setCurrentSearch(targetSearch);
+
+                // Update cache
+                setAllFirms(prev => {
+                    const newAll = [...prev];
+                    (resp.data || []).forEach(f => {
+                        if (!newAll.some(ef => ef._id === f._id)) newAll.push(f);
+                    });
+                    return newAll;
                 });
-                return newAll;
-            });
+                setInitialized(true);
+            }
         } catch (err) {
             console.error("Error loading firms:", err);
         } finally {
-            setLoading(false);
-            setInitialized(true);
+            if (stateRef.current.lastRequestId === requestId) {
+                setLoading(false);
+            }
         }
-    }, [currentPage, limit]);
+    }, [limit]);
 
     // Initial load for all firms to enable instant lookups
     const fetchAllFirms = useCallback(async () => {
@@ -58,42 +85,65 @@ export function FirmProvider({ children }) {
 
     const addFirm = useCallback(async (data) => {
         try {
-            await firmService.create(data);
+            const resp = await firmService.create(data);
             toast.success("Firm created successfully");
-            loadFirms(1);
+            // If we're on page 1, we could prepend, but reloading is safer for new items to ensure correct order
+            // However, the user wants "one time", so let's try local prepend if we are on page 1
+            if (stateRef.current.currentPage === 1) {
+                const newFirm = resp.data || resp;
+                setFirms(prev => [newFirm, ...prev.slice(0, limit - 1)]);
+                setTotal(t => t + 1);
+            } else {
+                // If not on page 1, we still need to reload or just skip local update and let user navigate
+                loadFirms(1, stateRef.current.currentSearch, true);
+            }
+            // Always update cache
+            setAllFirms(prev => [resp.data || resp, ...prev]);
             return true;
         } catch (err) {
             console.error(err);
-            toast.error("Failed to create firm");
             return false;
         }
-    }, [loadFirms]);
+    }, [loadFirms, limit]);
 
     const updateFirm = useCallback(async (id, data) => {
         try {
-            await firmService.update({ id, firmData: data });
+            const resp = await firmService.update({ id, firmData: data });
+            const updatedFirm = resp.data || resp;
+            
             toast.success("Firm updated successfully");
-            loadFirms();
+            
+            // LOCAL STATE UPDATE (Avoid extra API hit)
+            setFirms(prev => prev.map(f => f._id === id ? { ...f, ...updatedFirm } : f));
+            setAllFirms(prev => prev.map(f => f._id === id ? { ...f, ...updatedFirm } : f));
+            
             return true;
         } catch (err) {
             console.error(err);
-            toast.error("Failed to update firm");
             return false;
         }
-    }, [loadFirms]);
+    }, []);
 
     const deleteFirm = useCallback(async (id) => {
         try {
             await firmService.delete(id);
             toast.success("Firm deleted successfully");
-            loadFirms();
+            
+            // LOCAL STATE UPDATE
+            setFirms(prev => prev.filter(f => f._id !== id));
+            setAllFirms(prev => prev.filter(f => f._id !== id));
+            setTotal(t => Math.max(0, t - 1));
+
+            // If page is now empty and not page 1, go back
+            if (firms.length <= 1 && stateRef.current.currentPage > 1) {
+                loadFirms(stateRef.current.currentPage - 1, stateRef.current.currentSearch, true);
+            }
             return true;
         } catch (err) {
             console.error(err);
-            toast.error("Failed to delete firm");
             return false;
         }
-    }, [loadFirms]);
+    }, [firms.length, loadFirms]);
 
     const getFirmById = useCallback(async (id) => {
         if (!id) return null;
@@ -133,10 +183,16 @@ export function FirmProvider({ children }) {
         return firm ? firm.code : "--";
     }, [allFirms]);
 
+    // Use a ref for strict initialization control (prevents race conditions)
+    const initRef = useRef(false);
+
     useEffect(() => {
-        // Initial fetch removed to avoid bulk loading at once.
-        // It's now handled lazily by useFirms hook
-    }, []);
+        if (!initRef.current) {
+            initRef.current = true;
+            // Removed redundant loadFirms(1) - Page components will trigger this
+            fetchAllFirms();
+        }
+    }, [fetchAllFirms]);
 
     const value = useMemo(() => ({
         firms,
@@ -173,14 +229,5 @@ export function useFirms() {
     if (!context) {
         throw new Error('useFirms must be used within a FirmProvider');
     }
-
-    // Lazy load: Trigger fetch only when a component actually uses this hook
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadFirms(1);
-            context.fetchAllFirms();
-        }
-    }, [context]);
-
     return context;
 }

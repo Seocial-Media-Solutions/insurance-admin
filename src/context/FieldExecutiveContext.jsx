@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { fieldExecutiveService } from '../services/fieldExecutiveService';
 
 const FieldExecutiveContext = createContext();
@@ -13,7 +13,7 @@ export function FieldExecutiveProvider({ children }) {
     const [search, setSearch] = useState("");
     const limit = 50;
 
-    const loadExecutives = async (page = currentPage, currentSearch = search, force = false) => {
+    const loadExecutives = useCallback(async (page = currentPage, currentSearch = search, force = false) => {
         // Skip if already loaded with same parameters unless forced
         if (initialized && page === currentPage && currentSearch === search && !force) {
             return;
@@ -37,15 +37,15 @@ export function FieldExecutiveProvider({ children }) {
             setLoading(false);
             setInitialized(true);
         }
-    };
+    }, [currentPage, search, initialized]);
 
-    const goToPage = (page) => {
+    const goToPage = useCallback((page) => {
         if (page >= 1 && page <= totalPages) {
             loadExecutives(page);
         }
-    };
+    }, [loadExecutives, totalPages]);
 
-    const addExecutive = async (data) => {
+    const addExecutive = useCallback(async (data) => {
         try {
             await fieldExecutiveService.create(data);
             await loadExecutives(1, search, true);
@@ -53,9 +53,9 @@ export function FieldExecutiveProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadExecutives, search]);
 
-    const updateExecutive = async (id, data) => {
+    const updateExecutive = useCallback(async (id, data) => {
         try {
             await fieldExecutiveService.update({ id, executiveData: data });
             await loadExecutives(currentPage, search, true);
@@ -63,9 +63,9 @@ export function FieldExecutiveProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadExecutives, currentPage, search]);
 
-    const deleteExecutive = async (id) => {
+    const deleteExecutive = useCallback(async (id) => {
         try {
             await fieldExecutiveService.delete(id);
             await loadExecutives(currentPage, search, true);
@@ -73,14 +73,18 @@ export function FieldExecutiveProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadExecutives, currentPage, search]);
 
+    // Initial fetch guard
+    const initRef = useRef(false);
     useEffect(() => {
-        // Initial load removed to avoid bulk fetches. 
-        // Handles lazily by hook now.
-    }, []);
+        if (!initRef.current) {
+            initRef.current = true;
+            loadExecutives(1);
+        }
+    }, [loadExecutives]);
 
-    const value = {
+    const value = useMemo(() => ({
         executives,
         loading,
         currentPage,
@@ -93,7 +97,10 @@ export function FieldExecutiveProvider({ children }) {
         updateExecutive,
         deleteExecutive,
         initialized
-    };
+    }), [
+        executives, loading, currentPage, totalPages, total, limit,
+        loadExecutives, goToPage, addExecutive, updateExecutive, deleteExecutive, initialized
+    ]);
 
     return (
         <FieldExecutiveContext.Provider value={value}>
@@ -107,13 +114,5 @@ export function useFieldExecutives() {
     if (!context) {
         throw new Error('useFieldExecutives must be used within a FieldExecutiveProvider');
     }
-
-    // Lazy load when hook is used
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadExecutives(1);
-        }
-    }, [context]);
-
     return context;
 }

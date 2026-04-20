@@ -51,6 +51,9 @@ html{
 
   /* Border color (used by Dashboard cards) */
   --border: #e5e7eb;
+  /* Skeleton Loading */
+  --skeleton: #f9fafb; /* matches --card */
+  --skeleton-pulse: #f3f4f6;
 }
 
 /* ======================= */
@@ -156,4 +159,14 @@ body, .card, nav, aside, header, main {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+@keyframes skeleton-loading {
+  0% { background-color: #f3f4f6; }
+  50% { background-color: #e5e7eb; }
+  100% { background-color: #f3f4f6; }
+}
+
+.animate-skeleton {
+  animation: skeleton-loading 1.5s ease-in-out infinite;
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCases } from "../context/useCases";
 import CaseTable from "../components/Case/CaseTable";
 import Pagination from "../components/Ui/Pagination";
+import TableSkeleton from "../components/Ui/TableSkeleton";
 import { Search, X, Plus, Download, Filter, Loader2 } from "lucide-react";
 import { useGlobalSearch } from "../context/SearchContext";
 
@@ -27,12 +28,7 @@ export default function CaseManagement() {
   }, [cases, globalSearch, statusFilter]);
 
   if (loading) {
-    return (
-      <div className="flex flex-col justify-center items-center min-h-screen">
-        <Loader2 className="w-12 h-12 animate-spin text-blue-600" />
-        <p className="mt-4 text-gray-600">Loading cases...</p>
-      </div>
-    );
+    return <TableSkeleton columns={7} rows={limit || 10} />;
   }
 
   const handleExport = () => {

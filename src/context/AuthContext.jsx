@@ -5,13 +5,6 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  /*
-  const [user, setUser] = useState({
-    _id: "dummy_id",
-    username: "Admin (Bypassed)",
-    role: "SUPER_ADMIN"
-  });
-  */
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

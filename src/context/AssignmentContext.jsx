@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { assignmentService } from '../services/assignmentService';
 
@@ -14,7 +14,7 @@ export function AssignmentProvider({ children }) {
     const [search, setSearch] = useState("");
     const limit = 50;
 
-    const loadAssignments = async (page = currentPage, currentSearch = search, force = false) => {
+    const loadAssignments = useCallback(async (page = currentPage, currentSearch = search, force = false) => {
         // Skip if already loaded with same parameters unless forced
         if (initialized && page === currentPage && currentSearch === search && !force) {
             return;
@@ -34,20 +34,19 @@ export function AssignmentProvider({ children }) {
             setSearch(currentSearch);
         } catch (err) {
             console.error("Error loading assignments:", err);
-            // Service handles the actual errors if needed
         } finally {
             setLoading(false);
             setInitialized(true);
         }
-    };
+    }, [currentPage, search, initialized]);
 
-    const goToPage = (page) => {
+    const goToPage = useCallback((page) => {
         if (page >= 1 && page <= totalPages) {
             loadAssignments(page);
         }
-    };
+    }, [loadAssignments, totalPages]);
 
-    const addAssignment = async (data) => {
+    const addAssignment = useCallback(async (data) => {
         try {
             await assignmentService.create(data);
             await loadAssignments(1, search, true);
@@ -55,9 +54,9 @@ export function AssignmentProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadAssignments, search]);
 
-    const updateAssignment = async (id, data) => {
+    const updateAssignment = useCallback(async (id, data) => {
         try {
             await assignmentService.update({ id, assignmentData: data });
             await loadAssignments(currentPage, search, true);
@@ -65,9 +64,9 @@ export function AssignmentProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadAssignments, currentPage, search]);
 
-    const deleteAssignment = async (id) => {
+    const deleteAssignment = useCallback(async (id) => {
         try {
             await assignmentService.delete(id);
             await loadAssignments(currentPage, search, true);
@@ -75,13 +74,9 @@ export function AssignmentProvider({ children }) {
             console.error(err);
             throw err;
         }
-    };
+    }, [loadAssignments, currentPage, search]);
 
-    useEffect(() => {
-        // Handled by lazy load in hook
-    }, []);
-
-    const getAssignmentsByCaseId = async (caseId) => {
+    const getAssignmentsByCaseId = useCallback(async (caseId) => {
         try {
             const resp = await assignmentService.getByCaseId(caseId);
             return resp.data;
@@ -90,9 +85,9 @@ export function AssignmentProvider({ children }) {
             toast.error("Failed to fetch assignments for case");
             return [];
         }
-    };
+    }, []);
 
-    const getAssignmentById = async (id) => {
+    const getAssignmentById = useCallback(async (id) => {
         try {
             const resp = await assignmentService.getById(id);
             return resp.data;
@@ -101,9 +96,18 @@ export function AssignmentProvider({ children }) {
             toast.error("Failed to fetch assignment details");
             return null;
         }
-    };
+    }, []);
 
-    const value = {
+    // Initial fetch guard
+    const initRef = useRef(false);
+    useEffect(() => {
+        if (!initRef.current) {
+            initRef.current = true;
+            loadAssignments(1);
+        }
+    }, [loadAssignments]);
+
+    const value = useMemo(() => ({
         assignments,
         loading,
         currentPage,
@@ -118,7 +122,11 @@ export function AssignmentProvider({ children }) {
         getAssignmentsByCaseId,
         getAssignmentById,
         initialized
-    };
+    }), [
+        assignments, loading, currentPage, totalPages, total, limit,
+        loadAssignments, goToPage, addAssignment, updateAssignment, deleteAssignment,
+        getAssignmentsByCaseId, getAssignmentById, initialized
+    ]);
 
     return (
         <AssignmentContext.Provider value={value}>
@@ -132,13 +140,5 @@ export function useAssignments() {
     if (!context) {
         throw new Error('useAssignments must be used within an AssignmentProvider');
     }
-
-    // Lazy load when hook is used
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadAssignments(1);
-        }
-    }, [context]);
-
     return context;
 }

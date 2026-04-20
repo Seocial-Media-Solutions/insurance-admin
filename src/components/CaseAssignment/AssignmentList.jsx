@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from "../../services/apiClient";
 import toast from "react-hot-toast";
 import {
   Filter,
@@ -12,6 +12,7 @@ import {
   X
 } from "lucide-react";
 import Pagination from "../Ui/Pagination";
+import TableSkeleton from "../Ui/TableSkeleton";
 import { API } from "../../utils/api";
 import { useGlobalSearch } from "../../context/SearchContext";
 import { useFirms } from "../../context/FirmContext";
@@ -212,11 +213,7 @@ const AssignmentList = () => {
   };
 
   if (assignmentsLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <TableSkeleton columns={8} rows={10} />;
   }
 
   return (

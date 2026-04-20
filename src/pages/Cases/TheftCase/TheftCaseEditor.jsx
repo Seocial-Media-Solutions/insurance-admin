@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useIsMutating, useIsFetching } from '@tanstack/react-query';
 import { caseApi, caseFirmApi } from '../../../services/api';
 import { toast } from "react-hot-toast";
-import { ArrowLeft, Loader2, FileText, Edit2 } from "lucide-react";
+import { ArrowLeft, Loader2, FileText, Edit2, PanelRight } from "lucide-react";
 
 // Hooks
 import { useTheftCase } from "../../../hooks/useTheftCases";
@@ -16,6 +16,7 @@ import { getNestedValue } from "../../../utils/odCaseHelpers";
 import WitnessManager from "../../../components/WitnessManager";
 import TheftSectionUnit from "./components/TheftSectionUnit";
 import TheftProgressTracker from "./components/TheftProgressTracker";
+import DocxPreviewModal from "../ODCase/components/DocxPreviewModal";
 
 /* ---------------------------------------------------
    MAIN THEFT CASE EDITOR
@@ -34,7 +35,8 @@ export default function TheftCaseEditor() {
   };
 
   // Fetch case data
-  const { data: caseResponse, isLoading, isError, error, refetch } = useTheftCase(caseId);
+  const { data: caseResponse, isLoading, isFetching, isError, error, refetch } = useTheftCase(caseId);
+  const isMutating = useIsMutating();
   const caseData = caseResponse?.data;
 
   // Parents
@@ -57,6 +59,42 @@ export default function TheftCaseEditor() {
 
   const { generateDocx, isGenerating: isDocGenerating } = useTheftCaseDocx();
 
+  const [previewData, setPreviewData] = useState(null);
+
+  const handleGenerateDocx = async () => {
+    if (!caseData) {
+      toast.error("No case data available to generate document");
+      return;
+    }
+
+    await toast.promise(
+      (async () => {
+        const blob = await generateDocx(form);
+        if (blob) {
+          setPreviewData({
+            blob,
+            fileName: `Theft_Report_${form?.summaryOfTheClaim?.claimNo || "Draft"}_${new Date().toISOString().split('T')[0]}.docx`
+          });
+          return;
+        }
+        throw new Error("Failed to generate document blob");
+      })(),
+      {
+        loading: 'Generating DOCX...',
+        success: "Report generated successfully!",
+        error: (err) => {
+          console.error("Error generating DOCX:", err);
+          return "Failed to generate DOCX";
+        }
+      }
+    );
+  };
+
+  const handleDocxConfirm = () => {
+    setPreviewData(null);
+    toast.success("Document generated and downloaded successfully!");
+  };
+
   /* ---------------------------------------------------
      INITIAL FORM STATE
   --------------------------------------------------- */
@@ -74,6 +112,18 @@ export default function TheftCaseEditor() {
       policyNo: "",
       dateOfAppointmentForInvestigation: "",
       dateOfFirstContactWithClaimant: "",
+    },
+    insuredDetails: {
+      insuredName: "",
+      currentAddress: "",
+      permanentAddress: "",
+      contactNumber: "",
+      panNumber: "",
+      aadharNumber: "",
+      drivingLicenceNumber: "",
+      drivingLicenceValidFor: "",
+      drivingLicenceValidityPeriod: "",
+      vehicleRegistrationNumber: "",
     },
     policyAndIncidentDetails: {
       insurenceCompany: "",
@@ -258,7 +308,7 @@ export default function TheftCaseEditor() {
       letterDetails: {
         ...prev.letterDetails,
         ...caseData.letterDetails,
-        referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || "",
+        referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || parentCaseData.ourFileNo || "",
         recipientDesignation: caseFirmData?.recipientDesignation || caseData.letterDetails?.recipientDesignation || "",
         recipientDepartment: caseFirmData?.recipientDepartment || caseData.letterDetails?.recipientDepartment || "",
         recipientCompany: caseFirmData?.recipientCompany || caseData.letterDetails?.recipientCompany || "",
@@ -271,21 +321,127 @@ export default function TheftCaseEditor() {
         ...caseData.summaryOfTheClaim,
         claimNo: caseData.summaryOfTheClaim?.claimNo || parentCaseData.coClaimNo || "",
         policyNo: caseData.summaryOfTheClaim?.policyNo || parentCaseData.policyNo || "",
+        dateOfAppointmentForInvestigation: caseData.summaryOfTheClaim?.dateOfAppointmentForInvestigation || parentCaseData.theftDetails?.claimSummary?.investigationAppointmentDate || "",
+        dateOfFirstContactWithClaimant: caseData.summaryOfTheClaim?.dateOfFirstContactWithClaimant || parentCaseData.theftDetails?.claimSummary?.firstContactDate || "",
+      },
+
+      // Sync Insured Details
+      insuredDetails: {
+        ...prev.insuredDetails,
+        ...caseData.insuredDetails,
+        insuredName: caseData.insuredDetails?.insuredName || parentCaseData.nameOfInsured || parentCaseData.theftDetails?.insuredDetails?.insuredName || "",
+        currentAddress: caseData.insuredDetails?.currentAddress || parentCaseData.addressOfInsured || parentCaseData.theftDetails?.insuredDetails?.currentAddress || "",
+        permanentAddress: caseData.insuredDetails?.permanentAddress || parentCaseData.addressOfInsured || parentCaseData.theftDetails?.insuredDetails?.presentAddress || "",
+        contactNumber: caseData.insuredDetails?.contactNumber || parentCaseData.contactNo || parentCaseData.theftDetails?.insuredDetails?.contactNumber || "",
+        panNumber: caseData.insuredDetails?.panNumber || parentCaseData.theftDetails?.insuredDetails?.panNumber || "",
+        aadharNumber: caseData.insuredDetails?.aadharNumber || parentCaseData.theftDetails?.insuredDetails?.aadharNumber || "",
+        drivingLicenceNumber: caseData.insuredDetails?.drivingLicenceNumber || parentCaseData.theftDetails?.insuredDetails?.drivingLicenceNumber || "",
+        drivingLicenceValidFor: caseData.insuredDetails?.drivingLicenceValidFor || parentCaseData.theftDetails?.insuredDetails?.drivingLicenceValidFor || "",
+        drivingLicenceValidityPeriod: caseData.insuredDetails?.drivingLicenceValidityPeriod || parentCaseData.theftDetails?.insuredDetails?.drivingLicenceValidityPeriod || "",
+        vehicleRegistrationNumber: caseData.insuredDetails?.vehicleRegistrationNumber || parentCaseData.vehicleNo || parentCaseData.theftDetails?.insuredDetails?.vehicleRegistrationNumber || "",
       },
 
       // Sync Policy Details
       policyAndIncidentDetails: {
         ...prev.policyAndIncidentDetails,
         ...caseData.policyAndIncidentDetails,
-        insuredName: caseData.policyAndIncidentDetails?.insuredName || parentCaseData.nameOfInsured || "",
-        insuredContactNo: caseData.policyAndIncidentDetails?.insuredContactNo || parentCaseData.contactNo || "",
+        insuredName: caseData.policyAndIncidentDetails?.insuredName || parentCaseData.nameOfInsured || parentCaseData.theftDetails?.insuredDetails?.insuredName || "",
+        insuredContactNo: caseData.policyAndIncidentDetails?.insuredContactNo || parentCaseData.contactNo || parentCaseData.theftDetails?.insuredDetails?.contactNumber || "",
         policyNo: caseData.policyAndIncidentDetails?.policyNo || parentCaseData.policyNo || "",
-        vehicleRegistrationNumber: caseData.policyAndIncidentDetails?.vehicleRegistrationNumber || parentCaseData.vehicleNo || "",
+        riskCoverPeriod: caseData.policyAndIncidentDetails?.riskCoverPeriod || parentCaseData.policyPeriod || "",
+        makeAndModel: caseData.policyAndIncidentDetails?.makeAndModel || parentCaseData.theftDetails?.vehicleDetails?.makeAndModel || "",
+        yearOfManufacture: caseData.policyAndIncidentDetails?.yearOfManufacture || parentCaseData.theftDetails?.vehicleDetails?.yearOfManufacture || "",
+        vehicleRegistrationNumber: caseData.policyAndIncidentDetails?.vehicleRegistrationNumber || parentCaseData.vehicleNo || parentCaseData.theftDetails?.insuredDetails?.vehicleRegistrationNumber || "",
         engineNo: caseData.policyAndIncidentDetails?.engineNo || parentCaseData.engineNo || "",
         chassisNo: caseData.policyAndIncidentDetails?.chassisNo || parentCaseData.chassisNo || "",
+        hypothecationWith: caseData.policyAndIncidentDetails?.hypothecationWith || parentCaseData.theftDetails?.vehicleDetails?.hypDetails || "",
+        incidentDateAndTime: caseData.policyAndIncidentDetails?.incidentDateAndTime || parentCaseData.dateOfLoss || "",
+      },
+
+      // Sync Registration Particulars
+      purchaseAndRegistrationParticulars: {
+        ...prev.purchaseAndRegistrationParticulars,
+        ...caseData.purchaseAndRegistrationParticulars,
+        ownerName: caseData.purchaseAndRegistrationParticulars?.ownerName || parentCaseData.nameOfInsured || parentCaseData.theftDetails?.insuredDetails?.insuredName || "",
+        registrationNumber: caseData.purchaseAndRegistrationParticulars?.registrationNumber || parentCaseData.vehicleNo || parentCaseData.theftDetails?.insuredDetails?.vehicleRegistrationNumber || "",
+        registrationDate: caseData.purchaseAndRegistrationParticulars?.registrationDate || parentCaseData.theftDetails?.vehicleDetails?.registrationDate || "",
+        chassisNo: caseData.purchaseAndRegistrationParticulars?.chassisNo || parentCaseData.chassisNo || "",
+        engineNo: caseData.purchaseAndRegistrationParticulars?.engineNo || parentCaseData.engineNo || "",
+        makeModelYear: caseData.purchaseAndRegistrationParticulars?.makeModelYear || parentCaseData.theftDetails?.vehicleDetails?.makeAndModel || "",
+        financeDetails: caseData.purchaseAndRegistrationParticulars?.financeDetails || parentCaseData.theftDetails?.vehicleDetails?.hypDetails || "",
+      },
+
+      // Sync Insured DL Particulars
+      insuredDlParticulars: {
+        ...prev.insuredDlParticulars,
+        ...caseData.insuredDlParticulars,
+        driverDetails: caseData.insuredDlParticulars?.driverDetails || parentCaseData.theftDetails?.insuredDetails?.insuredName || "",
+        dlDetails: caseData.insuredDlParticulars?.dlDetails || parentCaseData.theftDetails?.insuredDetails?.drivingLicenceNumber || "",
+      },
+
+      // Documents checklist pre-fill (Aids user in knowing what was mentioned in main case)
+      documentsSubmittedAndVerified: {
+        ...prev.documentsSubmittedAndVerified,
+        ...caseData.documentsSubmittedAndVerified,
+        insuredPanCard: caseData.documentsSubmittedAndVerified?.insuredPanCard || (parentCaseData.theftDetails?.insuredDetails?.panNumber ? "Yes" : ""),
+        insuredAadharCard: caseData.documentsSubmittedAndVerified?.insuredAadharCard || (parentCaseData.theftDetails?.insuredDetails?.aadharNumber ? "Yes" : ""),
+      },
+
+      // Visit to Insured
+      visitToInsured: {
+        ...prev.visitToInsured,
+        ...caseData.visitToInsured,
+        dateOfLoss: caseData.visitToInsured?.dateOfLoss || parentCaseData.dateOfLoss || "",
       }
     }));
   }, [caseData, parentCaseData, caseFirmData]);
+
+  /* ---------------------------------------------------
+     REAL-TIME SYNC (Cross-section synchronization)
+  --------------------------------------------------- */
+  useEffect(() => {
+    const policy = form.policyAndIncidentDetails;
+    const purchase = form.purchaseAndRegistrationParticulars;
+
+    let updates = {};
+
+    // Sync Chassis No
+    if (policy.chassisNo !== purchase.chassisNo) {
+      if (policy.chassisNo) updates.chassisNo = policy.chassisNo;
+      else if (purchase.chassisNo) updates.chassisNo = purchase.chassisNo;
+    }
+
+    // Sync Engine No
+    if (policy.engineNo !== purchase.engineNo) {
+      if (policy.engineNo) updates.engineNo = policy.engineNo;
+      else if (purchase.engineNo) updates.engineNo = purchase.engineNo;
+    }
+
+    // Sync Make/Model
+    if (policy.makeAndModel !== purchase.makeModelYear) {
+      if (policy.makeAndModel) updates.makeAndModel = policy.makeAndModel;
+      else if (purchase.makeModelYear) updates.makeAndModel = purchase.makeModelYear;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      setForm(prev => ({
+        ...prev,
+        policyAndIncidentDetails: {
+          ...prev.policyAndIncidentDetails,
+          chassisNo: updates.chassisNo || prev.policyAndIncidentDetails.chassisNo,
+          engineNo: updates.engineNo || prev.policyAndIncidentDetails.engineNo,
+          makeAndModel: updates.makeAndModel || prev.policyAndIncidentDetails.makeAndModel,
+        },
+        purchaseAndRegistrationParticulars: {
+          ...prev.purchaseAndRegistrationParticulars,
+          chassisNo: updates.chassisNo || prev.purchaseAndRegistrationParticulars.chassisNo,
+          engineNo: updates.engineNo || prev.purchaseAndRegistrationParticulars.engineNo,
+          makeModelYear: updates.makeAndModel || prev.purchaseAndRegistrationParticulars.makeModelYear,
+        }
+      }));
+    }
+  }, [form.policyAndIncidentDetails.chassisNo, form.policyAndIncidentDetails.engineNo, form.policyAndIncidentDetails.makeAndModel, 
+      form.purchaseAndRegistrationParticulars.chassisNo, form.purchaseAndRegistrationParticulars.engineNo, form.purchaseAndRegistrationParticulars.makeModelYear]);
 
   /* ---------------------------------------------------
      SECTION CONFIG
@@ -293,6 +449,7 @@ export default function TheftCaseEditor() {
   const sections = [
     { key: "letterDetails", api: "letter-details" },
     { key: "summaryOfTheClaim", api: "summary-claim" },
+    { key: "insuredDetails", api: "insured-details" },
     { key: "policyAndIncidentDetails", api: "policy-incident-details" },
     { key: "purchaseAndRegistrationParticulars", api: "purchase-registration" },
     { key: "firDetails", api: "fir-details" },
@@ -374,7 +531,25 @@ export default function TheftCaseEditor() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden relative">
+      {/* GLOBAL LOADING / REPAINT OVERLAY */}
+      {(!isLoading && (isFetching || isMutating > 0)) && (
+        <div className="fixed inset-0 bg-white/40 backdrop-blur-[2px] z-[9999] flex items-center justify-center pointer-events-auto">
+          <div className="bg-white border border-indigo-100 shadow-xl rounded-2xl px-6 py-4 flex items-center gap-4">
+            <div className="bg-indigo-50 p-2 rounded-full">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-800 text-base">
+                {isMutating > 0 ? "Saving Section..." : "Syncing Data..."}
+              </span>
+              <span className="text-xs text-gray-500 font-medium">
+                {isMutating > 0 ? "Please wait, applying changes to server." : "Repainting latest information."}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header */}
       <div className="bg-white border-b z-20 shadow-sm flex-none transition-all">
         <div className="w-full px-6 py-4">
@@ -408,12 +583,12 @@ export default function TheftCaseEditor() {
                 </Link>
               )}
               <button
-                onClick={() => generateDocx(caseData)}
+                onClick={handleGenerateDocx}
                 disabled={isDocGenerating}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
               >
                 {isDocGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                {isDocGenerating ? "Generating..." : "Generate Report"}
+                {isDocGenerating ? "Generating..." : "DOCX Preview"}
               </button>
               <div className="text-right">
                 <p className="text-xs text-gray-500">Case ID</p>
@@ -466,7 +641,7 @@ export default function TheftCaseEditor() {
                   // <WitnessManager caseId={caseId} witnesses={...} onUpdate={...} />
                   // It likely constructs its own API calls.
                   // I should check WitnessManager.
-                  caseType="theft" // Passing this just in case
+                  caseType="theft"
                   onUpdate={() => {
                     refetch();
                   }}
@@ -496,6 +671,14 @@ export default function TheftCaseEditor() {
             </div>
           </div>
         </div>
+      {previewData && (
+        <DocxPreviewModal
+          blob={previewData.blob}
+          fileName={previewData.fileName}
+          onClose={() => setPreviewData(null)}
+          onConfirm={handleDocxConfirm}
+        />
+      )}
       </div>
     </div>
   );

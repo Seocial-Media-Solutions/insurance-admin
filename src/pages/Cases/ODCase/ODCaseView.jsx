@@ -4,7 +4,7 @@ import { Camera, Edit, FileText, Printer } from "lucide-react";
 import { useODCases } from "../../../context/ODCaseContext";
 import { useODCaseDocx } from "../../../hooks/useODCaseDocx";
 import { useODCasePdf } from "../../../hooks/useODCasePdf";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
+import saveAs from "file-saver";
 import { toast } from "react-hot-toast";
 
 /* ==================================================================================

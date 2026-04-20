@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Download, X, Check, FileText } from "lucide-react";
 import { renderAsync } from "docx-preview";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
+import saveAs from "file-saver";
 
 const DocxPreviewModal = ({ blob, onClose, onConfirm, fileName }) => {
     const containerRef = useRef(null);

@@ -19,8 +19,8 @@ import {
   PageNumber,
   BorderStyle,
   VerticalAlign,
-} from "https://esm.sh/docx@8.5.0";
-import saveAs from "https://esm.sh/file-saver@2.0.5";
+} from "docx";
+import saveAs from "file-saver";
 import { getCurrentDate, convertImageToBase64 } from "../utils/helper";
 
 export const useDocxGenerator = () => {

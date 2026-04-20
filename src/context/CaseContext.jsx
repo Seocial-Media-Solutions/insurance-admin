@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { caseService } from '../services/caseService';
 
@@ -25,7 +25,7 @@ export function CaseProvider({ children }) {
     const [statsLoading, setStatsLoading] = useState(false);
     const limit = 10;
 
-    const loadStats = async (force = false) => {
+    const loadStats = useCallback(async (force = false) => {
         if (dashboardStats.total > 0 && !force) return;
         setStatsLoading(true);
         try {
@@ -38,9 +38,9 @@ export function CaseProvider({ children }) {
         } finally {
             setStatsLoading(false);
         }
-    };
+    }, [dashboardStats.total]);
 
-    const loadCases = async (page = currentPage) => {
+    const loadCases = useCallback(async (page = currentPage) => {
         setLoading(true);
         try {
             const resp = await caseService.getAll({ page, limit });
@@ -55,48 +55,51 @@ export function CaseProvider({ children }) {
             setLoading(false);
             setInitialized(true);
         }
-    };
+    }, [currentPage]);
 
-    const goToPage = (page) => {
+    const goToPage = useCallback((page) => {
         if (page >= 1 && page <= totalPages) {
             loadCases(page);
         }
-    };
+    }, [loadCases, totalPages]);
 
-    const addNewCase = async (formData) => {
+    const addNewCase = useCallback(async (formData) => {
         try {
             await caseService.create(formData);
             toast.success("Case added successfully");
             loadCases(1);
+            loadStats(true); // Refresh stats
         } catch (err) {
             console.error(err);
             toast.error("Failed to add case");
         }
-    };
+    }, [loadCases, loadStats]);
 
-    const updateExistingCase = async (id, formData) => {
+    const updateExistingCase = useCallback(async (id, formData) => {
         try {
             await caseService.update({ id, caseData: formData });
             toast.success("Case updated successfully");
             loadCases();
+            loadStats(true);
         } catch (err) {
             console.error(err);
             toast.error("Failed to update case");
         }
-    };
+    }, [loadCases, loadStats]);
 
-    const removeCase = async (id) => {
+    const removeCase = useCallback(async (id) => {
         try {
             await caseService.delete(id);
             toast.success("Case deleted successfully");
             loadCases();
+            loadStats(true);
         } catch (err) {
             console.error(err);
             toast.error("Failed to delete case");
         }
-    };
+    }, [loadCases, loadStats]);
 
-    const getCaseById = async (id) => {
+    const getCaseById = useCallback(async (id) => {
         try {
             const resp = await caseService.getById(id);
             return resp.data;
@@ -105,11 +108,17 @@ export function CaseProvider({ children }) {
             toast.error("Failed to get case details");
             return null;
         }
-    };
-
-    useEffect(() => {
-        // Initial load removed here and handled by hook
     }, []);
+
+    // Initial fetch guard
+    const initRef = useRef(false);
+    useEffect(() => {
+        if (!initRef.current) {
+            initRef.current = true;
+            loadCases(1);
+            loadStats();
+        }
+    }, [loadCases, loadStats]);
 
     const value = useMemo(() => ({
         cases,
@@ -130,7 +139,8 @@ export function CaseProvider({ children }) {
         loadStats
     }), [
         cases, loading, currentPage, totalPages, total, initialized,
-        dashboardStats, statsLoading // loadCases and others are stable functions but good to include if not wrapped in useCallback
+        dashboardStats, statsLoading, loadCases, goToPage, addNewCase,
+        updateExistingCase, removeCase, getCaseById, loadStats
     ]);
 
     return (
@@ -145,13 +155,5 @@ export function useCases() {
     if (!context) {
         throw new Error('useCases must be used within a CaseProvider');
     }
-
-    // Lazy load: Trigger fetch only when a component uses this hook
-    useEffect(() => {
-        if (!context.initialized && !context.loading) {
-            context.loadCases(1);
-        }
-    }, [context.initialized, context.loading, context.loadCases]);
-
     return context;
 }
