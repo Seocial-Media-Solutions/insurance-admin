@@ -214,10 +214,6 @@ export default function TheftCaseEditor() {
       spotImages: [],
     },
     keysRemark: {
-      keysProvided: "",
-      keyTagNumberProvided: "",
-      keyTagNumberInInvoice: "",
-      keyTagMismatch: "",
       remarks: "",
     },
     feedBackFromLocationOfTheft: {
@@ -587,10 +583,6 @@ export default function TheftCaseEditor() {
       spotImages: "Spot Images",
     },
     keysRemark: {
-      keysProvided: "Keys Provided",
-      keyTagNumberProvided: "Key Tag No (Provided)",
-      keyTagNumberInInvoice: "Key Tag No (Invoice)",
-      keyTagMismatch: "Mismatch?",
       remarks: "Key Remarks (Detailed)",
     },
     feedBackFromLocationOfTheft: {
