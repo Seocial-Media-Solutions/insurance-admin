@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useUpdateTheftCaseSection } from "../../../../hooks/useTheftCases"; // Use correct hook
-import { formatLabel, getInputType, getNestedValue, setNestedValue, cleanNumericInput } from "../../../../utils/odCaseHelpers";
+import { formatLabel, getInputType, getNestedValue, setNestedValue, cleanNumericInput } from "../../../../utils/theftCaseHelpers";
 import TheftImageGallery from "./TheftImageGallery";
 import TheftDocumentUpload from "./TheftDocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";

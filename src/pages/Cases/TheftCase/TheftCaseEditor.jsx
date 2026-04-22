@@ -10,7 +10,7 @@ import { useTheftCase } from "../../../hooks/useTheftCases";
 import { useTheftCaseDocx } from "../../../hooks/useTheftCaseDocx";
 
 // Utils
-import { getNestedValue } from "../../../utils/odCaseHelpers";
+import { getNestedValue } from "../../../utils/theftCaseHelpers";
 
 // Components
 import WitnessManager from "../../../components/WitnessManager";

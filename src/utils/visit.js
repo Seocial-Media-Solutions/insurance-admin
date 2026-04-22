@@ -27,9 +27,7 @@ const OD_VISIT_ROUTES = [
    THEFT ROUTES
 --------------------------------------------------------- */
 export const THEFT_VISIT_ROUTES = [
-  {
-    key: "letterDetails", label: "Letter Details", icon: "Mail", endpoint: "/letter-details",
-  },
+ 
   {
     key: "summaryOfTheClaim", label: "Summary of the Claim", icon: "FileText", endpoint: "/summary-of-claim",
   },
