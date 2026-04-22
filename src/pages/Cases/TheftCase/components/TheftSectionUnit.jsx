@@ -197,7 +197,6 @@ function SectionUnit({
                             // Merge fields from fieldsObj and fileFields to ensure all inputs show up
                             const allFields = Array.from(new Set([
                                 ...Object.keys(labels || {}),
-                                ...Object.keys(fieldsObj || {}),
                                 ...Object.keys(fileFields || {})
                             ]));
 
@@ -209,7 +208,7 @@ function SectionUnit({
                             const currentSection = getNestedValue(form, sectionKey) || {};
 
                             const label = labels[field] || formatLabel(field);
-                            if (field.toLowerCase().includes("delay") || label.toLowerCase().includes("delay")) {
+                            if (field.toLowerCase().includes("date") && field.toLowerCase().includes("delay")) {
                                 const val = currentSection[field] || "";
                                 let datePart = "";
                                 let reasonPart = "";
