@@ -306,15 +306,15 @@ export default function TheftCaseEditor() {
       // Sync with Case Data from API
       ...caseData,
 
-      // Force refresh Letter Details from Firm (Overwrites saved/old details for these specific fields)
+      // Force refresh Letter Details (Sync Code Only)
       letterDetails: {
         ...prev.letterDetails,
         ...caseData.letterDetails,
         referenceNumber: caseFirmData?.code || caseData.letterDetails?.referenceNumber || parentCaseData.ourFileNo || "",
-        recipientDesignation: caseFirmData?.recipientDesignation || caseData.letterDetails?.recipientDesignation || "",
-        recipientDepartment: caseFirmData?.recipientDepartment || caseData.letterDetails?.recipientDepartment || "",
-        recipientCompany: caseFirmData?.recipientCompany || caseData.letterDetails?.recipientCompany || "",
-        recipientAddress: caseFirmData?.recipientAddress || caseData.letterDetails?.recipientAddress || "",
+        recipientDesignation: caseData.letterDetails?.recipientDesignation || "",
+        recipientDepartment: caseData.letterDetails?.recipientDepartment || "",
+        recipientCompany: caseData.letterDetails?.recipientCompany || "",
+        recipientAddress: caseData.letterDetails?.recipientAddress || "",
       },
 
       // Sync Claim Summary from Parent Case

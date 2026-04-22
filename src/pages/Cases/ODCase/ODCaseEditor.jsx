@@ -137,8 +137,8 @@ export default function OdCaseEditor() {
       if (parentCaseData) {
         const pc = parentCaseData;
 
-        // Letter Details Sync
-        const fileNo = pc.ourFileNo || caseData.ourFileNo || caseData.fileNo;
+        // Letter Details Sync (Priority: Firm Code -> Parent File No -> Case Data)
+        const fileNo = caseFirmData?.code || pc.ourFileNo || caseData.ourFileNo || caseData.fileNo;
         if (fileNo) {
           newForm.letterDetails = {
             ...(newForm.letterDetails || {}),
@@ -179,15 +179,11 @@ export default function OdCaseEditor() {
         newForm.odDetails.claimSummary.makeAndModel = newForm.odDetails.vehicleDetails.makeAndModel || newForm.odDetails.claimSummary.makeAndModel || "";
       }
 
-      // 5. AUTO-FILL FROM FIRM DATA
-      if (caseFirmData) {
-        const cf = caseFirmData;
+      // 5. AUTO-FILL FROM FIRM DATA (CODE ONLY)
+      if (caseFirmData?.code) {
         newForm.letterDetails = {
           ...(newForm.letterDetails || {}),
-          recipientDesignation: newForm.letterDetails?.recipientDesignation || cf.recipientDesignation || "",
-          recipientDepartment: newForm.letterDetails?.recipientDepartment || cf.recipientDepartment || "",
-          recipientCompany: newForm.letterDetails?.recipientCompany || cf.recipientCompany || "",
-          recipientAddress: newForm.letterDetails?.recipientAddress || cf.recipientAddress || "",
+          referenceNumber: caseFirmData.code,
         };
       }
 
@@ -295,10 +291,10 @@ export default function OdCaseEditor() {
     letterDetails: {
       date: new Date().toISOString().split("T")[0],
       referenceNumber: caseFirmData?.code,
-      recipientDesignation: caseFirmData?.recipientDesignation,
-      recipientDepartment: caseFirmData?.recipientDepartment,
-      recipientCompany: caseFirmData?.recipientCompany,
-      recipientAddress: caseFirmData?.recipientAddress,
+      recipientDesignation: "",
+      recipientDepartment: "",
+      recipientCompany: "",
+      recipientAddress: "",
     },
     odDetails: {
       claimSummary: {
@@ -648,7 +644,7 @@ export default function OdCaseEditor() {
               
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`p-2 rounded-lg transition-all border shrink-0 ${
+                className={`hidden md:block p-2 rounded-lg transition-all border shrink-0 ${
                   isSidebarOpen
                     ? 'bg-blue-50 text-blue-600 border-blue-100'
                     : 'bg-gray-50 text-gray-500 border-gray-200'
@@ -739,7 +735,7 @@ export default function OdCaseEditor() {
         {/* Sidebar - Progress Tracker (Right Side) */}
         <div
           className={`
-            bg-white border-l border-gray-200 flex-none flex flex-col 
+            bg-white border-l border-gray-200 flex-none hidden md:flex flex-col 
             transition-all duration-300 ease-in-out
             ${isSidebarOpen ? 'w-34 opacity-100 translate-x-0' : 'w-0 opacity-0 overflow-hidden border-l-0 translate-x-full'}
           `}

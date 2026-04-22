@@ -132,7 +132,7 @@ function CaseFirmPage() {
           </div>
           <button
             onClick={handleOpenDrawer}
-            className=" sm:flex hidden  flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded hover:bg-gray-800 transition shadow-sm z-99"
+            className={`${isDrawerOpen ? " hidden " : " sm:flex"} items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded hover:bg-gray-800 transition shadow-sm z-99`}
           >
             <Plus size={18} />
             <span>New Firm</span>

@@ -95,13 +95,13 @@ export default function Navbar({ sidebarOpen, setSidebarOpen, activeMenu }) {
           </div>
 
           {/* Notifications */}
-          <button
+          {/* <button
             className="relative p-2 text-black hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Notifications"
           >
             <Bell className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-          </button>
+          </button> */}
 
           {/* User Profile / Logout */}
           <div className="flex items-center gap-3 ml-2 border-l pl-4 border-gray-100">
