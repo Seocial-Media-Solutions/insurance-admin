@@ -482,12 +482,7 @@ function SectionUnit({
                                                         className="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
                                                         rows={2}
                                                         value={val || ""}
-                                                        onFocus={() => {
-                                                            // Auto-add new box if this is the last one and has content
-                                                            if (idx === currentSection[field].length - 1 && val && val.trim() !== "") {
-                                                                updateField(field, [...currentSection[field], ""]);
-                                                            }
-                                                        }}
+                                                       
                                                         onKeyDown={(e) => {
                                                             if (e.key === "Enter" && !e.shiftKey) {
                                                                 e.preventDefault();
