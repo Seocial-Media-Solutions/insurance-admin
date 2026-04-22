@@ -482,6 +482,19 @@ export default function TheftCaseEditor() {
   ];
 
   const sectionLabels = {
+    letterDetails: {
+      date: "Date",
+      referenceNumber: "Reference Number",
+      recipientDesignation: "Recipient Designation",
+      recipientDepartment: "Recipient Department",
+      recipientCompany: "Recipient Company",
+      recipientAddress: "Recipient Address",
+    },
+    summaryOfTheClaim: {
+      claimNo: "Claim No.",
+      dateOfAppointmentForInvestigation: "Date of Appointment for Investigation",
+      dateOfFirstContactWithClaimant: "Date of First Contact with Claimant",
+    },
     policyAndIncidentDetails: {
       insurenceCompany: "Insurer",
       insuredName: "Insured",
@@ -589,6 +602,42 @@ export default function TheftCaseEditor() {
       statementOfParkingAttendant: "Statement of Parking Attendant",
       statementOfShopkeepers: "Statement of Shopkeeper’s",
       statementOfWatchman: "Statement of Watchman",
+    },
+    visitToServiceStation: {
+      nameOfGarage: "Name of Garage",
+    },
+    documentsSubmittedAndVerified: {
+      intimationLetter: "Intimation Letter",
+      claimForm: "Claim Form",
+      letterToRtoPoliceNcrb: "Letter to RTO / Police / NCRB",
+      rcCopy: "RC Copy",
+      onlineRcExtract: "Online RC Extract",
+      kycForm: "KYC Form",
+      insuredPanCard: "Insured PAN Card",
+      insuredAadharCard: "Insured Aadhar Card",
+      insurancePolicyCopy: "Insurance Policy Copy",
+      originalFir: "Original FIR",
+      qst: "QST",
+      purchaseInvoice: "Purchase Invoice",
+      bankPassbookDetails: "Bank Passbook Details",
+      ncrbVehicleEnquiryReport: "NCRB Vehicle Enquiry Report",
+      rtiCopyWithReceiptAndReply: "RTI Copy with Receipt & Reply",
+      vehicleKeys: "Vehicle Keys",
+      insuredStatement: "Insured Statement",
+      witnessStatement: "Witness Statement",
+      photosCollected: "Photos Collected",
+      form29AndForm30: "Form 29 & Form 30",
+      courtFinalReport: "Court Final Report",
+    },
+    insuredDlParticulars: {
+      driverDetails: "Driver Details",
+      dlDetails: "DL Details",
+      dateOfBirth: "Date of Birth",
+      nameOfRto: "Name of RTO",
+      validityDetailsMcwgLmv: "Validity Details (MCWG/LMV)",
+      validityDetailsOfTransport: "Validity Details (Transport)",
+      addressOfDriver: "Address of Driver",
+      dlStatus: "DL Status",
     },
     additionalInvestigationIfCommercialUseSuspected: {
       suspectedInvolvementOfFriendsFamilyOnAnyReport: "Suspected involvement of friend’s / family on any report",
