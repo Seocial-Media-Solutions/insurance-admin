@@ -9,6 +9,7 @@ export const getInputType = (fieldName) => {
     
     // Theft specific overrides
     if (lower === "invoicenowithdate") return "text";
+    if (lower === "dateofloss") return "datetime-local";
     
     if (lower.includes("dateandtime")) return "datetime-local";
     if (lower.includes("date") || lower.includes("dob")) return "date";
