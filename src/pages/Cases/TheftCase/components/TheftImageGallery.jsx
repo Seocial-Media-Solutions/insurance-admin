@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Loader2, Trash2, ExternalLink } from "lucide-react";
+import toast from "react-hot-toast";
 import { useDeleteTheftCaseImage } from "../../../../hooks/useTheftCases";
 import { confirmToast } from "../../../../components/Ui/ConfirmToast";
 

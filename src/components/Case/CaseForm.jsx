@@ -520,7 +520,7 @@ export default function CaseForm({
                   "chassisNo",
                   "dateOfLoss",
                   "nameOfInsured",
-                 
+
                 ].map((key) => (
                   <div key={key}>
                     <label className="block mb-1">{formatLabel(key)}</label>
@@ -533,16 +533,16 @@ export default function CaseForm({
                     />
                   </div>
                 ))}
-                  <div >
-                    <label className="block mb-1">addressOfInsured</label>
-                    <textarea
-                      type={"textArea"}
-                      name={"addressOfInsured"}
-                      value={form["addressOfInsured"]}
-                      onChange={handleChange} 
-                      className="w-full p-3 border rounded-md"
-                    />
-                  </div>
+                <div >
+                  <label className="block mb-1">addressOfInsured</label>
+                  <textarea
+                    type={"textArea"}
+                    name={"addressOfInsured"}
+                    value={form["addressOfInsured"]}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-md"
+                  />
+                </div>
                 {/* Contact No — input type number, passed as String */}
                 <div>
                   <label className="block mb-1">Contact No</label>

@@ -1633,10 +1633,10 @@ export const useODCaseDocx = () => {
                     title: "Witness Photos & Documents",
                     data: data.witnessDetails ? {
                         allWitnessItems: (data.witnessDetails || []).flatMap(w => [
-                            ...(Array.isArray(w.witnessPhoto) ? w.witnessPhoto : (w.witnessPhoto ? [w.witnessPhoto] : [])).map(img => ({ 
-                                imageUrl: typeof img === 'string' ? img : img?.imageUrl || img?.url || img?.secure_url, 
+                            ...(Array.isArray(w.witnessPhoto) ? w.witnessPhoto : (w.witnessPhoto ? [w.witnessPhoto] : [])).map(img => ({
+                                imageUrl: typeof img === 'string' ? img : img?.imageUrl || img?.url || img?.secure_url,
                                 title: "Witness Photo",
-                                isDocument: false 
+                                isDocument: false
                             })),
                             ...(Array.isArray(w.witnessDocument) ? w.witnessDocument : []).flatMap(doc => [
                                 {
@@ -1742,7 +1742,7 @@ export const useODCaseDocx = () => {
                             const isStandardDoc = ["rcPhoto", "dlPhoto", "insuredPanCardPhoto", "insuredAadharCardPhoto"].includes(fieldKey);
                             const squareLayoutTitles = ["Spot Visit Photos", "Garage Visit Photos", "Witness Photos & Documents"];
                             const isSquareLayout = squareLayoutTitles.includes(section.title);
-                            
+
                             const columns = isVerification ? 1 : (isGPSTimeline ? 3 : 2);
                             const maxRowsPerPage = (isGPSTimeline || isSquareLayout) ? 2 : Infinity;
 
@@ -1786,7 +1786,7 @@ export const useODCaseDocx = () => {
                                     const horizontalAlign = currentIsDocument
                                         ? (cellIdx === 0 ? AlignmentType.RIGHT : AlignmentType.LEFT)
                                         : AlignmentType.CENTER;
-                                    
+
                                     // Adjust sizes if it's a document but in a square layout section
                                     let currentWidth = imgWidth;
                                     let currentHeight = imgHeight;

@@ -4,7 +4,7 @@ import { formatLabel, getInputType, getNestedValue, setNestedValue, cleanNumeric
 import TheftImageGallery from "./TheftImageGallery";
 import TheftDocumentUpload from "./TheftDocumentUpload";
 import DragDropUpload from "../../../../components/Ui/DragDropUpload";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
 function SectionUnit({
@@ -20,6 +20,7 @@ function SectionUnit({
     isExpanded,
     onToggle,
     firmData,
+    labels = {},
 }) {
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
@@ -84,22 +85,36 @@ function SectionUnit({
 
         if (hasFiles) {
             const fd = new FormData();
-
-            // Non-file fields
-            Object.entries(data).forEach(([key, val]) => {
-                if (!fileFields[key]) fd.append(key, val ?? "");
+            
+            // Clean the data: remove actual File objects from the JSON part 
+            // to avoid sending them as "[object File]" strings
+            const cleanData = { ...data };
+            Object.keys(fileFields).forEach(key => {
+                // Keep only existing image objects (those with imageUrl)
+                if (Array.isArray(cleanData[key])) {
+                    cleanData[key] = cleanData[key].filter(item => item && item.imageUrl);
+                } else if (cleanData[key] && !cleanData[key].imageUrl) {
+                    delete cleanData[key];
+                }
             });
 
-            // File fields
+            // Put all non-file data into a single 'data' field
+            fd.append('data', JSON.stringify(cleanData));
+
+            // Append ONLY the new File objects
             Object.entries(data).forEach(([key, val]) => {
                 if (!fileFields[key]) return;
-                if (!val) return; // Skip empty files
+                if (!val) return;
 
                 const fieldName = `${sectionKey}.${key}`;
 
                 if (Array.isArray(val)) {
-                    val.forEach((f) => fd.append(fieldName, f));
-                } else {
+                    val.forEach((f) => {
+                        if (f instanceof File || f instanceof Blob) {
+                            fd.append(fieldName, f);
+                        }
+                    });
+                } else if (val instanceof File || val instanceof Blob) {
                     fd.append(fieldName, val);
                 }
             });
@@ -178,37 +193,44 @@ function SectionUnit({
             <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[3000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="p-6 pt-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {Object.keys(fieldsObj || {}).map((field) => {
-                            const fileConfig = fileFields[field];
-                            const isFile = !!fileConfig;
-                            const type = getInputType(field);
+                        {(() => {
+                            // Merge fields from fieldsObj and fileFields to ensure all inputs show up
+                            const allFields = Array.from(new Set([
+                                ...Object.keys(fieldsObj || {}),
+                                ...Object.keys(fileFields || {})
+                            ]));
+
+                            return allFields.map((field) => {
+                                const fileConfig = fileFields[field];
+                                const isFile = !!fileConfig;
+                                const type = getInputType(field);
                             const error = errors[field];
                             const currentSection = getNestedValue(form, sectionKey) || {};
 
-                            if (field === "riskCoverPeriod") {
+                            if (field === "riskCoverPeriod" || field === "drivingLicenceValidityPeriod") {
                                 const currentVal = currentSection[field] || "";
-                                const [fromStr, toStr] = currentVal.includes(" to ") ? currentVal.split(" to ") : ["", ""];
+                                const [fromStr, toStr] = currentVal.includes(" to ") ? currentVal.split(" to ") : [currentVal, ""];
 
-                                // Convert DD/MM/YYYY to YYYY-MM-DD for input
                                 const toInputDate = (str) => {
                                     if (!str) return "";
-                                    const parts = str.trim().split("/");
+                                    const parts = str.trim().split(/[./-]/);
                                     if (parts.length !== 3) return "";
+                                    if (parts[0].length === 4) return str.trim(); // Already YYYY-MM-DD
                                     return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
                                 };
 
-                                // Convert YYYY-MM-DD to DD/MM/YYYY for saving
+                                // Convert YYYY-MM-DD to DD.MM.YYYY for saving
                                 const toStringDate = (val) => {
                                     if (!val) return "";
                                     const parts = val.split("-");
                                     if (parts.length !== 3) return "";
-                                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                    return `${parts[2]}.${parts[1]}.${parts[0]}`;
                                 };
 
                                 return (
                                     <div key={field} className="col-span-1 md:col-span-2">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Risk Cover Period</label>
+                                            <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{labels[field] || formatLabel(field)}</label>
                                             <div className="flex items-center gap-2">
                                                 <div className="flex-1 relative">
                                                     <input
@@ -223,16 +245,19 @@ function SectionUnit({
                                                             }
                                                             const newFrom = toStringDate(val);
                                                             
-                                                            // Auto-calculate end date (1 year - 1 day)
-                                                            const startDate = new Date(val);
-                                                            const endDate = new Date(startDate);
-                                                            endDate.setFullYear(startDate.getFullYear() + 1);
-                                                            endDate.setDate(startDate.getDate() - 1);
-                                                            
-                                                            const ey = endDate.getFullYear();
-                                                            const em = String(endDate.getMonth() + 1).padStart(2, '0');
-                                                            const ed = String(endDate.getDate()).padStart(2, '0');
-                                                            const newTo = toStringDate(`${ey}-${em}-${ed}`);
+                                                            // Auto-calculate end date (1 year - 1 day) for risk cover
+                                                            let newTo = toStr;
+                                                            if (field === "riskCoverPeriod") {
+                                                                const startDate = new Date(val);
+                                                                const endDate = new Date(startDate);
+                                                                endDate.setFullYear(startDate.getFullYear() + 1);
+                                                                endDate.setDate(startDate.getDate() - 1);
+                                                                
+                                                                const ey = endDate.getFullYear();
+                                                                const em = String(endDate.getMonth() + 1).padStart(2, '0');
+                                                                const ed = String(endDate.getDate()).padStart(2, '0');
+                                                                newTo = toStringDate(`${ey}-${em}-${ed}`);
+                                                            }
                                                             updateField(field, `${newFrom} to ${newTo}`);
                                                         }}
                                                     />
@@ -351,12 +376,111 @@ function SectionUnit({
                                 );
                             }
 
+                            if (Array.isArray(currentSection[field])) {
+                                return (
+                                    <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3 space-y-3">
+                                        <label className="text-sm font-semibold text-gray-700">
+                                            {labels[field] || formatLabel(field)}
+                                        </label>
+                                        <div className="space-y-3">
+                                            {currentSection[field].map((val, idx) => (
+                                                <div key={idx} className="flex gap-2 group">
+                                                    <textarea
+                                                        className="flex-1 border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm"
+                                                        rows={2}
+                                                        value={val || ""}
+                                                        onFocus={() => {
+                                                            // Auto-add new box if this is the last one and has content
+                                                            if (idx === currentSection[field].length - 1 && val && val.trim() !== "") {
+                                                                updateField(field, [...currentSection[field], ""]);
+                                                            }
+                                                        }}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter" && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                const newArray = [...currentSection[field]];
+                                                                // If it's the last one and not empty, add a new one. 
+                                                                // Otherwise just move focus to next if it exists?
+                                                                // User said "on enter new txt box"
+                                                                if (idx === currentSection[field].length - 1) {
+                                                                    updateField(field, [...newArray, ""]);
+                                                                    // Focus logic will happen on next render if we use Refs, 
+                                                                    // but standard behavior is to just add.
+                                                                } else {
+                                                                    // Focus next if it already exists
+                                                                    const nextEl = e.target.parentElement.nextElementSibling?.querySelector('textarea');
+                                                                    nextEl?.focus();
+                                                                }
+                                                            }
+                                                        }}
+                                                        onChange={(e) => {
+                                                            const newArray = [...currentSection[field]];
+                                                            newArray[idx] = e.target.value;
+                                                            updateField(field, newArray);
+                                                        }}
+                                                        placeholder={idx === 0 ? "Start typing here..." : "Add more details..."}
+                                                    />
+                                                    {currentSection[field].length > 1 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                const newArray = currentSection[field].filter((_, i) => i !== idx);
+                                                                updateField(field, newArray);
+                                                            }}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all self-start"
+                                                            title="Remove Point"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            
+                                            {/* Fallback Add button if list is empty or for explicit add */}
+                                            {(!currentSection[field] || currentSection[field].length === 0) && (
+                                                <button
+                                                    onClick={() => updateField(field, [""])}
+                                                    className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-sm font-medium transition-colors border border-indigo-100"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                    Add Content
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (sectionKey === "documentsSubmittedAndVerified") {
+                                return (
+                                    <div key={field} className="col-span-1">
+                                        <label className="block">
+                                            <span className="text-sm font-semibold text-gray-700 mb-1 block">
+                                                {labels[field] || formatLabel(field)}
+                                            </span>
+                                            <select
+                                                className="w-full border border-gray-300 px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white transition-all text-sm"
+                                                value={currentSection[field] || ""}
+                                                onChange={(e) => updateField(field, e.target.value)}
+                                            >
+                                                <option value="">Select Status</option>
+                                                <option value="Attached">Attached</option>
+                                                <option value="Not Attached">Not Attached</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                );
+                            }
+
                             return (
                                 <div key={field} className={type === "textarea" ? "col-span-1 md:col-span-2 lg:col-span-3" : ""}>
                                     <label className="block">
                                         <div className="flex items-center justify-between mb-1">
                                             <span className="text-sm font-semibold text-gray-700">
-                                                {formatLabel(field)}
+                                                {labels[field] || formatLabel(field)}
                                             </span>
                                         </div>
 
@@ -377,16 +501,21 @@ function SectionUnit({
                                                 value={type === 'date' ? (() => {
                                                     const val = currentSection[field] || "";
                                                     if (!val) return "";
-                                                    const parts = val.split("/");
-                                                    if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-                                                    return val; // Fallback if already in wrong format
+                                                    const parts = val.split(/[./-]/);
+                                                    if (parts.length === 3) {
+                                                        // Handle YYYY-MM-DD
+                                                        if (parts[0].length === 4) return val;
+                                                        // Handle DD.MM.YYYY or DD/MM/YYYY
+                                                        return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                                                    }
+                                                    return val;
                                                 })() : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")}
                                                 onChange={(e) => {
                                                     let val = e.target.value;
                                                     if (type === 'date' && val) {
                                                         const parts = val.split("-");
                                                         if (parts.length === 3) {
-                                                            val = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                                                            val = `${parts[2]}.${parts[1]}.${parts[0]}`;
                                                         }
                                                     } else if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
                                                         val = cleanNumericInput(val);
@@ -405,7 +534,8 @@ function SectionUnit({
                                     </label>
                                 </div>
                             );
-                        })}
+                        })
+                    })()}
                     </div>
 
                     <div className="mt-6 flex justify-end pb-2">

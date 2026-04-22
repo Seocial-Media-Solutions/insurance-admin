@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import Layout from "./components/layout/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { AppDataProvider } from "./providers/AppDataProvider";
 
 /* --------------------------
    Lazy Loaded Pages with Prefetch
@@ -73,7 +74,9 @@ function AppComponent() {
           <Route
             element={
               <ProtectedRoute>
-                <Layout />
+                <AppDataProvider>
+                  <Layout />
+                </AppDataProvider>
               </ProtectedRoute>
             }
           >

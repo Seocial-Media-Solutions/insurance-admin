@@ -2124,10 +2124,30 @@ function SectionUnit({
                                         const toInputDate = (dateStr) => {
                                             if (!dateStr) return "";
                                             const cleanStr = dateStr.trim().split(" ")[0]; // Take only the date part if time exists
-                                            const parts = cleanStr.split(".");
-                                            if (parts.length !== 3) return "";
-                                            const [day, month, year] = parts;
-                                            return `${year}-${month}-${day}`;
+                                            
+                                            // Handle DD.MM.YYYY
+                                            if (cleanStr.includes(".")) {
+                                                const parts = cleanStr.split(".");
+                                                if (parts.length === 3) {
+                                                    const [day, month, year] = parts;
+                                                    return `${year}-${month}-${day}`;
+                                                }
+                                            }
+                                            
+                                            // Handle YYYY-MM-DD (already in input format)
+                                            if (cleanStr.includes("-")) {
+                                                const parts = cleanStr.split("-");
+                                                if (parts.length === 3 && parts[0].length === 4) {
+                                                    return cleanStr;
+                                                }
+                                                // Handle DD-MM-YYYY if it exists
+                                                if (parts.length === 3 && parts[2].length === 4) {
+                                                    const [day, month, year] = parts;
+                                                    return `${year}-${month}-${day}`;
+                                                }
+                                            }
+                                            
+                                            return "";
                                         };
 
                                         const toStorageDate = (dateStr) => {

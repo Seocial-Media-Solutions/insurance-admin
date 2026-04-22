@@ -19,7 +19,8 @@ export const getInputType = (fieldName) => {
         lower.includes("summary") ||
         lower.includes("version") ||
         lower.includes("contact") ||
-        lower.includes("record")
+        lower.includes("record") ||
+        lower.includes("remark")
     ) {
         return "textarea";
     }

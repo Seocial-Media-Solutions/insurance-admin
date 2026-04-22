@@ -3,33 +3,60 @@
 // Helper function to format date
 export const formatDate = (date) => {
   if (!date) return "N/A";
-  
+
   // Handle MongoDB $date objects
   const dateValue = (typeof date === 'object' && date.$date) ? date.$date : date;
   
+  // If it's already a string in DD.MM.YYYY or DD/MM/YYYY format, return it or parse it
+  if (typeof dateValue === 'string' && /^\d{2}[./-]\d{2}[./-]\d{4}$/.test(dateValue)) {
+      return dateValue.replace(/[/]/g, '.').replace(/-/g, '.');
+  }
+
   const d = new Date(dateValue);
   if (isNaN(d.getTime())) return "N/A";
-  
+
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}.${month}.${year}`;
 };
 
+// Helper function to format date range "YYYY-MM-DD to YYYY-MM-DD" -> "DD.MM.YYYY to DD.MM.YYYY"
+export const formatDateRange = (rangeStr) => {
+  if (!rangeStr || typeof rangeStr !== 'string' || !rangeStr.includes(" to ")) return rangeStr || "N/A";
+
+  const [start, end] = rangeStr.split(" to ");
+
+  const formatPart = (part) => {
+    const clean = part.trim();
+    if (clean.includes(".") && clean.split(".").length === 3) return clean;
+    const formatted = formatDate(clean);
+    return formatted === "N/A" ? clean : formatted;
+  };
+
+  return `${formatPart(start)} to ${formatPart(end)}`;
+};
+
 // Helper function to format date and time (useful for loss timestamps)
 export const formatDateTime = (date) => {
   if (!date) return "N/A";
-  
+
   const dateValue = (typeof date === 'object' && date.$date) ? date.$date : date;
+
+  // If it's already a string in a readable format, return it or clean it
+  if (typeof dateValue === 'string' && (dateValue.includes(".") || dateValue.includes("/") || dateValue.includes(" at "))) {
+      return dateValue.replace(/[/]/g, '.');
+  }
+
   const d = new Date(dateValue);
   if (isNaN(d.getTime())) return "N/A";
-  
+
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   const hours = String(d.getHours()).padStart(2, "0");
   const minutes = String(d.getMinutes()).padStart(2, "0");
-  
+
   return `${day}.${month}.${year} ${hours}:${minutes}`;
 };
 

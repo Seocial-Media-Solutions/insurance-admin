@@ -17,7 +17,7 @@ import {
     VerticalAlign,
 } from "docx";
 import { useCallback, useState } from "react";
-import { convertImageToBase64, getCurrentDate } from "../utils/helper";
+import { convertImageToBase64, getCurrentDate, formatDate, formatDateTime, formatDateRange } from "../utils/helper";
 import { toast } from "react-hot-toast";
 
 // Helper for consistent table rows
@@ -273,185 +273,388 @@ export const useTheftCaseDocx = () => {
             // 2. Summary of Claim
             const summary = data.summaryOfTheClaim || {};
             if (summary && Object.keys(summary).length > 0) {
-                children.push(createShadedHeading("Summary of Claim"));
+                children.push(createShadedHeading("SUMMARY OF THE CLAIM"));
                 children.push(new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    width: { size: 130, type: WidthType.PERCENTAGE },
                     rows: [
-                        createStandardRow("Claim No.", summary.claimNo),
-                        createStandardRow("Insured Name", insuredName),
-                        createStandardRow("Vehicle No.", vehicleNo),
-                        createStandardRow("Make & Model", policyCheck.makeAndModel),
-                        createStandardRow("Date of Appointment", summary.dateOfAppointmentForInvestigation),
-                        createStandardRow("First Contact with Claimant", summary.dateOfFirstContactWithClaimant),
-                    ]
-                }));
-            }
-
-            // 2.5 New Insured Details
-            if (insured && (insured.insuredName || insured.contactNumber || insured.aadharNumber)) {
-                children.push(createShadedHeading("Insured Details"));
-                children.push(new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: [
-                        createStandardRow("Name of Insured", insured.insuredName),
-                        createStandardRow("Contact Number", insured.contactNumber),
-                        createStandardRow("Current Address", insured.currentAddress),
-                        createStandardRow("Permanent Address", insured.permanentAddress),
-                        createStandardRow("Aadhar Card No", insured.aadharNumber),
-                        createStandardRow("PAN Card No", insured.panNumber),
-                        createStandardRow("DL Number", insured.drivingLicenceNumber),
-                        createStandardRow("DL Valid For", insured.drivingLicenceValidFor),
-                        createStandardRow("DL Validity", insured.drivingLicenceValidityPeriod),
-                        createStandardRow("Vehicle Reg No", insured.vehicleRegistrationNumber),
+                        createStandardRow("Claim No.", summary.claimNo || "N/A"),
+                        createStandardRow("Policy No.", summary.policyNo || "N/A"),
+                        createStandardRow("Date of Appointment for Investigation", formatDate(summary.dateOfAppointmentForInvestigation)),
+                        createStandardRow("Date of First Contact with Claimant", formatDate(summary.dateOfFirstContactWithClaimant)),
                     ]
                 }));
             }
 
             // 3. Policy & Incident Details
             const policy = data.policyAndIncidentDetails || {};
-            children.push(createShadedHeading("Policy & Incident Details"));
+            children.push(createShadedHeading("INSURANCE POLICY & INCIDENT DETAILS"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Insurance Company", policy.insurenceCompany),
-                    createStandardRow("Insured Name", policy.insuredName),
-                    createStandardRow("Contact No", policy.insuredContactNo),
-                    createStandardRow("Policy No", policy.policyNo),
-                    createStandardRow("Cover Period", policy.riskCoverPeriod),
-                    createStandardRow("Sum Insured (IDV)", policy.sumInsured),
-                    createStandardRow("Vehicle Reg No", policy.vehicleRegistrationNumber),
-                    createStandardRow("Make & Model", policy.makeAndModel),
-                    createStandardRow("Mfg Year", policy.yearOfManufacture),
-                    createStandardRow("Engine No", policy.engineNo),
-                    createStandardRow("Chassis No", policy.chassisNo),
-                    createStandardRow("Hypothecation", policy.hypothecationWith),
-                    createStandardRow("Incident Date/Time", policy.incidentDateAndTime),
-                    createStandardRow("Parking Place", policy.parkingPlaceAtTheft),
+                    createStandardRow("Insurer", policy.insurenceCompany),
+                    createStandardRow("Insured", policy.insuredName),
+                    createStandardRow("Insured contact No.", policy.insuredContactNo),
+                    createStandardRow("Policy No.", policy.policyNo),
+                    createStandardRow("Period of Risk Cover", formatDateRange(policy.riskCoverPeriod)),
+                    createStandardRow("Policy Name", policy.policyName),
+                    createStandardRow("Sum Insured", policy.sumInsured),
+                    createStandardRow("Make & Model of the Vehicle", policy.makeAndModel),
+                    createStandardRow("Year of Manufacturing", policy.yearOfManufacture),
+                    createStandardRow("Vehicle Registration Number", policy.vehicleRegistrationNumber),
+                    createStandardRow("Engine No.", policy.engineNo),
+                    createStandardRow("Chassis No.", policy.chassisNo),
+                    createStandardRow("Hypothecation with", policy.hypothecationWith),
+                    createStandardRow("Date and Time of Incident", policy.incidentDateAndTime),
+                    createStandardRow("Date of Start of Policy", formatDate(policy.policyStartDate)),
+                    createStandardRow("Date of FIR and reasons for delay, if any", policy.firDateAndDelayReason),
+                    createStandardRow("Date of Intimation to Insurer and reasons if delay", policy.insurerIntimationDateAndDelayReason),
+                    createStandardRow("Place of Parking at the time of theft & Location of Accident / Theft", policy.parkingPlaceAtTheft),
                 ]
             }));
 
-            // 4. Purchase & Registration
+
+
+
+            // 4. Insured Details
+            if (insured && (insured.insuredName || insured.contactNumber || insured.aadharNumber)) {
+                children.push(createShadedHeading("Insured Details"));
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        createStandardRow("Name of Insured", insured.insuredName),
+                        createStandardRow("Current address of insured", insured.currentAddress),
+                        createStandardRow("Present address", insured.permanentAddress),
+                        createStandardRow("Contact Number", insured.contactNumber),
+                        createStandardRow("PAN Number", insured.panNumber),
+                        createStandardRow("Aadhar Card Number", insured.aadharNumber),
+                        createStandardRow("Driving Licence Details", insured.drivingLicenceNumber),
+                        createStandardRow("Driving Licence Valid For", insured.drivingLicenceValidFor),
+                        createStandardRow("Driving Licence Valid from to", formatDateRange(insured.drivingLicenceValidityPeriod)),
+                        createStandardRow("Vehicle Registration Number", insured.vehicleRegistrationNumber),
+                    ]
+                }));
+            }
+
+            // 5. Purchase & Registration
             const purchase = data.purchaseAndRegistrationParticulars || {};
-            children.push(createShadedHeading("Purchase & Registration Particulars"));
+            children.push(createShadedHeading("PURCHASE & REGISTRATION PARTICULARS"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Purchased From", purchase.vehiclePurchasedFrom),
-                    createStandardRow("Invoice No/Date", purchase.invoiceNoWithDate),
+                    createStandardRow("Vehicle Purchased From", purchase.vehiclePurchasedFrom),
+                    createStandardRow("Invoice No. With Date", purchase.invoiceNoWithDate),
                     createStandardRow("Invoice Value", purchase.invoiceValue),
-                    createStandardRow("Owner Name", purchase.ownerName),
-                    createStandardRow("Date of Registration", purchase.registrationDate),
-                    createStandardRow("RTO Authority", purchase.registrationAuthority),
-                    createStandardRow("Vehicle Type/Class", `${purchase.vehicleType || ""} / ${purchase.vehicleClass || ""}`),
-                    createStandardRow("Tax Valid Upto", purchase.roadTaxClearTo),
-                    createStandardRow("Finance Details", purchase.financeDetails),
+                    createStandardRow("Owner’s Name", purchase.ownerName),
+                    createStandardRow("Registration Number", purchase.registrationNumber),
+                    createStandardRow("Date of Registration", formatDate(purchase.registrationDate)),
+                    createStandardRow("Registration Authority", purchase.registrationAuthority),
+                    createStandardRow("Chassis No.", purchase.chassisNo),
+                    createStandardRow("Engine No.", purchase.engineNo),
+                    createStandardRow("Make / Model of the Vehicle & Year", purchase.makeModelYear),
+                    createStandardRow("Type of Vehicle", purchase.vehicleType),
+                    createStandardRow("Class of Vehicle", purchase.vehicleClass),
+                    createStandardRow("Road Tax Clear to", purchase.roadTaxClearTo),
+                    createStandardRow("Finance From (Hypothecation Details)", purchase.financeDetails),
                 ]
             }));
 
-            // 5. FIR Details
+            // 6. FIR Details
             const fir = data.firDetails || {};
             children.push(createShadedHeading("FIR Details"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Police Station", fir.policeStationName),
-                    createStandardRow("FIR No", fir.firNo),
-                    createStandardRow("Date/Time", fir.firDateAndTime),
-                    createStandardRow("Section", fir.crimeCaseNoAndSection),
-                    createStandardRow("Lodged By", fir.firLodgedBy),
-                    createStandardRow("Against", fir.firLodgedAgainst),
-                    createStandardRow("Investigating Officer", fir.investigationOfficerName),
+                    createStandardRow("Name of Police Station where case was reported", fir.policeStationName),
+                    createStandardRow("Crime Case No. And Section of Crime", fir.crimeCaseNoAndSection),
+                    createStandardRow("FIR Lodged By", fir.firLodgedBy),
+                    createStandardRow("FIR Lodged Against", fir.firLodgedAgainst),
+                    createStandardRow("Date and Time of FIR", fir.firDateAndTime),
+                    createStandardRow("FIR No.", fir.firNo),
+                    createStandardRow("Name of Investigation Officer", fir.investigationOfficerName),
+                    createStandardRow("Translation of FIR", fir.firTranslationRequired),
                 ]
             }));
 
-            // 6. Visit to Insured
+            // 7. Maintenance & Service Record
+            const maintenance = data.maintenanceServiceRecord || {};
+            children.push(createShadedHeading("MAINTENANCE & SERVICE RECORD OF VEHICLE : As per Insured Statement"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Vehicle Last Service From", maintenance.lastServiceFrom),
+                    createStandardRow("Date of Last Service", formatDate(maintenance.lastServiceDate)),
+                    createStandardRow("Service Free or Paid", maintenance.serviceType),
+                    createStandardRow("Amount Paid in the Service", maintenance.serviceAmountPaid),
+                    createStandardRow("Availability of Service Details", maintenance.serviceDetailsAvailability),
+                    createStandardRow("Odometer Reading during last Service with date", maintenance.odometerReadingAtLastService),
+                ]
+            }));
+
+            // 8. Visit to Insured
             const visit = data.visitToInsured || {};
-            children.push(createShadedHeading("Visit details to the Insured"));
+            children.push(createShadedHeading("VISIT TO INSURED"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Insured Profession", visit.insuredProfession),
-                    createStandardRow("Annual Income", visit.annualIncome),
-                    createStandardRow("Keys Possession", visit.possessionOfKeys),
-                    createStandardRow("Economic Status", visit.economicStatus),
-                    createStandardRow("Delayed Intimation Reason", visit.insurerIntimationDateAndDelayReason),
-                    createStandardRow("Family Background", visit.familyProfessionalBackground),
+                    createStandardRow("Date of Loss", formatDateTime(visit.dateOfLoss)),
+                    createStandardRow("Date of Start of Policy", formatDate(visit.policyStartDate)),
+                    createStandardRow("Date of FIR and reasons for delay, if any", visit.firDateAndDelayReason),
+                    createStandardRow("Date of Intimation to Insurer and reasons if delay", visit.insurerIntimationDateAndDelayReason),
+                    createStandardRow("Profession of Insured", visit.insuredProfession),
+                    createStandardRow("Turnover / Annual Income", visit.annualIncome),
+                    createStandardRow("Possession of both / all Keys", visit.possessionOfKeys),
+                    createStandardRow("Economic Status / Live Style judged from residential accommodation", visit.economicStatus),
+                    createStandardRow("Do the life style / Economic Status match with the ownership of vehicle? Investigator’s view in this regard", visit.lifestyleMatchWithVehicleOwnership),
+                    createStandardRow("Written Statement and Claim Form (Insured’s Statement in Detail)", visit.writtenStatementAndClaimForm),
+                    createStandardRow("Professional background of Father / Wife / Brother", visit.familyProfessionalBackground),
+                    createStandardRow("Translation of Insured Statement", visit.statementTranslationRequired),
                 ]
             }));
 
-            // 7. Loss Site Inspection
-            const lossSite = data.lossSiteInspection || {};
-            children.push(createShadedHeading("Loss Site Inspection"));
+            // 9. Witness Details
+            if (data.witnessDetails && Array.isArray(data.witnessDetails) && data.witnessDetails.length > 0) {
+                children.push(createShadedHeading("WITNESSES DETAILS"));
+                data.witnessDetails.forEach((witness, wIdx) => {
+                    // Title: Witness Details
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: `Witness Details - ${witness.witnessName || "N/A"}`, bold: true, size: 24 }),
+                        ],
+                        spacing: { before: 300, after: 100 },
+                    }));
+
+                    // Structured Table
+                    children.push(new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        rows: [
+                            createStandardRow("Name", witness.witnessName),
+                            createStandardRow("Address", witness.witnessAddress),
+                            createStandardRow("Relation with Insured", witness.relationWithInsured),
+
+                        ]
+                    }));
+
+                    // Narrative Portion in a boxed cell
+                    children.push(new Table({
+                        width: { size: 100, type: WidthType.PERCENTAGE },
+                        rows: [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: [
+                                            // Title: Version of witness [Name]:-
+                                            new Paragraph({
+                                                children: [
+                                                    new TextRun({
+                                                        text: `Version of witness ${witness.witnessName || "N/A"}:-`,
+                                                        bold: true,
+                                                        underline: {},
+                                                        size: 24
+                                                    }),
+                                                ],
+                                                spacing: { before: 200, after: 200 },
+                                            }),
+                                            // Statement (Narrative)
+                                            ...(witness.witnessStatement ? [
+                                                new Paragraph({
+                                                    children: [
+                                                        new TextRun({ text: witness.witnessStatement, size: 22 }),
+                                                        new TextRun({ text: '"', size: 22 }), // Ending quote like in image
+                                                    ],
+                                                    alignment: AlignmentType.JUSTIFY,
+                                                    spacing: { after: 200 },
+                                                })
+                                            ] : []),
+                                            // Footer: Statement enclosed.
+                                            new Paragraph({
+                                                children: [
+                                                    new TextRun({ text: "Statement enclosed.", bold: true, size: 22 }),
+                                                ],
+                                                spacing: { after: 200 },
+                                            }),
+                                        ],
+                                        margins: { top: 200, bottom: 200, left: 200, right: 200 }
+                                    })
+                                ]
+                            })
+                        ],
+                        spacing: { before: 200, after: 400 }
+                    }));
+                });
+            }
+
+            // 10. Visit to Person Possessing Vehicle
+            const possessor = data.visitToPersonPossessingVehicle || {};
+            children.push(createShadedHeading("VIST TO THE PERSON POSSESSING THE VEHICLE AT THE TIME / BEFORE THE THEFT"));
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Description", lossSite.parkingLocationDescription),
-                    createStandardRow("Coordinates", `${lossSite.theftSpotLatitude}, ${lossSite.theftSpotLongitude}`),
+                    createStandardRow("Registration Number", possessor.registrationNumber),
+                    createStandardRow("Name of the person", possessor.personName),
+                    createStandardRow("Period of possession / employment", possessor.possessionPeriod),
+                    createStandardRow("Statement Translation", possessor.statementTranslation),
                 ]
             }));
 
-            // 8. Keys Remark
+            // 11. Visit to Financer
+            const financer = data.visitToFinancer || {};
+            children.push(createShadedHeading("VISIT TO FINANCER’S OFFICE"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Name of Financier", financer.financerName),
+                    createStandardRow("No. of Total Instalments", financer.totalInstallments),
+                    createStandardRow("Note/Remarks", financer.remarks),
+                    createStandardRow("No. of Instalment paid", financer.installmentsPaid),
+                    createStandardRow("No. of Cheques Bounced", financer.chequesBounced),
+                    createStandardRow("Date of Last Instalment", formatDate(financer.lastInstallmentDate)),
+                ]
+            }));
+
+            // 3b. Inspection of Loss Site (Requested for dedicated section)
+            const inspection = data.lossSiteInspection || {};
+            if (inspection && (inspection.parkingLocationDescription || inspection.theftSpotLatitude)) {
+                children.push(createShadedHeading("INSPECTION OF LOSS SITE"));
+
+                if (inspection.parkingLocationDescription) {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: inspection.parkingLocationDescription, size: 24 })],
+                        alignment: AlignmentType.JUSTIFIED,
+                        spacing: { before: 200, after: 200 }
+                    }));
+                }
+
+                if (inspection.theftSpotLatitude || inspection.theftSpotLongitude) {
+                    children.push(new Paragraph({
+                        children: [
+                            new TextRun({ text: "Theft Spot Latitude : ", bold: true, size: 24 }),
+                            new TextRun({ text: inspection.theftSpotLatitude || "N/A", size: 24 }),
+                            new TextRun({ text: "                                                              & Longitude: ", bold: true, size: 24 }),
+                            new TextRun({ text: inspection.theftSpotLongitude || "N/A", size: 24 }),
+                        ],
+                        spacing: { after: 200 }
+                    }));
+                }
+            }
+
             const keys = data.keysRemark || {};
-            children.push(createShadedHeading("Keys Remark"));
-            children.push(new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                    createStandardRow("Keys Provided", keys.keysProvided),
-                    createStandardRow("Key Tag No (Provided)", keys.keyTagNumberProvided),
-                    createStandardRow("Key Tag No (Invoice)", keys.keyTagNumberInInvoice),
-                    createStandardRow("Mismatch?", keys.keyTagMismatch),
-                ]
-            }));
+            const hasData = keys.keysProvided || keys.keyTagNumberProvided || keys.keyTagNumberInInvoice || keys.remarks;
 
-            // 9. Feedback from Location
-            const feedback = data.feedBackFromLocationOfTheft || {};
-            children.push(createShadedHeading("Feedback from Location"));
-            children.push(new Table({
-                width: { size: 100, type: WidthType.PERCENTAGE },
-                rows: [
-                    createStandardRow("Watchman Statement", feedback.statementOfWatchman),
-                    createStandardRow("Parking Attendant", feedback.statementOfParkingAttendant),
-                    createStandardRow("Shopkeepers", feedback.statementOfShopkeepers),
-                ]
-            }));
-
-            // 10. Documents Verified
-            const docs = data.documentsSubmittedAndVerified || {};
-            children.push(createShadedHeading("Documents Verified"));
-            const docRows = Object.entries(docs).map(([key, val]) => {
-                // Formatting key to label (camelCase to Title Case)
-                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                return createStandardRow(label, val);
-            });
-
-            // Only add table if there are rows
-            if (docRows.length > 0) {
+            if (hasData) {
                 children.push(new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: docRows
-                }));
-            } else {
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: "No documents verified yet." })],
-                    spacing: { after: 200 },
-                    alignment: AlignmentType.CENTER,
+                    rows: [
+                        // Heading Row
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: "REMARK ON KEYS OF THE VEHICLE",
+                                                    bold: true,
+                                                    underline: {},
+                                                    size: 24
+                                                })
+                                            ],
+                                            alignment: AlignmentType.CENTER,
+                                        })
+                                    ],
+                                    verticalAlign: VerticalAlign.CENTER,
+                                    shading: { fill: "F2F2F2" },
+                                    columnSpan: 2
+                                })
+                            ]
+                        }),
+                        // Standard Rows
+                        createStandardRow("Keys Provided", keys.keysProvided),
+                        createStandardRow("Key Tag No (Provided)", keys.keyTagNumberProvided),
+                        createStandardRow("Key Tag No (Invoice)", keys.keyTagNumberInInvoice),
+                        createStandardRow("Mismatch?", keys.keyTagMismatch),
+                        // Narrative content row (if remarks exist)
+                        ...(keys.remarks ? [
+                            new TableRow({
+                                children: [
+                                    new TableCell({
+                                        children: [
+                                            new Paragraph({
+                                                children: [new TextRun({ text: "Detailed Remarks", bold: true, size: 24 })],
+                                                spacing: { after: 100 }
+                                            }),
+                                            new Paragraph({
+                                                children: [new TextRun({ text: keys.remarks, size: 24 })],
+                                                alignment: AlignmentType.JUSTIFIED
+                                            })
+                                        ],
+                                        columnSpan: 2,
+                                        spacing: { before: 100, after: 100 }
+                                    })
+                                ]
+                            })
+                        ] : [])
+                    ]
                 }));
             }
+            children.push(new Paragraph({ text: "", spacing: { after: 200 } }));
 
-            // 11. Findings & Conclusion
-            children.push(createShadedHeading("Findings"));
-            if (data.findings) {
-                const f = data.findings;
-                children.push(new Paragraph({
-                    children: [new TextRun({ text: String(f.suspectedInvolvementOfFriendsFamilyOnAnyReport || f.anyInconsistentStatementOfFacts || "Investigation findings enclosed.") })],
-                    spacing: { after: 200 },
-                    alignment: AlignmentType.JUSTIFIED,
-                }));
-            }
+            // 14. Feedback from Location
+            const feedback = data.feedBackFromLocationOfTheft || {};
+            children.push(createShadedHeading("FEED BACK FROM LOCATION OF THEFT"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Statement of Parking Attendant", feedback.statementOfParkingAttendant),
+                    createStandardRow("Statement of Shopkeeper’s", feedback.statementOfShopkeepers),
+                    createStandardRow("Statement of Watchman", feedback.statementOfWatchman),
+                ]
+            }));
 
-            children.push(createShadedHeading("Conclusion"));
-            if (data.conclusion && Array.isArray(data.conclusion.conclusion)) {
-                data.conclusion.conclusion.forEach(line => {
+            // 15. Visit to Service Station
+            const garage = data.visitToServiceStation || {};
+            children.push(createShadedHeading("VISIT TO SERVICE STATION/ GARAGE"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Name of Garage", garage.nameOfGarage),
+                ]
+            }));
+
+            // 16. Additional Investigation
+            const extra = data.additionalInvestigationIfCommercialUseSuspected || {};
+            children.push(createShadedHeading("ADDITIONAL INVESTIGATION IF COMMERCIAL USE SUSPECTED"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Suspected involvement of friend’s / family on any report", extra.suspectedInvolvementOfFriendsFamilyOnAnyReport),
+                    createStandardRow("Intentional delay in report incident to the Police", extra.intentionalDelayInReportIncidentToPolice),
+                    createStandardRow("Any inconsistent statement of facts", extra.anyInconsistentStatementOfFacts),
+                    createStandardRow("Any concerned authorities unwilling to provide facts", extra.anyConcernedAuthoritiesUnwillingToProvideFacts),
+                    createStandardRow("News Paper cutting available or not", extra.newsPaperCuttingAvailableOrNot),
+                    createStandardRow("Income Certificate available or not", extra.incomeCertificateAvailableOrNot),
+                ]
+            }));
+
+            // 17. Findings
+            const findings = data.findings || {};
+            children.push(createShadedHeading("FINDINGS"));
+            children.push(new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    createStandardRow("Is there any suspected involvement of friend’s/ family on any report", findings.suspectedInvolvementOfFriendsFamilyOnAnyReport),
+                    createStandardRow("In there any intentional delay in report incident to the Police", findings.intentionalDelayInReportIncidentToPolice),
+                    createStandardRow("Any inconsistent statements of facts", findings.anyInconsistentStatementOfFacts),
+                    createStandardRow("Any concerned authorities unwilling to provide facts", findings.anyConcernedAuthoritiesUnwillingToProvideFacts),
+                    createStandardRow("News Paper Cutting Available", findings.newsPaperCuttingAvailableOrNot),
+                    createStandardRow("Income Certificate available or not", findings.incomeCertificateAvailableOrNot),
+                ]
+            }));
+
+            // 18. Brief Details
+            const brief = data.briefDetailsOfTheCase || {};
+            children.push(createShadedHeading("BRIEF DETAILS OF THE CASE"));
+            if (Array.isArray(brief.briefDetailsOfTheCase)) {
+                brief.briefDetailsOfTheCase.forEach(line => {
                     children.push(new Paragraph({
                         children: [new TextRun({ text: "• " + line })],
                         spacing: { after: 100 }
@@ -459,126 +662,89 @@ export const useTheftCaseDocx = () => {
                 });
             }
 
-            // 12. Photographs
-            children.push(createShadedHeading("Photographs"));
-
-            // Gather images robustly
-            let allImages = [];
-            
-            // 1. Specific sections images
-            if (data.spotVisit && Array.isArray(data.spotVisit)) {
-                allImages = [...allImages, ...data.spotVisit.map(img => ({ ...img, category: 'Spot Visit' }))];
-            }
-
-            // 2. Insured Documents (mixed arrays and objects)
-            const iDocs = data.insuredDocuments || {};
-            const docFields = [
-                { key: 'rcPhoto', label: 'RC Photo' },
-                { key: 'rcverification', label: 'RC Verification' },
-                { key: 'dlPhoto', label: 'DL Photo' },
-                { key: 'dlverification', label: 'DL Verification' },
-                { key: 'insuredPanCardPhoto', label: 'PAN Card' },
-                { key: 'insuredAadharCardPhoto', label: 'Aadhar Card' },
-                { key: 'bankPassbookDetails', label: 'Bank Passbook' }
-            ];
-
-            docFields.forEach(({ key, label }) => {
-                const val = iDocs[key];
-                if (val) {
-                    if (Array.isArray(val)) {
-                        allImages = [...allImages, ...val.map(img => ({ ...img, category: label }))];
-                    } else if (typeof val === 'object' && (val.imageUrl || val.url || val.secure_url)) {
-                        allImages.push({ ...val, category: label });
-                    }
-                }
-            });
-
-            // 3. Witness Details
-            if (data.witnessDetails && Array.isArray(data.witnessDetails)) {
-                data.witnessDetails.forEach(w => {
-                    if (w.witnessPhoto && Array.isArray(w.witnessPhoto)) {
-                        allImages = [...allImages, ...w.witnessPhoto.map(img => ({ ...img, category: `Witness: ${w.witnessName}` }))];
-                    }
-                    if (w.witnessDocument && Array.isArray(w.witnessDocument)) {
-                        w.witnessDocument.forEach(d => {
-                            if (d.front) allImages.push({ ...d.front, category: `${w.witnessName} ${d.title || "ID"} Front` });
-                            if (d.back) allImages.push({ ...d.back, category: `${w.witnessName} ${d.title || "ID"} Back` });
-                        });
-                    }
+            // 19. Conclusion
+            const conclusion = data.conclusion || {};
+            children.push(createShadedHeading("CONCLUSION"));
+            if (Array.isArray(conclusion.conclusion)) {
+                conclusion.conclusion.forEach(line => {
+                    children.push(new Paragraph({
+                        children: [new TextRun({ text: "• " + line })],
+                        spacing: { after: 100 }
+                    }));
                 });
             }
 
-            if (allImages.length > 0) {
-                // Process images in batches to prevent memory overflow
-                const BATCH_SIZE = 10;
-                const processedImages = [];
+            // 20. Documents Verified
+            const docs = data.documentsSubmittedAndVerified || {};
+            children.push(createShadedHeading("LIST OF DOCUMENTS SUBMITTED & VERIFIED"));
+            const docRows = Object.entries(docs).map(([key, val]) => {
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return createStandardRow(label, (Array.isArray(val) ? (val.length > 0 ? "Yes" : "No") : val) || "N/A");
+            });
+            if (docRows.length > 0) {
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: docRows
+                }));
+            }
 
-                for (let i = 0; i < allImages.length; i += BATCH_SIZE) {
-                    const batch = allImages.slice(i, i + BATCH_SIZE);
-                    const batchResults = await Promise.all(
-                        batch.map(async (img) => {
-                            const url = img.imageUrl || img.url || img.secure_url;
-                            if (url) {
-                                try {
-                                    const b64 = await convertImageToBase64(url);
-                                    if (!b64) return null;
+            // PHOTOGRAPHS SECTION - ONE BY ONE
 
-                                    // DOCX needs Uint8Array for browser
-                                    const binaryString = atob(b64);
-                                    const uint8Array = new Uint8Array(binaryString.length);
-                                    for (let j = 0; j < binaryString.length; j++) {
-                                        uint8Array[j] = binaryString.charCodeAt(j);
-                                    }
-                                    return { ...img, uint8Array };
-                                } catch (e) {
-                                    console.error(`Failed to process image: ${url}`, e);
-                                    return null;
+            // Function to generate image tables
+            const createImageGallery = async (images, title) => {
+                if (!images || images.length === 0) return;
+
+                children.push(createShadedHeading(title));
+
+                const validProcessed = [];
+                for (const img of images) {
+                    const url = img.imageUrl || img.url || img.secure_url;
+                    if (url) {
+                        try {
+                            const b64 = await convertImageToBase64(url);
+                            if (b64) {
+                                const binaryString = atob(b64);
+                                const uint8Array = new Uint8Array(binaryString.length);
+                                for (let j = 0; j < binaryString.length; j++) {
+                                    uint8Array[j] = binaryString.charCodeAt(j);
                                 }
+                                validProcessed.push({ ...img, uint8Array });
                             }
-                            return null;
-                        })
-                    );
-                    processedImages.push(...batchResults.filter(i => i !== null));
-
-                    if (i + BATCH_SIZE < allImages.length) {
-                        await new Promise(resolve => setTimeout(resolve, 100));
+                        } catch (e) {
+                            console.error(`Failed: ${url}`, e);
+                        }
                     }
                 }
 
-                const validImages = processedImages.filter(i => i && i.uint8Array);
-
-                const imageRows = [];
-                let rowCells = [];
-                validImages.forEach((img, idx) => {
-                    const imgPara = new Paragraph({
-                        children: [new ImageRun({
-                            data: img.uint8Array,
-                            transformation: { width: 250, height: 180 }
-                        })],
-                        alignment: AlignmentType.CENTER
-                    });
-                    const txtPara = new Paragraph({
-                        children: [new TextRun({ text: String(img.category || img.title || `Image ${idx + 1}`) })],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { after: 200 }
-                    });
-
-                    rowCells.push(new TableCell({
-                        children: [imgPara, txtPara],
+                const rows = [];
+                let cells = [];
+                validProcessed.forEach((img, idx) => {
+                    cells.push(new TableCell({
+                        children: [
+                            new Paragraph({
+                                children: [new ImageRun({ data: img.uint8Array, transformation: { width: 300, height: 250 } })],
+                                alignment: AlignmentType.CENTER
+                            }),
+                            new Paragraph({
+                                children: [new TextRun({ text: img.label || img.title || `Image ${idx + 1}` })],
+                                alignment: AlignmentType.CENTER,
+                                spacing: { after: 200 }
+                            })
+                        ],
                         width: { size: 50, type: WidthType.PERCENTAGE },
                         borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                     }));
 
-                    if (rowCells.length === 2) {
-                        imageRows.push(new TableRow({ children: rowCells }));
-                        rowCells = [];
+                    if (cells.length === 2) {
+                        rows.push(new TableRow({ children: cells }));
+                        cells = [];
                     }
                 });
-                if (rowCells.length > 0) imageRows.push(new TableRow({ children: rowCells }));
+                if (cells.length > 0) rows.push(new TableRow({ children: cells }));
 
-                if (imageRows.length > 0) {
+                if (rows.length > 0) {
                     children.push(new Table({
-                        rows: imageRows,
+                        rows: rows,
                         width: { size: 100, type: WidthType.PERCENTAGE },
                         borders: {
                             top: { style: BorderStyle.NIL },
@@ -590,6 +756,57 @@ export const useTheftCaseDocx = () => {
                         }
                     }));
                 }
+            };
+
+            // 21. Insured Documents Photos
+            const iDocs = data.insuredDocuments || {};
+            const insuredImgs = [];
+            [
+                'rcPhoto', 'rcverification', 'dlPhoto', 'dlverification',
+                'insuredPanCardPhoto', 'insuredAadharCardPhoto', 'bankPassbookDetails'
+            ].forEach(k => {
+                const val = iDocs[k];
+                if (val) {
+                    const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    if (Array.isArray(val)) val.forEach(img => insuredImgs.push({ ...img, label }));
+                    else insuredImgs.push({ ...val, label });
+                }
+            });
+            await createImageGallery(insuredImgs, "INSURED DOCUMENTS");
+
+            // 22. Witness Document and Photos
+            const witnessImgs = [];
+            if (data.witnessDetails && Array.isArray(data.witnessDetails)) {
+                data.witnessDetails.forEach(w => {
+                    const wName = w.witnessName || "Witness";
+                    if (Array.isArray(w.witnessPhoto)) {
+                        w.witnessPhoto.forEach(img => witnessImgs.push({ ...img, label: `${wName} Photo` }));
+                    }
+                    if (Array.isArray(w.witnessDocument)) {
+                        w.witnessDocument.forEach(d => {
+                            if (d.front) witnessImgs.push({ ...d.front, label: `${wName} ${d.title || "ID"} Front` });
+                            if (d.back) witnessImgs.push({ ...d.back, label: `${wName} ${d.title || "ID"} Back` });
+                        });
+                    }
+                });
+            }
+            await createImageGallery(witnessImgs, "WITNESS DOCUMENTS & PHOTOS");
+
+            // 23. Spot & Investigation Gallery (2x2 Grid)
+            const investigationImgs = [];
+
+            // From Loss Site Inspection
+            if (data.lossSiteInspection?.spotImages && Array.isArray(data.lossSiteInspection.spotImages)) {
+                data.lossSiteInspection.spotImages.forEach(img => investigationImgs.push({ ...img, label: 'Theft Spot' }));
+            }
+
+            // From Statements / Letters
+            if (data.letterDetails?.letterImages && Array.isArray(data.letterDetails.letterImages)) {
+                data.letterDetails.letterImages.forEach(img => investigationImgs.push({ ...img, label: 'Statement / Letter' }));
+            }
+
+            if (investigationImgs.length > 0) {
+                await createImageGallery(investigationImgs, "INVESTIGATION & SPOT PHOTOS (2x2 Grid)");
             }
 
             // Footer Design (Matching OD)

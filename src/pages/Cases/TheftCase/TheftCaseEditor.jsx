@@ -202,6 +202,7 @@ export default function TheftCaseEditor() {
     visitToFinancer: {
       financerName: "",
       totalInstallments: "",
+      remarks: "",
       installmentsPaid: "",
       chequesBounced: "",
       lastInstallmentDate: "",
@@ -210,12 +211,14 @@ export default function TheftCaseEditor() {
       parkingLocationDescription: "",
       theftSpotLatitude: "",
       theftSpotLongitude: "",
+      spotImages: [],
     },
     keysRemark: {
       keysProvided: "",
       keyTagNumberProvided: "",
       keyTagNumberInInvoice: "",
       keyTagMismatch: "",
+      remarks: "",
     },
     feedBackFromLocationOfTheft: {
       statementOfParkingAttendant: "",
@@ -290,7 +293,6 @@ export default function TheftCaseEditor() {
       insuredAadharCardPhoto: [],
     },
     witnessDetails: [],
-    spotVisit: [],
   });
 
   /* ---------------------------------------------------
@@ -447,7 +449,7 @@ export default function TheftCaseEditor() {
      SECTION CONFIG
   --------------------------------------------------- */
   const sections = [
-    { key: "letterDetails", api: "letter-details" },
+    { key: "letterDetails", api: "letter-details", files: { letterImages: "multiple" } },
     { key: "summaryOfTheClaim", api: "summary-claim" },
     { key: "insuredDetails", api: "insured-details" },
     { key: "policyAndIncidentDetails", api: "policy-incident-details" },
@@ -457,7 +459,7 @@ export default function TheftCaseEditor() {
     { key: "visitToInsured", api: "visit-insured" },
     { key: "visitToPersonPossessingVehicle", api: "visit-person-possessing" },
     { key: "visitToFinancer", api: "visit-financer" },
-    { key: "lossSiteInspection", api: "loss-site-inspection" },
+    { key: "lossSiteInspection", api: "loss-site-inspection", files: { spotImages: "multiple" } },
     { key: "keysRemark", api: "keys-remark" },
     { key: "feedBackFromLocationOfTheft", api: "feedback-theft-location" },
     { key: "visitToServiceStation", api: "visit-service-station" },
@@ -467,7 +469,6 @@ export default function TheftCaseEditor() {
     { key: "conclusion", api: "conclusion" },
     { key: "documentsSubmittedAndVerified", api: "documents-submitted" },
     { key: "insuredDlParticulars", api: "insured-dl-particulars" },
-
     {
       key: "insuredDocuments",
       api: "insured-documents",
@@ -481,9 +482,145 @@ export default function TheftCaseEditor() {
         insuredAadharCardPhoto: "max-2",
       },
     },
-
     { key: "witnessDetails" },
   ];
+
+  const sectionLabels = {
+    policyAndIncidentDetails: {
+      insurenceCompany: "Insurer",
+      insuredName: "Insured",
+      insuredContactNo: "Insured contact No.",
+      policyNo: "Policy No.",
+      riskCoverPeriod: "Period of Risk Cover",
+      policyName: "Policy Name",
+      sumInsured: "Sum Insured",
+      makeAndModel: "Make & Model of the Vehicle",
+      yearOfManufacture: "Year of Manufacturing",
+      vehicleRegistrationNumber: "Vehicle Registration Number",
+      engineNo: "Engine No.",
+      chassisNo: "Chassis No.",
+      hypothecationWith: "Hypothecation with",
+      incidentDateAndTime: "Date and Time of Incident",
+      policyStartDate: "Date of Start of Policy",
+      firDateAndDelayReason: "Date of FIR and reasons for delay, if any",
+      insurerIntimationDateAndDelayReason: "Date of Intimation to Insurer and reasons if delay",
+      parkingPlaceAtTheft: "Place of Parking at the time of theft & Location of Accident / Theft",
+    },
+    insuredDetails: {
+      insuredName: "Name of Insured",
+      currentAddress: "Current address of insured",
+      permanentAddress: "Present address",
+      contactNumber: "Contact Number",
+      panNumber: "PAN Number",
+      aadharNumber: "Aadhar Card Number",
+      drivingLicenceNumber: "Driving Licence Details",
+      drivingLicenceValidFor: "Driving Licence Valid For",
+      drivingLicenceValidityPeriod: "Driving Licence Valid from to",
+      vehicleRegistrationNumber: "Vehicle Registration Number",
+    },
+    purchaseAndRegistrationParticulars: {
+      vehiclePurchasedFrom: "Vehicle Purchased From",
+      invoiceNoWithDate: "Invoice No. With Date",
+      invoiceValue: "Invoice Value",
+      ownerName: "Owner’s Name",
+      registrationNumber: "Registration Number",
+      registrationDate: "Date of Registration",
+      registrationAuthority: "Registration Authority",
+      chassisNo: "Chassis No.",
+      engineNo: "Engine No.",
+      makeModelYear: "Make / Model of the Vehicle & Year",
+      vehicleType: "Type of Vehicle",
+      vehicleClass: "Class of Vehicle",
+      roadTaxClearTo: "Road Tax Clear to",
+      financeDetails: "Finance From (Hypothecation Details)",
+    },
+    firDetails: {
+      policeStationName: "Name of Police Station where case was reported",
+      crimeCaseNoAndSection: "Crime Case No. And Section of Crime",
+      firLodgedBy: "FIR Lodged By",
+      firLodgedAgainst: "FIR Lodged Against",
+      firDateAndTime: "Date and Time of FIR",
+      firNo: "FIR No.",
+      investigationOfficerName: "Name of Investigation Officer",
+      firTranslationRequired: "Translation of FIR",
+    },
+    maintenanceServiceRecord: {
+      lastServiceFrom: "Vehicle Last Service From",
+      lastServiceDate: "Date of Last Service",
+      serviceType: "Service Free or Paid",
+      serviceAmountPaid: "Amount Paid in the Service",
+      serviceDetailsAvailability: "Availability of Service Details",
+      odometerReadingAtLastService: "Odometer Reading during last Service with date",
+    },
+    visitToInsured: {
+      dateOfLoss: "Date of Loss",
+      policyStartDate: "Date of Start of Policy",
+      firDateAndDelayReason: "Date of FIR and reasons for delay, if any",
+      insurerIntimationDateAndDelayReason: "Date of Intimation to Insurer and reasons if delay",
+      insuredProfession: "Profession of Insured",
+      annualIncome: "Turnover / Annual Income",
+      possessionOfKeys: "Possession of both / all Keys",
+      economicStatus: "Economic Status / Live Style judged from residential accommodation",
+      lifestyleMatchWithVehicleOwnership: "Do the life style / Economic Status match with the ownership of vehicle? Investigator’s view in this regard",
+      writtenStatementAndClaimForm: "Written Statement and Claim Form (Insured’s Statement in Detail)",
+      familyProfessionalBackground: "Professional background of Father / Wife / Brother",
+      statementTranslationRequired: "Translation of Insured Statement",
+    },
+    visitToPersonPossessingVehicle: {
+      registrationNumber: "Registration Number",
+      personName: "Name of the person",
+      possessionPeriod: "Period of possession / employment",
+      statementTranslation: "Statement Translation",
+    },
+    visitToFinancer: {
+      financerName: "Name of Financier",
+      totalInstallments: "No. of Total Instalments",
+      remarks: "Financier Remarks (e.g. As per insured...)",
+      installmentsPaid: "No. of Instalment paid",
+      chequesBounced: "No. of Cheques Bounced",
+      lastInstallmentDate: "Date of Last Instalment",
+    },
+    lossSiteInspection: {
+      parkingLocationDescription: "Description of where it was parked",
+      theftSpotLatitude: "Theft Spot Latitude",
+      theftSpotLongitude: "Theft Spot Longitude",
+      spotImages: "Spot Images",
+    },
+    keysRemark: {
+      keysProvided: "Keys Provided",
+      keyTagNumberProvided: "Key Tag No (Provided)",
+      keyTagNumberInInvoice: "Key Tag No (Invoice)",
+      keyTagMismatch: "Mismatch?",
+      remarks: "Key Remarks (Detailed)",
+    },
+    feedBackFromLocationOfTheft: {
+      statementOfParkingAttendant: "Statement of Parking Attendant",
+      statementOfShopkeepers: "Statement of Shopkeeper’s",
+      statementOfWatchman: "Statement of Watchman",
+    },
+    additionalInvestigationIfCommercialUseSuspected: {
+      suspectedInvolvementOfFriendsFamilyOnAnyReport: "Suspected involvement of friend’s / family on any report",
+      intentionalDelayInReportIncidentToPolice: "Intentional delay in report incident to the Police",
+      anyInconsistentStatementOfFacts: "Any inconsistent statement of facts",
+      anyConcernedAuthoritiesUnwillingToProvideFacts: "Any concerned authorities unwilling to provide facts",
+      newsPaperCuttingAvailableOrNot: "News Paper cutting available or not",
+      incomeCertificateAvailableOrNot: "Income Certificate available or not",
+    },
+    findings: {
+      suspectedInvolvementOfFriendsFamilyOnAnyReport: "Suspected involvement of friend’s / family on any report",
+      intentionalDelayInReportIncidentToPolice: "Intentional delay in report incident to the Police",
+      anyInconsistentStatementOfFacts: "Any inconsistent statement of facts",
+      anyConcernedAuthoritiesUnwillingToProvideFacts: "Any concerned authorities unwilling to provide facts",
+      newsPaperCuttingAvailableOrNot: "News Paper cutting available or not",
+      incomeCertificateAvailableOrNot: "Income Certificate available or not",
+    },
+    briefDetailsOfTheCase: {
+      briefDetailsOfTheCase: "Detailed Case Brief (Multi-point)",
+    },
+    conclusion: {
+      conclusion: "Final Conclusion & Recommendations (Multi-point)",
+    }
+  };
 
   /* ---------------------------------------------------
      DERIVED STATE: ACTIVE SECTION CONFIG
@@ -503,7 +640,7 @@ export default function TheftCaseEditor() {
   }
 
   // Error state
-  if (isError) {
+ else if  (isError) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
@@ -654,13 +791,14 @@ export default function TheftCaseEditor() {
                   apiPath={activeSectionConfig.api}
                   sectionKey={activeSectionConfig.key}
                   fieldsObj={getNestedValue(form, activeSectionConfig.key) || {}}
-                  fileFields={activeSectionConfig.files || {}}
                   form={form}
                   setForm={setForm}
                   firmData={caseFirmData}
+                  fileFields={activeSectionConfig.files || {}}
                   defaultFieldValues={activeSectionConfig.key === 'letterDetails' ? { referenceNumber: caseData?.ourFileNo || caseData?.fileNo || "" } : {}}
                   isExpanded={true}
                   onToggle={() => { }}
+                   labels={sectionLabels[activeSectionConfig.key] || {}}
                   caseType="theft"
                 />
               ) : (
