@@ -196,6 +196,7 @@ function SectionUnit({
                         {(() => {
                             // Merge fields from fieldsObj and fileFields to ensure all inputs show up
                             const allFields = Array.from(new Set([
+                                ...Object.keys(labels || {}),
                                 ...Object.keys(fieldsObj || {}),
                                 ...Object.keys(fileFields || {})
                             ]));
@@ -206,6 +207,99 @@ function SectionUnit({
                                 const type = getInputType(field);
                             const error = errors[field];
                             const currentSection = getNestedValue(form, sectionKey) || {};
+
+                            const label = labels[field] || formatLabel(field);
+                            if (field.toLowerCase().includes("delay") || label.toLowerCase().includes("delay")) {
+                                const val = currentSection[field] || "";
+                                let datePart = "";
+                                let reasonPart = "";
+                                let hasDelay = false;
+
+                                if (val.includes(" | Delay: ")) {
+                                    [datePart, reasonPart] = val.split(" | Delay: ");
+                                    hasDelay = true;
+                                } else {
+                                    datePart = val;
+                                }
+
+                                const toInputDate = (str) => {
+                                    if (!str) return "";
+                                    const parts = str.trim().split(/[./-]/);
+                                    if (parts.length !== 3) return "";
+                                    if (parts[0].length === 4) return str.trim();
+                                    return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                                };
+
+                                const toStringDate = (val) => {
+                                    if (!val) return "";
+                                    const parts = val.split("-");
+                                    if (parts.length !== 3) return "";
+                                    return `${parts[2]}.${parts[1]}.${parts[0]}`;
+                                };
+
+                                const updateCombined = (newDate, newHasDelay, newReason) => {
+                                    let finalVal = newDate;
+                                    if (newHasDelay) {
+                                        finalVal = `${newDate} | Delay: ${newReason}`;
+                                    }
+                                    updateField(field, finalVal);
+                                };
+
+                                return (
+                                    <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3 space-y-3 p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                                        <label className="text-xs font-bold text-gray-500 uppercase tracking-widest block">
+                                            {labels[field] || formatLabel(field)}
+                                        </label>
+                                        
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 relative">
+                                                    <input
+                                                        type="date"
+                                                        className="w-full border border-gray-300 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                        value={toInputDate(datePart)}
+                                                        onChange={(e) => {
+                                                            const newD = toStringDate(e.target.value);
+                                                            updateCombined(newD, hasDelay, reasonPart);
+                                                        }}
+                                                    />
+                                                    <span className="absolute -top-2 left-2 px-1 bg-white text-[10px] font-bold text-indigo-500 uppercase">Date</span>
+                                                </div>
+
+                                                <label className="flex items-center gap-2 cursor-pointer select-none group">
+                                                    <div className={`w-10 h-5 rounded-full p-1 transition-all ${hasDelay ? 'bg-green-500' : 'bg-gray-200'}`}>
+                                                        <div className={`w-3 h-3 bg-white rounded-full transition-all ${hasDelay ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                    </div>
+                                                    <input
+                                                        type="checkbox"
+                                                        className="hidden"
+                                                        checked={hasDelay}
+                                                        onChange={(e) => {
+                                                            const checked = e.target.checked;
+                                                            updateCombined(datePart, checked, checked ? reasonPart : "");
+                                                        }}
+                                                    />
+                                                    <span className="text-[10px] font-black text-gray-500 uppercase group-hover:text-gray-900 tracking-tighter">Any Delay?</span>
+                                                </label>
+                                            </div>
+
+                                            {hasDelay && (
+                                                <div className="relative animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <textarea
+                                                        className="w-full border border-orange-200 px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 outline-none min-h-[80px] bg-white"
+                                                        placeholder="Enter reason for delay..."
+                                                        value={reasonPart}
+                                                        onChange={(e) => {
+                                                            updateCombined(datePart, true, e.target.value);
+                                                        }}
+                                                    />
+                                                    <span className="absolute -top-2 left-2 px-1 bg-white text-[10px] font-bold text-orange-500 uppercase">Reason for Delay</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            }
 
                             if (field === "riskCoverPeriod" || field === "drivingLicenceValidityPeriod") {
                                 const currentVal = currentSection[field] || "";
@@ -503,10 +597,23 @@ function SectionUnit({
                                                     if (!val) return "";
                                                     const parts = val.split(/[./-]/);
                                                     if (parts.length === 3) {
-                                                        // Handle YYYY-MM-DD
                                                         if (parts[0].length === 4) return val;
-                                                        // Handle DD.MM.YYYY or DD/MM/YYYY
                                                         return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+                                                    }
+                                                    return val;
+                                                })() : type === 'datetime-local' ? (() => {
+                                                    const val = currentSection[field] || "";
+                                                    if (!val) return "";
+                                                    // Standard format is YYYY-MM-DDTHH:mm
+                                                    if (val.includes('T')) return val.substring(0, 16);
+                                                    
+                                                    // Handle DD.MM.YYYY HH:mm
+                                                    const parts = val.split(/[ .:]/);
+                                                    if (parts.length >= 5) {
+                                                        const [d, m, y, hr, min] = parts;
+                                                        if (y.length === 4) {
+                                                            return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T${hr.padStart(2, '0')}:${min.padStart(2, '0')}`;
+                                                        }
                                                     }
                                                     return val;
                                                 })() : (currentSection[field] || (field === 'referenceNumber' ? defaultFieldValues?.referenceNumber : "") || "")}
@@ -517,6 +624,11 @@ function SectionUnit({
                                                         if (parts.length === 3) {
                                                             val = `${parts[2]}.${parts[1]}.${parts[0]}`;
                                                         }
+                                                    } else if (type === 'datetime-local' && val) {
+                                                        // Save as DD.MM.YYYY HH:mm
+                                                        const [datePart, timePart] = val.split("T");
+                                                        const [y, m, d] = datePart.split("-");
+                                                        val = `${d}.${m}.${y} ${timePart}`;
                                                     } else if (field.toLowerCase().includes("latitude") || field.toLowerCase().includes("longitude")) {
                                                         val = cleanNumericInput(val);
                                                     }
