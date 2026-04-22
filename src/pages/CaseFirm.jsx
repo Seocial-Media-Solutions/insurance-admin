@@ -132,86 +132,147 @@ function CaseFirmPage() {
           </div>
           <button
             onClick={handleOpenDrawer}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded hover:bg-gray-800 transition shadow-sm"
+            className=" sm:flex hidden  flex items-center gap-2 px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded hover:bg-gray-800 transition shadow-sm z-99"
           >
             <Plus size={18} />
             <span>New Firm</span>
           </button>
+          <button
+            onClick={handleOpenDrawer}
+            className="sm:hidden fixed right-4 bottom-4 w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center shadow-lg z-50"
+          >
+            <Plus size={20} className="text-white" />
+          </button>
         </div>
 
         {/* Content Area */}
-        <div className="bg-white border border-gray-200 shadow-sm rounded-md overflow-hidden">
+        <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
           {loading ? (
             <TableSkeleton columns={7} rows={10} />
           ) : firms.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-gray-400 font-medium">No firm records found in the system.</p>
+               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Plus className="w-8 h-8 text-gray-300" />
+               </div>
+               <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No firm records found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-100 border-b border-gray-200 text-gray-600 font-semibold uppercase tracking-wider text-[11px]">
-                    <th className="px-6 py-4">Firm Name</th>
-                    <th className="px-6 py-4">City</th>
-                    <th className="px-6 py-4">Regional Office</th>
-                    <th className="px-6 py-4">Operation</th>
-                    <th className="px-6 py-4">FY</th>
-                    <th className="px-6 py-4">Firm Code</th>
-                    <th className="px-6 py-4 text-right">Options</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {firms.map((firm) => (
-                    <tr
-                      key={firm._id}
-                      className="hover:bg-gray-50 transition-colors group"
-                    >
-                      <td className="px-6 py-4 font-semibold text-gray-900">
-                        {firm.name || firm.recipientCompany || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600">
-                        {firm.city || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-600 text-xs">
-                        {firm.regionalOffice || "—"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200">
-                          {firm.operationType || "—"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500 font-mono text-xs">
-                        {firm.financialYear || "—"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-bold text-blue-700 font-mono">
-                          {firm.code || "—"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-4">
-                          <button
-                            onClick={() => handleEdit(firm)}
-                            className="text-gray-400 hover:text-blue-600 transition"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(firm._id)}
-                            className="text-gray-400 hover:text-red-600 transition"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
+                      <th className="px-6 py-5">Firm Name</th>
+                      <th className="px-6 py-5">City</th>
+                      <th className="px-6 py-5">Regional Office</th>
+                      <th className="px-6 py-5">Operation</th>
+                      <th className="px-6 py-5">FY</th>
+                      <th className="px-6 py-5">Firm Code</th>
+                      <th className="px-6 py-5 text-right">Options</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {firms.map((firm) => (
+                      <tr
+                        key={firm._id}
+                        className="hover:bg-blue-50/30 transition-all group"
+                      >
+                        <td className="px-6 py-5">
+                          <p className="font-black text-gray-900 uppercase tracking-tight">
+                            {firm.name || firm.recipientCompany || "—"}
+                          </p>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 font-bold text-xs uppercase">
+                          {firm.city || "—"}
+                        </td>
+                        <td className="px-6 py-4 text-gray-400 text-[11px] font-medium italic">
+                          {firm.regionalOffice || "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[9px] font-black px-2.5 py-1 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 uppercase tracking-widest">
+                            {firm.operationType || "—"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-400 font-black text-[11px]">
+                          {firm.financialYear || "—"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-1 rounded border border-blue-100 uppercase tracking-tighter">
+                            {firm.code || "—"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                            <button
+                              onClick={() => handleEdit(firm)}
+                              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(firm._id)}
+                              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile View */}
+              <div className="md:hidden divide-y divide-gray-50">
+                {firms.map((firm) => (
+                  <div key={firm._id} className="p-5 active:bg-gray-50 transition-all">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                         <h3 className="font-black text-gray-900 uppercase tracking-tight leading-tight mb-1">
+                           {firm.name || firm.recipientCompany || "—"}
+                         </h3>
+                         <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{firm.code || "—"}</span>
+                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{firm.city || "—"}</span>
+                         </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(firm)}
+                          className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 active:bg-blue-600 active:text-white transition-all"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(firm._id)}
+                          className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100 active:bg-red-600 active:text-white transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Regional Office</p>
+                          <p className="text-[10px] font-bold text-gray-700 truncate">{firm.regionalOffice || "—"}</p>
+                       </div>
+                       <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Type / FY</p>
+                          <p className="text-[10px] font-bold text-gray-700">
+                            {firm.operationType || "—"} • {firm.financialYear || "—"}
+                          </p>
+                       </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Pagination Bar */}

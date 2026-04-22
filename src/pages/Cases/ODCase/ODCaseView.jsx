@@ -128,56 +128,57 @@ const GeneralDetails = ({ letterData, referenceData }) => {
   const apptDate = formatDate(referenceData.investigatorAppointmentDate);
 
   return (
-    <div className="bg-white shadow-sm rounded-sm border border-gray-200 p-8 md:p-12 mb-8 text-gray-900 font-sans leading-relaxed max-w-5xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div className="font-bold text-sm md:text-base">
-          Our Ref. No.: {letterData.referenceNumber || "________________"}
+    <div className="bg-white shadow-sm rounded-sm border border-gray-200 p-6 md:p-12 mb-8 text-gray-900 font-sans leading-relaxed max-w-5xl mx-auto">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 border-b border-gray-100 pb-4 sm:pb-0 sm:border-0">
+        <div className="font-black text-xs md:text-base uppercase tracking-tight">
+          Ref: {letterData.referenceNumber || "________________"}
         </div>
-        <div className="font-bold text-sm md:text-base underline underline-offset-4">
-          Dt. {letterDate}
+        <div className="font-black text-xs md:text-base underline underline-offset-4 decoration-2">
+          Date: {letterDate}
         </div>
       </div>
 
-      <div className="mb-8 text-sm md:text-base space-y-1">
-        <p className="font-bold">To,</p>
-        <p className="font-bold">
+      <div className="mb-8 text-xs md:text-base space-y-1">
+        <p className="font-black uppercase text-[10px] text-gray-400 mb-2">To,</p>
+        <p className="font-black text-gray-900 uppercase">
           {letterData.recipientDesignation || "Manager"},
         </p>
-        <p className="font-bold">
+        <p className="font-bold text-gray-700">
           {letterData.recipientDepartment || "Claim Tie-up Hub"},
         </p>
-        <p className="font-bold">
+        <p className="font-bold text-gray-700">
           {letterData.recipientCompany || "Insurance Co. Ltd"},
         </p>
-        <div className="font-bold max-w-sm whitespace-pre-line">
-          {letterData.recipientAddress || "Address Line 1, City - Zipcode"}
+        <div className="font-medium text-gray-600 max-w-sm whitespace-pre-line leading-snug">
+          {letterData.recipientAddress || "Address Details Not Provided"}
         </div>
       </div>
 
-      <div className="mb-6">
-        <p className="font-bold text-sm md:text-base">
-          <span className="underline underline-offset-2">Ref:</span> OD
-          Investigation Report for claim of: -
-          <span className="font-bold uppercase tracking-wide">
-            {referenceData.insuredName || referenceData.nameOfInsured || "Insured Name"}
-          </span>{" "}
-          ({referenceData.vehicleNumber || referenceData.vehicleNo || referenceData.vehicleRegistrationNo || "Vehicle No"})
+      <div className="mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
+        <p className="font-black text-xs md:text-base text-gray-900 uppercase tracking-tight">
+          <span className="text-gray-400">Subject:</span> OD Investigation Report
         </p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          <span className="px-2 py-0.5 bg-black text-white text-[10px] font-black uppercase rounded">
+            {referenceData.insuredName || referenceData.nameOfInsured || "Insured"}
+          </span>
+          <span className="px-2 py-0.5 bg-gray-200 text-gray-700 text-[10px] font-black uppercase rounded">
+            {referenceData.vehicleNumber || referenceData.vehicleNo || referenceData.vehicleRegistrationNo || "Vehicle"}
+          </span>
+        </div>
       </div>
 
-      <div className="text-justify text-sm md:text-base mb-4 font-medium">
+      <div className="text-justify text-xs md:text-base mb-4 font-medium leading-relaxed text-gray-700">
         <p>
-          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In reference to the subject Own
-          damage claim of Mr.{" "}
-          <span className="font-bold underline underline-offset-2">
+          In reference to the subject Own damage claim of Mr.{" "}
+          <span className="font-black text-black underline underline-offset-2">
             {referenceData.insuredName || "___________"}
           </span>{" "}
           vehicle number{" "}
-          <span className="font-bold underline underline-offset-2">
+          <span className="font-black text-black underline underline-offset-2">
             {referenceData.vehicleNumber || "___________"}
           </span>
-          , we have been appointed as an Investigator on {apptDate} by you. Our
-          investigation report as follows:
+          , we were appointed as Investigators on {apptDate}. Our comprehensive investigation report is detailed below:
         </p>
       </div>
     </div>
@@ -838,30 +839,34 @@ const Thumbnail = ({ src, label }) => (
    ================================================================================== */
 
 const DocumentHeader = () => (
-  <div className="max-w-5xl mx-auto mb-4 border-t-4 border-gray-400 pt-4 flex justify-between items-start font-serif">
-    <div className="w-[55%]">
-      <h1 className="text-2xl font-bold text-gray-800 leading-tight">Satyendra Kumar Garg</h1>
-      <p className="text-base text-gray-600 font-bold">(Insurance Claim Investigation Service)</p>
-      <p className="text-base text-gray-600">Contact: +91 9610339955</p>
+  <div className="max-w-5xl mx-auto mb-6 border-t-4 border-black pt-6 flex flex-col sm:flex-row justify-between items-start font-sans gap-6">
+    <div className="w-full sm:w-[60%]">
+      <h1 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight uppercase tracking-tighter">Satyendra Kumar Garg</h1>
+      <p className="text-xs sm:text-sm text-gray-500 font-bold uppercase tracking-widest mt-1">(Insurance Claim Investigation Service)</p>
+      <p className="text-xs sm:text-sm text-gray-900 font-bold mt-2 flex items-center gap-2">
+        <span className="text-gray-400 font-black">Contact:</span> +91 9610339955
+      </p>
     </div>
-    <div className="w-[45%] text-left pl-4 space-y-0.5 text-sm text-gray-700">
+    <div className="w-full sm:w-[40%] sm:text-right space-y-1 text-[10px] sm:text-xs text-gray-600 font-medium bg-gray-50 sm:bg-transparent p-4 sm:p-0 rounded-lg sm:rounded-none border sm:border-0 border-gray-100">
+      <p className="font-bold text-gray-900 uppercase">Registered Office</p>
       <p>Flat No. H-207, Hanging Gardens,</p>
       <p>Jaisinghpura Road, Bhankrota,</p>
       <p>Jaipur – 302026. (Raj)</p>
-      <p>
-        Email: <span className="text-blue-600 underline">invthirdeye@gmail.com</span>
+      <p className="pt-1">
+        Email: <span className="text-black font-bold underline">invthirdeye@gmail.com</span>
       </p>
     </div>
   </div>
 );
 
 const DocumentFooter = () => (
-  <div className="max-w-5xl mx-auto mt-8 border-t border-gray-300 pt-2 flex flex-col">
-    <div className="flex items-center gap-1 text-blue-400 font-bold text-sm">
-      <span>1</span>
-      <span className="text-gray-300"> |</span>
+  <div className="max-w-5xl mx-auto mt-12 border-t border-gray-200 pt-4 flex flex-col items-center">
+    <div className="flex items-center gap-2 text-gray-400 font-black text-[10px] uppercase tracking-widest">
+      <span>Page 1</span>
+      <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+      <span>Confidential Report</span>
     </div>
-    <div className="mt-4 h-4 w-full bg-[#e3f2f1] rounded-sm"></div>
+    <div className="mt-4 h-1.5 w-full bg-black rounded-full opacity-5"></div>
   </div>
 );
 
@@ -928,75 +933,85 @@ export default function ODCaseView() {
 
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        Loading...
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-10 h-10 animate-spin text-black" />
+          <p className="text-xs font-black uppercase text-gray-400 tracking-widest">Loading Report...</p>
+        </div>
       </div>
     );
+
   if (error)
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">
-        {error}
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-red-50 text-red-600 p-8 rounded-[2rem] border border-red-100 max-w-md w-full">
+           <h2 className="text-xl font-black uppercase mb-2">Error Occurred</h2>
+           <p className="text-sm font-medium mb-6 opacity-80">{error}</p>
+           <Link to="/case" className="inline-block px-6 py-3 bg-red-600 text-white font-black uppercase text-xs rounded-xl shadow-lg shadow-red-200">Go Back</Link>
+        </div>
       </div>
     );
+
   if (!data)
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
-        Case not found
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-500 font-bold uppercase tracking-widest">Case not found</p>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8 px-4 sm:px-6 lg:px-8 print:bg-white print:p-0">
       <div className="max-w-6xl mx-auto">
         {/* TOP HEADER (Actions) */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 print:hidden">
-          <div>
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-              <span>OD Case</span>
-              <span>•</span>
-              <span className="font-mono text-gray-600 font-bold">
-                {caseId}
-              </span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Investigation Report
-            </h1>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8 print:hidden">
+          <div className="flex items-center gap-4">
+             <Link
+               to="/case"
+               className="p-3 bg-white border border-gray-200 text-gray-400 hover:text-black rounded-2xl transition-all shadow-sm"
+             >
+               <ArrowLeft className="w-5 h-5" />
+             </Link>
+             <div>
+               <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                 <span>OD Investigation</span>
+                 <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                 <span className="text-black">{caseId?.slice(-8).toUpperCase()}</span>
+               </div>
+               <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tighter leading-tight">
+                 Report Preview
+               </h1>
+             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-sm p-2 rounded-[1.5rem] border border-white shadow-sm">
             <button
               onClick={() => handleGenerate(generateDocx)}
               disabled={isGeneratingDocx}
-              className="px-4 py-2 border rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 flex items-center gap-2"
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-black text-white text-[11px] font-black uppercase rounded-xl hover:bg-gray-900 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <FileText className="w-4 h-4" />
-              {isGeneratingDocx ? "Generating..." : "Docx"}
+              <FileText className="w-3.5 h-3.5" />
+              {isGeneratingDocx ? "..." : "Docx"}
             </button>
             <button
               onClick={() => handleGenerate(generatePdf)}
               disabled={isGeneratingPdf}
-              className="px-4 py-2 border rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 flex items-center gap-2"
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-gray-100 text-gray-900 text-[11px] font-black uppercase rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Printer className="w-4 h-4" />
-              {isGeneratingPdf ? "Generating..." : "PDF"}
+              <Printer className="w-3.5 h-3.5" />
+              {isGeneratingPdf ? "..." : "PDF"}
             </button>
-            <Link
-              to="/case"
-              className="px-4 py-2 border rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50"
-            >
-              Back
-            </Link>
+            <div className="w-px h-6 bg-gray-200 hidden sm:block mx-1"></div>
             <Link
               to={`/case/od-case/edit/${caseId}`}
-              className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 flex items-center gap-2"
+              className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 text-white text-[11px] font-black uppercase rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
             >
-              <Edit className="w-4 h-4" /> Edit
+              <Edit className="w-3.5 h-3.5" /> Edit Report
             </Link>
           </div>
         </div>
 
         {/* --- REPORT CONTENT --- */}
-        <div className="bg-white p-4 md:p-8 shadow-md print:shadow-none print:p-0 rounded-lg">
-          {/* Header Mockup */}
+        <div className="bg-white p-4 sm:p-8 md:p-12 shadow-xl shadow-gray-200/50 print:shadow-none print:p-0 rounded-[2rem] sm:rounded-[3rem] border border-gray-100">
           <DocumentHeader />
 
           {/* 1. Letter / General Details */}

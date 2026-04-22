@@ -217,17 +217,17 @@ const AssignmentList = () => {
   }
 
   return (
-    <div className="bg-white shadow-lg rounded-lg overflow-hidden">
+    <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
       {/* Filters */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+      <div className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="relative group flex-1 sm:flex-none">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full sm:w-44 pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer"
               >
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
@@ -237,12 +237,12 @@ const AssignmentList = () => {
               </select>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-400" />
+            <div className="relative group flex-1 sm:flex-none">
+              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="w-full sm:w-44 pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-[11px] font-black uppercase tracking-wider text-gray-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer"
               >
                 <option value="All">All Priority</option>
                 <option value="Low">Low</option>
@@ -255,192 +255,235 @@ const AssignmentList = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Firm
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort("caseId")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Case Details</span>
-                  <SortIcon field="caseId" />
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort("fieldExecutiveId")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Field Executive</span>
-                  <SortIcon field="fieldExecutiveId" />
-                </div>
-              </th>
-              {/* UPDATED HEADER: Was Visit Details */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Investigation Visits
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort("priority")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Priority</span>
-                  <SortIcon field="priority" />
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort("status")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Status</span>
-                  <SortIcon field="status" />
-                </div>
-              </th>
-              <th
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                onClick={() => handleSort("assignedDate")}
-              >
-                <div className="flex items-center space-x-1">
-                  <span>Assigned Date</span>
-                  <SortIcon field="assignedDate" />
-                </div>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredAssignments.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                  No assignments found matching your criteria.
-                </td>
+      {/* Table / Cards */}
+      <div className="relative">
+        {/* Desktop View */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead className="bg-white">
+              <tr className="border-b border-gray-100">
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Firm</th>
+                <th
+                  className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("caseId")}
+                >
+                  <div className="flex items-center gap-1">
+                    Case Details <SortIcon field="caseId" />
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("fieldExecutiveId")}
+                >
+                  <div className="flex items-center gap-1">
+                    Executive <SortIcon field="fieldExecutiveId" />
+                  </div>
+                </th>
+                <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Visits</th>
+                <th
+                  className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("priority")}
+                >
+                  <div className="flex items-center gap-1">
+                    Priority <SortIcon field="priority" />
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  onClick={() => handleSort("status")}
+                >
+                  <div className="flex items-center gap-1">
+                    Status <SortIcon field="status" />
+                  </div>
+                </th>
+                <th className="px-6 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
               </tr>
-            ) : (
-              filteredAssignments.map((assignment) => (
-                <tr key={assignment._id} className="hover:bg-gray-50 border-b border-gray-100 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <FirmCodeCell firmId={assignment.caseId?.caseFirmId} />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {assignment.caseId?.recordNumber}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {assignment.caseId?.vehicleNo}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {assignment.caseId?.nameOfInsured}
+            </thead>
+
+            <tbody className="divide-y divide-gray-50 bg-white">
+              {filteredAssignments.length === 0 ? (
+                <tr>
+                  <td colSpan="7" className="px-6 py-20 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                        <Filter className="w-8 h-8 text-gray-200" />
+                      </div>
+                      <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No assignments matching criteria</p>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {assignment.fieldExecutiveId?.fullName}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {assignment.fieldExecutiveId?.contactNumber}
-                    </div>
-                  </td>
-                  {/* UPDATED COLUMN: Display investigation visits array */}
-                  <td className="px-6 py-4">
-                    <div className="grid grid-cols-2 gap-2 h-24 w-60 overflow-y-auto">
-                      {assignment.investigationVisits &&
-                        assignment.investigationVisits.length > 0 ? (
-                        assignment.investigationVisits.map((visit, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex justify-center items-center px-2 py-1 rounded text-[10px] font-medium bg-gray-100 text-gray-800 border border-gray-400"
+                </tr>
+              ) : (
+                filteredAssignments.map((assignment) => (
+                  <tr key={assignment._id} className="hover:bg-blue-50/30 transition-all group">
+                    <td className="px-6 py-5">
+                      <FirmCodeCell firmId={assignment.caseId?.caseFirmId} />
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-black text-gray-900 uppercase tracking-tight mb-0.5">
+                        {assignment.caseId?.recordNumber}
+                      </div>
+                      <div className="text-[10px] font-black text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 inline-block uppercase tracking-tight">
+                        {assignment.caseId?.vehicleNo}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-[11px] font-black text-gray-800 uppercase tracking-tight">
+                        {assignment.fieldExecutiveId?.fullName}
+                      </div>
+                      <div className="text-[10px] font-medium text-gray-400">
+                        {assignment.fieldExecutiveId?.contactNumber}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex -space-x-1 overflow-hidden">
+                        {(assignment.investigationVisits || []).slice(0, 3).map((visit, idx) => (
+                          <div 
+                            key={idx} 
+                            className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm"
+                            title={visit.label}
                           >
-                            {visit.label}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-sm text-gray-400">None</span>
-                      )}
-                    </div>
-                  </td>
+                            <span className="text-[8px] font-black text-gray-400 uppercase">{visit.label[0]}</span>
+                          </div>
+                        ))}
+                        {assignment.investigationVisits?.length > 3 && (
+                          <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shadow-sm">
+                            <span className="text-[8px] font-black text-gray-500">+{assignment.investigationVisits.length - 3}</span>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getPriorityColor(assignment.priority)}`}>
+                        {assignment.priority}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <span className={`inline-flex px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${getStatusColor(assignment.status)}`}>
+                        {assignment.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                        <button
+                          onClick={() => setReassignModal({
+                            open: true,
+                            assignmentId: assignment._id,
+                            currentExecutiveId: assignment.fieldExecutiveId?._id,
+                            newExecutiveId: ""
+                          })}
+                          className="bg-white text-orange-600 p-2 rounded-xl border border-orange-100 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
+                          title="Reassign Case"
+                        >
+                          <UserCog className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(assignment._id)}
+                          className="bg-white text-red-600 p-2 rounded-xl border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(
-                        assignment.priority
-                      )}`}
-                    >
-                      {assignment.priority}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                        assignment.status
-                      )}`}
-                    >
-                      {assignment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {assignment.createdAt // Changed from assignedDate if you don't have that field explicitly, otherwise keep assignedDate
-                      ? new Date(assignment.createdAt).toLocaleDateString()
-                      : "N/A"}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      {/* <button
-                        onClick={() =>
-                          navigate(`/cases/assignments/view/${assignment._id}`)
-                        }
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          navigate(`/cases/assignments/edit/${assignment._id}`)
-                        }
-                        className="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50"
-                        title="Edit Assignment"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button> */}
-
-                      <button
+        {/* Mobile View */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {filteredAssignments.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">No assignments found</p>
+            </div>
+          ) : (
+            filteredAssignments.map((assignment) => (
+              <div key={assignment._id} className="p-5 active:bg-gray-50 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                   <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FirmCodeCell firmId={assignment.caseId?.caseFirmId} />
+                        <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                        <span className="text-[10px] font-black text-gray-900 uppercase tracking-tight">{assignment.caseId?.recordNumber}</span>
+                      </div>
+                      <p className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 inline-block uppercase tracking-tight">
+                        {assignment.caseId?.vehicleNo}
+                      </p>
+                   </div>
+                   <div className="flex gap-2">
+                     <button
                         onClick={() => setReassignModal({
                           open: true,
                           assignmentId: assignment._id,
                           currentExecutiveId: assignment.fieldExecutiveId?._id,
                           newExecutiveId: ""
                         })}
-                        className="text-orange-600 hover:text-orange-900 p-1 flex items-center gap-2 rounded hover:bg-orange-50"
-                        title="Reassign Case"
+                        className="p-2.5 bg-orange-50 text-orange-600 rounded-xl border border-orange-100 active:bg-orange-600 active:text-white transition-all"
                       >
-                        Reassign <UserCog className="h-4 w-4" />
+                        <UserCog size={16} />
                       </button>
-
                       <button
                         onClick={() => handleDelete(assignment._id)}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                        title="Delete"
+                        className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100 active:bg-red-600 active:text-white transition-all"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 size={16} />
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                   </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                   <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${getStatusColor(assignment.status)}`}>
+                        {assignment.status}
+                      </span>
+                   </div>
+                   <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Priority</p>
+                      <span className={`inline-flex px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${getPriorityColor(assignment.priority)}`}>
+                        {assignment.priority}
+                      </span>
+                   </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                   <div className="flex-1">
+                      <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Field Executive</p>
+                      <p className="text-xs font-bold text-gray-800 truncate">{assignment.fieldExecutiveId?.fullName || "Unassigned"}</p>
+                   </div>
+                   <div className="flex flex-col items-end gap-2">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Investigation Visits</p>
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        {(assignment.investigationVisits || []).length > 0 ? (
+                          (assignment.investigationVisits || []).slice(0, 2).map((visit, idx) => (
+                            <span 
+                              key={idx} 
+                              className={`px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${
+                                visit.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                                visit.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                'bg-gray-50 text-gray-600 border-gray-100'
+                              }`}
+                            >
+                              {visit.label}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[10px] font-bold text-gray-300 uppercase italic">No visits yet</span>
+                        )}
+                        {(assignment.investigationVisits || []).length > 2 && (
+                          <span className="px-2 py-0.5 rounded-lg bg-black text-white text-[8px] font-black uppercase tracking-widest">
+                            +{assignment.investigationVisits.length - 2} More
+                          </span>
+                        )}
+                      </div>
+                   </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* Reassign Modal */}

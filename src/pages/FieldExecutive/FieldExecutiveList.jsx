@@ -70,11 +70,12 @@ export default function FieldExecutiveList() {
       {loading ? (
         <TableSkeleton columns={8} rows={limit || 10} />
       ) : (
-        <div className="bg-card rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* Desktop View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-[#f9fafb]">
-                <tr className="border-t-2 border-t-gray-200 p-2">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
                   {[
                     "Full Name",
                     "Username",
@@ -85,52 +86,47 @@ export default function FieldExecutiveList() {
                     "Status",
                     "Actions",
                   ].map((head) => (
-                    <th key={head} className="px-5 py-2 text-left text-sm">
+                    <th key={head} className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
                       {head}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 bg-white">
                 {fieldExecutives.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan="8"
-                      className="px-6 py-8 text-center text-gray-500"
-                    >
+                    <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                       No field executives found
                     </td>
                   </tr>
                 ) : (
-                    fieldExecutives.map((exec) => (
+                  fieldExecutives.map((exec) => (
                     <tr
                       key={exec._id}
                       onClick={() => handleEdit(exec)}
-                      className="cursor-pointer transition-colors border border-gray-200 bg-white hover:bg-gray-100"
+                      className="cursor-pointer hover:bg-gray-50 transition-colors"
                     >
-                      <td className="px-6 py-2 text-sm font-medium">
+                      <td className="px-6 py-4 text-sm font-bold text-gray-900">
                         {exec.fullName}
                       </td>
-                      <td className="px-6 py-2 text-sm">{exec.username}</td>
-                      <td className="px-6 py-2 text-sm">{exec.email}</td>
-                      <td className="px-6 py-2 text-sm">{exec.contactNumber}</td>
-                      <td className="px-6 py-2 text-sm">{exec.aadharNumber}</td>
-                      <td className="px-6 py-2 text-sm">
-                        {exec.drivingLicenseNumber}
-                      </td>
-                      <td className="px-6 py-2 text-sm">
+                      <td className="px-6 py-4 text-sm text-gray-600">{exec.username}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{exec.email}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 font-mono">{exec.contactNumber}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{exec.aadharNumber}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 uppercase">{exec.drivingLicenseNumber}</td>
+                      <td className="px-6 py-4 text-sm">
                         {exec.isActive ? (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                            <CheckCircle size={14} /> Active
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase bg-green-100 text-green-700">
+                            <CheckCircle size={12} /> Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                            <XCircle size={14} /> Inactive
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black uppercase bg-red-100 text-red-700">
+                            <XCircle size={12} /> Inactive
                           </span>
                         )}
                       </td>
-                      <td className="px-6 py-2 text-sm">
-                        <div className="flex justify-center gap-2">
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -148,6 +144,66 @@ export default function FieldExecutiveList() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="md:hidden grid grid-cols-1 gap-4 p-4 bg-gray-50">
+            {fieldExecutives.length === 0 ? (
+              <div className="py-20 text-center text-gray-500 bg-white rounded-lg">
+                No field executives found
+              </div>
+            ) : (
+              fieldExecutives.map((exec) => (
+                <div 
+                  key={exec._id} 
+                  onClick={() => handleEdit(exec)}
+                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 space-y-4"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-black text-gray-900 text-sm uppercase">{exec.fullName}</h3>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-tight">{exec.username}</p>
+                    </div>
+                    {exec.isActive ? (
+                      <span className="px-2 py-0.5 text-[9px] font-black uppercase bg-green-100 text-green-700 rounded">
+                        Active
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 text-[9px] font-black uppercase bg-red-100 text-red-700 rounded">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50">
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">Contact</p>
+                      <p className="text-xs font-bold text-gray-900 font-mono">{exec.contactNumber || "--"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">License</p>
+                      <p className="text-xs font-bold text-gray-900 uppercase">{exec.drivingLicenseNumber || "--"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex flex-col">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase">Email</p>
+                      <p className="text-[10px] font-medium text-gray-600 truncate max-w-[180px]">{exec.email}</p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(exec._id);
+                      }}
+                      className="p-2 bg-red-50 text-red-600 rounded-lg"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}

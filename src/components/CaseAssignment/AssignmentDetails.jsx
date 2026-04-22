@@ -1,6 +1,6 @@
 // FILE: src/components/CaseAssignment/AssignmentDetails.jsx
 import React from 'react';
-import { X, Calendar, MapPin, Phone, User, FileText } from 'lucide-react';
+import { X, Calendar, MapPin, Phone, User, FileText, Edit, ClipboardList } from 'lucide-react';
 
 const AssignmentDetails = ({ assignment, onClose, onEdit }) => {
   const formatDate = (dateString) => {
@@ -32,28 +32,36 @@ const AssignmentDetails = ({ assignment, onClose, onEdit }) => {
   };
 
   return (
-    <div className=" flex items-center justify-center p-4 ">
-      <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-[2rem] shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-y-auto border border-gray-100">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Assignment Details</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Case: {assignment.caseId?.ourFileNo} • Executive: {assignment.fieldExecutiveId?.fullName}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 sm:p-8 border-b border-gray-100 bg-gray-50/30 gap-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+              <span>Assignment Details</span>
+              <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+              <span className="text-black">{assignment.caseId?.ourFileNo}</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tighter leading-none">
+              Case Verification
+            </h2>
+            <p className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-wide">
+              Assigned to <span className="text-blue-600 underline underline-offset-4">{assignment.fieldExecutiveId?.fullName}</span>
             </p>
           </div>
-          <div className="flex space-x-3">
+          
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={onEdit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+              className="flex-1 sm:flex-none px-6 py-3 bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
             >
-              Edit Assignment
+              <Edit className="w-3.5 h-3.5" /> Edit
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+              className="p-3 bg-white border border-gray-200 text-gray-400 hover:text-black rounded-xl transition-all shadow-sm"
             >
-              <X className="h-5 w-5" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -208,17 +216,56 @@ const AssignmentDetails = ({ assignment, onClose, onEdit }) => {
             </div>
           )}
 
+          {/* Investigation Visits Timeline */}
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+            <h3 className="text-[14px] font-black text-gray-900 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+              <ClipboardList className="w-5 h-5 text-blue-600" />
+              Investigation Visits
+            </h3>
+            
+            <div className="space-y-4">
+              {(!assignment.investigationVisits || assignment.investigationVisits.length === 0) ? (
+                <div className="py-8 text-center bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                  <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">No visits recorded for this assignment</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {assignment.investigationVisits.map((visit, vIdx) => (
+                    <div key={vIdx} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:border-blue-200 transition-colors group">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[12px] font-black text-blue-600 shadow-sm group-hover:scale-110 transition-transform">
+                          {vIdx + 1}
+                        </div>
+                        <div>
+                          <p className="text-[11px] font-black text-gray-900 uppercase tracking-tight">{visit.label}</p>
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{visit.status}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${
+                        visit.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                        visit.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                        'bg-gray-50 text-gray-600 border-gray-100'
+                      }`}>
+                        {visit.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Investigation Details */}
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Investigation Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-700">Investigation Type:</span>
-                <span className="ml-2 text-gray-900">{assignment.investigationType}</span>
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-6 sm:p-8 shadow-sm">
+            <h3 className="text-[14px] font-black text-gray-900 uppercase tracking-[0.2em] mb-6">Investigation Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+              <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Investigation Type</p>
+                <p className="text-sm font-bold text-gray-800">{assignment.investigationType || "Standard"}</p>
               </div>
-              <div>
-                <span className="font-medium text-gray-700">Assigned Date:</span>
-                <span className="ml-2 text-gray-900">{formatDate(assignment.assignedDate)}</span>
+              <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Assigned Date</p>
+                <p className="text-sm font-bold text-gray-800">{formatDate(assignment.assignedDate)}</p>
               </div>
             </div>
           </div>

@@ -449,7 +449,7 @@ export default function TheftCaseEditor() {
      SECTION CONFIG
   --------------------------------------------------- */
   const sections = [
-    { key: "letterDetails", api: "letter-details", files: { letterImages: "multiple" } },
+    { key: "letterDetails", api: "letter-details" },
     { key: "summaryOfTheClaim", api: "summary-claim" },
     { key: "insuredDetails", api: "insured-details" },
     { key: "policyAndIncidentDetails", api: "policy-incident-details" },
@@ -689,50 +689,76 @@ export default function TheftCaseEditor() {
       )}
       {/* Header */}
       <div className="bg-white border-b z-20 shadow-sm flex-none transition-all">
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="w-full px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/case"
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Back</span>
               </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
+              <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Theft Case Editor</h1>
-                {caseData?.summaryOfTheClaim?.claimNo && (
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Claim: {caseData.summaryOfTheClaim.claimNo}
-                  </p>
-                )}
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-black text-gray-900 uppercase tracking-tighter leading-tight">
+                  Theft Case Editor
+                </h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="px-1.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] font-black uppercase rounded border border-indigo-100">
+                    {caseId?.slice(-6).toUpperCase()}
+                  </span>
+                  {caseData?.summaryOfTheClaim?.claimNo && (
+                    <p className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase truncate max-w-[150px]">
+                      Claim: {caseData.summaryOfTheClaim.claimNo}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
               {parentCaseData?._id && (
                 <Link
                   to={`/cases/edit/${parentCaseData._id}`}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium rounded-lg border border-indigo-200 transition-colors"
+                  className="flex items-center justify-center gap-2 px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-black uppercase rounded-lg border border-gray-200 transition-colors shrink-0"
                 >
-                  <Edit2 className="w-4 h-4" />
-                  Manage Case
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Manage Case</span>
+                  <span className="sm:hidden text-[10px]">Case</span>
                 </Link>
               )}
               <button
                 onClick={handleGenerateDocx}
                 disabled={isDocGenerating}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-black hover:bg-gray-900 text-white text-xs font-black uppercase rounded-lg shadow-sm transition-all disabled:opacity-50 shrink-0"
               >
-                {isDocGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                {isDocGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
                 {isDocGenerating ? "Generating..." : "DOCX Preview"}
               </button>
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Case ID</p>
-                <p className="text-sm font-mono text-gray-700">{caseId}</p>
-              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Section Selector (Tab Bar) */}
+      <div className="md:hidden bg-white border-b overflow-x-auto flex-none sticky top-0 z-10 scrollbar-hide">
+        <div className="flex px-4 py-2 gap-2">
+          {sections.map((section) => {
+            const isActive = activeSection === section.key;
+            return (
+              <button
+                key={section.key}
+                onClick={() => handleSectionChange(section.key)}
+                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap transition-all border ${
+                  isActive
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-md"
+                    : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"
+                }`}
+              >
+                {section.key.replace(/([A-Z])/g, ' $1').trim()}
+              </button>
+            );
+          })}
         </div>
       </div>
 

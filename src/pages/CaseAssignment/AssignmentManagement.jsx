@@ -45,7 +45,7 @@ const AssignmentManagement = () => {
         
      <button
             onClick={() => setActiveTab("assign")}
-            className={`inline-flex fixed bottom-5 right-5 items-center px-4 py-2  border text-sm font-medium rounded-md shadow-sm transition-colors ${activeTab === "assign"
+            className={`inline-flex  z-99 fixed bottom-5 right-5 items-center px-4 py-2  border text-sm font-medium rounded-md shadow-sm transition-colors ${activeTab === "assign"
               ? " hidden"
               : "bg-black text-white hover:bg-black"
               }`}

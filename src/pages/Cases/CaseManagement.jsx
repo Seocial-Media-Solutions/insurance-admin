@@ -202,126 +202,217 @@ export default function CaseList() {
 
 
         {/* Table Section */}
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="bg-white rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
           {loading ? (
             <TableSkeleton columns={6} rows={10} />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100 text-[10px] uppercase text-gray-500 font-bold tracking-widest">
-                    <th className="px-6 py-4 w-16">S.No</th>
-                    <th className="px-6 py-4">Case Firm</th>
-                    {columns.map((col, idx) => (
-                      <th key={idx} className={`px-6 py-4 ${col.width || ""}`}>
-                        {col.header}
-                      </th>
-                    ))}
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
-                  {filteredData.length === 0 ? (
-                    <tr>
-                      <td colSpan={columns.length + 2} className="px-6 py-12 text-center text-gray-500">
-                        No cases found.
-                      </td>
+            <>
+              {/* Desktop View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] uppercase text-gray-400 font-black tracking-[0.2em]">
+                      <th className="px-6 py-5 w-16">S.No</th>
+                      <th className="px-6 py-5">Case Firm</th>
+                      {columns.map((col, idx) => (
+                        <th key={idx} className={`px-6 py-5 ${col.width || ""}`}>
+                          {col.header}
+                        </th>
+                      ))}
+                      <th className="px-6 py-5 text-right">Actions</th>
                     </tr>
-                  ) : (
-                    filteredData.map((item, idx) => (
-                      <tr
-                        key={item._id}
-                        className="hover:bg-gray-50 transition-colors group cursor-pointer"
-                        onClick={() => {
-                          if (!item.caseTypeId) {
-                            toast.error("First assign assignment for this case", {
-                              icon: "⚠️",
-                              duration: 4000
-                            });
-                            return;
-                          }
-
-                          const route = item.caseType === "OD"
-                            ? `od-case/edit/${item.caseTypeId}`
-                            : `theft-case/edit/${item.caseTypeId}`;
-                          
-                          navigate(route, { 
-                            state: { 
-                              parentCaseData: item.caseId 
-                            } 
-                          });
-                        }}
-                      >
-                        <td className="px-6 py-4 text-gray-400 font-mono text-[10px] w-16">
-                           {(page - 1) * 15 + idx + 1}
-                        </td>
-                         <td className="px-6 py-4 min-w-[150px]">
-                            <FirmCell 
-                              firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
-                              firmData={item?.caseId?.caseFirmId}
-                              caseFileNo={item?.caseId?.ourFileNo}
-                            />
-                         </td>
-                        {columns.map((col, colIdx) => (
-                          <td key={colIdx} className="px-6 py-4">
-                            {col.isDate ? (
-                              <span className="flex items-center gap-1.5 text-gray-500 text-xs">
-                                <Calendar className="w-3.5 h-3.5" />
-                                {new Date(getNestedValue(item, col.accessor)).toLocaleDateString('en-GB', {
-                                  day: '2-digit', month: 'short', year: 'numeric'
-                                })}
-                              </span>
-                            ) : col.accessor === "status" ? (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${
-                                  item.status === "Draft" ? "bg-amber-100 text-amber-700 ring-1 ring-amber-600/20" :
-                                  item.status === "Submitted" ? "bg-blue-100 text-blue-700 ring-1 ring-blue-600/20" :
-                                  item.status === "Approved" ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-600/20" :
-                                  item.status === "Rejected" ? "bg-rose-100 text-rose-700 ring-1 ring-rose-600/20" :
-                                  "bg-gray-100 text-gray-700 ring-1 ring-gray-600/20"
-                                }`}>
-                                {item.status || "--"}
-                              </span>
-                            ) : col.accessor === "caseId.status" ? (
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                  item.caseId?.status === "Pending" ? "bg-orange-50 text-orange-600 border-orange-100" :
-                                  item.caseId?.status === "Completed" ? "bg-green-50 text-green-600 border-green-100" :
-                                  "bg-gray-50 text-gray-600 border-gray-100"
-                                }`}>
-                                {item.caseId?.status || "--"}
-                              </span>
-                            ) : (
-                              <span className={col.header === "Vehicle No" ? "font-mono text-xs font-bold text-gray-700" : "font-medium text-gray-900"}>
-                                {getNestedValue(item, col.accessor) || "--"}
-                              </span>
-                            )}
-                          </td>
-                        ))}
-                        <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
-                          <button
-                            className="bg-blue-50 text-blue-600 p-2 rounded-lg hover:bg-blue-100 transition-colors"
-                            title="View Assignments"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewAssignments(item.caseId?._id || item.caseId, e);
-                            }}
-                          >
-                            <ClipboardList className="w-4 h-4" />
-                          </button>
-
-                          <button
-                            className="bg-red-50 text-red-600 p-2 rounded-lg hover:bg-red-100 transition-colors"
-                            title="Delete Investigation"
-                            onClick={(e) => handleDelete(item._id, e)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50 text-sm text-gray-700">
+                    {filteredData.length === 0 ? (
+                      <tr>
+                        <td colSpan={columns.length + 2} className="px-6 py-20 text-center">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                              <ClipboardList className="w-8 h-8 text-gray-300" />
+                            </div>
+                            <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">No cases found</p>
+                          </div>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      filteredData.map((item, idx) => (
+                        <tr
+                          key={item._id}
+                          className="hover:bg-blue-50/30 transition-all group cursor-pointer"
+                          onClick={() => {
+                            if (!item.caseTypeId) {
+                              toast.error("First assign assignment for this case", {
+                                icon: "⚠️",
+                                duration: 4000
+                              });
+                              return;
+                            }
+
+                            const route = item.caseType === "OD"
+                              ? `od-case/edit/${item.caseTypeId}`
+                              : `theft-case/edit/${item.caseTypeId}`;
+                            
+                            navigate(route, { 
+                              state: { 
+                                parentCaseData: item.caseId 
+                              } 
+                            });
+                          }}
+                        >
+                          <td className="px-6 py-4 text-gray-300 font-black text-[10px] w-16 group-hover:text-blue-600 transition-colors">
+                             {((page - 1) * 15 + idx + 1).toString().padStart(2, '0')}
+                          </td>
+                           <td className="px-6 py-4 min-w-[150px]">
+                              <FirmCell 
+                                firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
+                                firmData={item?.caseId?.caseFirmId}
+                                caseFileNo={item?.caseId?.ourFileNo}
+                              />
+                           </td>
+                          {columns.map((col, colIdx) => (
+                            <td key={colIdx} className="px-6 py-4">
+                              {col.isDate ? (
+                                <span className="flex items-center gap-2 text-gray-500 text-[11px] font-bold uppercase">
+                                  <Calendar className="w-3.5 h-3.5 text-gray-300" />
+                                  {new Date(getNestedValue(item, col.accessor)).toLocaleDateString('en-GB', {
+                                    day: '2-digit', month: 'short', year: 'numeric'
+                                  })}
+                                </span>
+                              ) : col.accessor === "status" ? (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black tracking-widest uppercase border ${
+                                    item.status === "Draft" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                    item.status === "Submitted" ? "bg-blue-50 text-blue-600 border-blue-100" :
+                                    item.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                                    item.status === "Rejected" ? "bg-rose-50 text-rose-600 border-rose-100" :
+                                    "bg-gray-50 text-gray-600 border-gray-100"
+                                  }`}>
+                                  {item.status || "--"}
+                                </span>
+                              ) : col.accessor === "caseId.status" ? (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[9px] font-black uppercase border-b-2 ${
+                                    item.caseId?.status === "Pending" ? "bg-orange-50 text-orange-600 border-orange-200" :
+                                    item.caseId?.status === "Completed" ? "bg-green-50 text-green-600 border-green-200" :
+                                    "bg-gray-50 text-gray-600 border-gray-200"
+                                  }`}>
+                                  {item.caseId?.status || "--"}
+                                </span>
+                              ) : (
+                                <span className={col.header === "Vehicle No" ? "font-black text-xs text-gray-900 uppercase tracking-tight bg-gray-100 px-2 py-1 rounded" : "font-bold text-gray-800"}>
+                                  {getNestedValue(item, col.accessor) || "--"}
+                                </span>
+                              )}
+                            </td>
+                          ))}
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                              <button
+                                className="bg-white text-blue-600 p-2 rounded-xl border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                                title="View Assignments"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewAssignments(item.caseId?._id || item.caseId, e);
+                                }}
+                              >
+                                <ClipboardList className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                className="bg-white text-red-600 p-2 rounded-xl border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                                title="Delete Investigation"
+                                onClick={(e) => handleDelete(item._id, e)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden divide-y divide-gray-100">
+                {filteredData.length === 0 ? (
+                   <div className="p-12 text-center">
+                      <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">No cases found</p>
+                   </div>
+                ) : (
+                  filteredData.map((item, idx) => (
+                    <div 
+                      key={item._id} 
+                      className="p-5 active:bg-gray-50 transition-colors"
+                      onClick={() => {
+                        if (!item.caseTypeId) {
+                          toast.error("First assign assignment for this case");
+                          return;
+                        }
+                        const route = item.caseType === "OD"
+                          ? `od-case/edit/${item.caseTypeId}`
+                          : `theft-case/edit/${item.caseTypeId}`;
+                        navigate(route, { state: { parentCaseData: item.caseId } });
+                      }}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <FirmCell 
+                          firmId={item?.caseId?.caseFirmId?._id || item?.caseId?.caseFirmId} 
+                          firmData={item?.caseId?.caseFirmId}
+                          caseFileNo={item?.caseId?.ourFileNo}
+                        />
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${
+                          item.status === "Draft" ? "bg-amber-50 text-amber-600 border-amber-100" :
+                          item.status === "Submitted" ? "bg-blue-50 text-blue-600 border-blue-100" :
+                          item.status === "Approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
+                          "bg-gray-50 text-gray-600 border-gray-100"
+                        }`}>
+                          {item.status || "N/A"}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Vehicle No</p>
+                           <p className="text-xs font-black text-gray-900 uppercase tracking-tight">
+                             {item.caseId?.vehicleNo || "--"}
+                           </p>
+                        </div>
+                        <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                           <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Date</p>
+                           <p className="text-xs font-bold text-gray-700">
+                             {new Date(item.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                           </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3">
+                         <div className="flex-1">
+                            <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Insured Name</p>
+                            <p className="text-sm font-bold text-gray-800 truncate">{item.caseId?.nameOfInsured || "--"}</p>
+                         </div>
+                         <div className="flex gap-2">
+                            <button
+                              className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100 active:bg-blue-600 active:text-white transition-all"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleViewAssignments(item.caseId?._id || item.caseId, e);
+                              }}
+                            >
+                              <ClipboardList className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100 active:bg-red-600 active:text-white transition-all"
+                              onClick={(e) => handleDelete(item._id, e)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                         </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
           )}
 
           {/* Pagination */}
@@ -447,20 +538,20 @@ export default function CaseList() {
                               <p className="text-xs text-gray-500 uppercase font-semibold mb-3">
                                 Investigation Visits ({assignment.investigationVisits.length})
                               </p>
-                              <div className="grid grid-cols-1 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {assignment.investigationVisits.map((visit, vIdx) => (
-                                  <div key={vIdx} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                                    <div className="flex items-center gap-2">
-                                      <span className={`w-2 h-2 rounded-full ${visit.status === 'Completed' ? 'bg-green-500' :
-                                        visit.status === 'In Progress' ? 'bg-blue-500' :
-                                          'bg-gray-400'
-                                        }`}></span>
-                                      <span className="text-sm text-gray-700">{visit.label}</span>
+                                  <div key={vIdx} className="flex items-center justify-between p-3 bg-gray-50/50 rounded-xl border border-gray-100 group hover:border-indigo-200 transition-all">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-full bg-white border border-gray-100 flex items-center justify-center text-[10px] font-black text-indigo-600 shadow-sm">
+                                        {vIdx + 1}
+                                      </div>
+                                      <span className="text-xs font-black text-gray-700 uppercase tracking-tight">{visit.label}</span>
                                     </div>
-                                    <span className={`text-xs px-2 py-0.5 rounded-full ${visit.status === 'Completed' ? 'bg-green-100 text-green-700' :
-                                      visit.status === 'In Progress' ? 'bg-blue-100 text-blue-700' :
-                                        'bg-gray-200 text-gray-600'
-                                      }`}>
+                                    <span className={`text-[8px] px-2 py-0.5 rounded-lg font-black uppercase tracking-widest border ${
+                                      visit.status === 'Completed' ? 'bg-green-50 text-green-600 border-green-100' :
+                                      visit.status === 'In Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                      'bg-gray-50 text-gray-600 border-gray-100'
+                                    }`}>
                                       {visit.status}
                                     </span>
                                   </div>

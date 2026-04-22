@@ -180,209 +180,201 @@ export default function CaseTable({ cases, onEdit, onDelete }) {
 
 
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead
-              style={{
-                backgroundColor: "var(--background)",
-                color: "var(--foreground)",
-              }}
-            >
-              <tr className="border-b border-b-gray-600" >
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                  #
-                </th>
-                <th
-                  onClick={() => handleSort("recordNumber")}
-                  className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5">
-                    File No <SortIcon column="ourFileNo" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSort("policyNo")}
-                  className="hidden md:table-cell px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5">
-                    Policy No <SortIcon column="policyNo" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSort("vehicleNo")}
-                  className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Car className="w-3 h-3" />
-                    Vehicle <SortIcon column="vehicleNo" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSort("nameOfInsured")}
-                  className="hidden lg:table-cell px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <User className="w-3 h-3" />
-                    Name <SortIcon column="nameOfInsured" />
-                  </div>
-                </th>
-                <th className="hidden sm:table-cell px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">
-                  <div className="flex items-center gap-1.5">
-                    <Phone className="w-3 h-3" />
-                    Contact
-                  </div>
-                </th>
-                <th
-                  onClick={() => handleSort("status")}
-                  className="px-3 sm:px-6 py-3 text-left text-xs font-bold uppercase tracking-wider cursor-pointer select-none hover:bg-black/5 transition-colors"
-                >
-                  <div className="flex items-center gap-1.5">
-                    Status <SortIcon column="status" />
-                  </div>
-                </th>
-                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody style={{ backgroundColor: "var(--card)" }}>
-              {sortedCases.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-4 sm:px-6 py-16 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <div
-                        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-                        style={{ backgroundColor: "var(--border)" }}
-                      >
-                        {globalSearch || statusFilter !== "all" ? (
-                          <AlertCircle className="w-8 h-8" style={{ color: "var(--secondary)" }} />
-                        ) : (
-                          <FolderOpen className="w-8 h-8" style={{ color: "var(--secondary)" }} />
-                        )}
-                      </div>
-                      <p className="text-lg font-semibold mb-1" style={{ color: "var(--foreground)" }}>
-                        {globalSearch || statusFilter !== "all" ? "No matching cases" : "No cases found"}
-                      </p>
-                      <p className="text-sm" style={{ color: "var(--secondary)" }}>
-                        {globalSearch || statusFilter !== "all"
-                          ? "Try adjusting your search or filters"
-                          : "Create your first case to get started"}
-                      </p>
+        {/* Table / Cards */}
+        <div className="relative">
+          {/* Desktop View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full border-collapse">
+              <thead className="bg-white">
+                <tr className="border-b border-gray-100">
+                  <th className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">#</th>
+                  <th
+                    onClick={() => handleSort("recordNumber")}
+                    className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      File No <SortIcon column="ourFileNo" />
                     </div>
-                  </td>
+                  </th>
+                  <th
+                    onClick={() => handleSort("policyNo")}
+                    className="hidden lg:table-cell px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      Policy <SortIcon column="policyNo" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("vehicleNo")}
+                    className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      Vehicle <SortIcon column="vehicleNo" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("nameOfInsured")}
+                    className="hidden xl:table-cell px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      Insured <SortIcon column="nameOfInsured" />
+                    </div>
+                  </th>
+                  <th
+                    onClick={() => handleSort("status")}
+                    className="px-6 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] cursor-pointer hover:text-blue-600 transition-colors"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      Status <SortIcon column="status" />
+                    </div>
+                  </th>
+                  <th className="px-6 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Actions</th>
                 </tr>
-              ) : (
-                currentCases.map((c, index) => {
-                  const statusColors = getStatusColor(c.status);
-                  return (
-                    <tr
-                      key={c._id}
-                      className="border-b border-b-gray-200 hover:bg-black/5 transition-all duration-150 cursor-pointer"
-                      onClick={() => {
-                        if (!c.caseTypeId) {
-                          toast.error("First assign assignment for this case", {
-                            icon: "⚠️",
-                            duration: 4000
-                          });
-                          return;
-                        }
+              </thead>
 
-                        const route = c.caseType === "OD"
-                          ? `/case/od-case/edit/${c.caseTypeId}`
-                          : `/case/theft-case/edit/${c.caseTypeId}`;
-                        
-                        navigate(route);
-                      }}
-                    >
-                      <td className="px-3 sm:px-6 py-4" style={{ color: "var(--secondary)" }}>
-                        {startIndex + index + 1}
-                      </td>
-                      <td
-                        className="px-3 sm:px-6 py-4 font-mono text-sm font-bold tracking-tight text-blue-700"
+              <tbody className="divide-y divide-gray-50 bg-white">
+                {sortedCases.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+                          <FolderOpen className="w-8 h-8 text-gray-200" />
+                        </div>
+                        <p className="text-gray-400 font-black uppercase text-xs tracking-widest">No cases found</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  currentCases.map((c, index) => {
+                    const statusColors = getStatusColor(c.status);
+                    return (
+                      <tr 
+                        key={c._id} 
+                        className="hover:bg-blue-50/30 transition-all group cursor-pointer"
+                        onClick={() => {
+                          if (!c.caseTypeId) {
+                            toast.error("First assign assignment for this case", { icon: "⚠️" });
+                            return;
+                          }
+                          navigate(c.caseType === "OD" ? `/case/od-case/edit/${c.caseTypeId}` : `/case/theft-case/edit/${c.caseTypeId}`);
+                        }}
                       >
-                        {c.ourFileNo || c.recordNumber || "-"}
-                      </td>
-                      <td className="hidden md:table-cell px-3 sm:px-6 py-4" style={{ color: "var(--foreground)" }}>
-                        {c.policyNo || "-"}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4 font-medium" style={{ color: "var(--foreground)" }}>
-                        {c.vehicleNo || "-"}
-                      </td>
-                      <td className="hidden lg:table-cell px-3 sm:px-6 py-4" style={{ color: "var(--foreground)" }}>
-                        {c.nameOfInsured || "-"}
-                      </td>
-                      <td className="hidden sm:table-cell px-3 sm:px-6 py-4" style={{ color: "var(--foreground)" }}>
-                        {c.contactNo || "-"}
-                      </td>
-                      <td className="px-3 sm:px-6 py-4">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-xs"
-                          style={{
-                            backgroundColor: statusColors.bg,
-                            color: statusColors.text,
-                          }}
+                        <td className="px-6 py-5 text-[11px] font-black text-gray-400">{startIndex + index + 1}</td>
+                        <td className="px-6 py-5">
+                          <div className="text-sm font-black text-gray-900 uppercase tracking-tight">{c.ourFileNo || c.recordNumber || "-"}</div>
+                        </td>
+                        <td className="hidden lg:table-cell px-6 py-5">
+                          <div className="text-[11px] font-black text-gray-500 uppercase tracking-tight">{c.policyNo || "-"}</div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="text-[10px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 inline-block uppercase tracking-tight">
+                            {c.vehicleNo || "-"}
+                          </div>
+                        </td>
+                        <td className="hidden xl:table-cell px-6 py-5">
+                          <div className="text-[11px] font-black text-gray-800 uppercase tracking-tight truncate max-w-[200px]">{c.nameOfInsured || "-"}</div>
+                        </td>
+                        <td className="px-6 py-5">
+                          <span 
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border"
+                            style={{ backgroundColor: `${statusColors.bg}15`, color: statusColors.bg, borderColor: `${statusColors.bg}30` }}
+                          >
+                            {c.status || "Unknown"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5">
+                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                            <Link to={`/cases/view/${c._id}`} onClick={(e) => e.stopPropagation()} className="p-2 bg-white text-emerald-600 rounded-xl border border-emerald-100 hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
+                              <Eye size={14} />
+                            </Link>
+                            <Link to={`/cases/edit/${c._id}`} onClick={(e) => e.stopPropagation()} className="p-2 bg-white text-indigo-600 rounded-xl border border-indigo-100 hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                              <Edit2 size={14} />
+                            </Link>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setAssigningCase(c); }}
+                              className="p-2 bg-white text-orange-600 rounded-xl border border-orange-100 hover:bg-orange-600 hover:text-white transition-all shadow-sm"
+                            >
+                              <UserPlus size={14} />
+                            </button>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleDelete(c._id, c.recordNumber); }}
+                              className="p-2 bg-white text-red-600 rounded-xl border border-red-100 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile View */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {sortedCases.length === 0 ? (
+              <div className="p-12 text-center text-gray-400 font-black uppercase text-[10px] tracking-widest">No cases found</div>
+            ) : (
+              currentCases.map((c) => {
+                const statusColors = getStatusColor(c.status);
+                return (
+                  <div 
+                    key={c._id} 
+                    className="p-5 active:bg-gray-50 transition-colors"
+                    onClick={() => {
+                      if (!c.caseTypeId) {
+                        toast.error("First assign assignment for this case", { icon: "⚠️" });
+                        return;
+                      }
+                      navigate(c.caseType === "OD" ? `/case/od-case/edit/${c.caseTypeId}` : `/case/theft-case/edit/${c.caseTypeId}`);
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex-1">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">File No</p>
+                        <h4 className="text-sm font-black text-gray-900 uppercase tracking-tight">{c.ourFileNo || c.recordNumber || "-"}</h4>
+                      </div>
+                      <div className="flex gap-2">
+                        <Link to={`/cases/view/${c._id}`} onClick={(e) => e.stopPropagation()} className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100"><Eye size={16} /></Link>
+                        <Link to={`/cases/edit/${c._id}`} onClick={(e) => e.stopPropagation()} className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100"><Edit2 size={16} /></Link>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Vehicle</p>
+                        <span className="text-[10px] font-black text-blue-600 uppercase truncate block">{c.vehicleNo || "-"}</span>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-2xl border border-gray-100/50">
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                        <span 
+                          className="inline-flex px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border"
+                          style={{ backgroundColor: `${statusColors.bg}15`, color: statusColors.bg, borderColor: `${statusColors.bg}30` }}
                         >
-                          {c.status?.toLowerCase() === "paid" ? (
-                            <CheckCircle className="w-3.5 h-3.5" />
-                          ) : (
-                            <Clock className="w-3.5 h-3.5" />
-                          )}
                           {c.status || "Unknown"}
                         </span>
-                      </td>
-                      <td className="px-3 sm:px-6 py-4">
-                        <div className="flex justify-center items-center gap-1.5">
-                          <Link
-                            to={`/cases/view/${c._id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
-                            style={{ backgroundColor: "#10b981" }}
-                            title="View case"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Link>
-                          <Link
-                            to={`/cases/edit/${c._id}`}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
-                            style={{ backgroundColor: "#6366f1" }}
-                            title="Edit case"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Link>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(c._id, c.recordNumber);
-                            }}
-                            className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
-                            style={{ backgroundColor: "#ef4444" }}
-                            title="Delete case"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      </div>
+                    </div>
 
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setAssigningCase(c);
-                            }}
-                            className="p-2 rounded-lg text-white transition-all duration-200 hover:opacity-80 hover:scale-105"
-                            style={{ backgroundColor: "#f59e0b" }}
-                            title="Assign case"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                    <div className="flex items-center justify-between">
+                       <div className="flex-1 overflow-hidden mr-4">
+                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Insured Name</p>
+                          <p className="text-xs font-bold text-gray-800 truncate">{c.nameOfInsured || "-"}</p>
+                       </div>
+                       <button 
+                          onClick={(e) => { e.stopPropagation(); setAssigningCase(c); }}
+                          className="px-4 py-2 bg-black text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-lg"
+                        >
+                          Assign
+                        </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Drawer for Case Assignment */}

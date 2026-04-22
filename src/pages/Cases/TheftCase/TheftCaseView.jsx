@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useTheftCases } from "../../../context/TheftCaseContext";
 import {
-    FileText, Camera, Edit
+    FileText, Camera, Edit, ArrowLeft
 } from "lucide-react";
 
 const SectionCard = ({ title, data, fields, fileFields = {} }) => {
@@ -223,35 +223,38 @@ export default function TheftCaseView() {
             <div className="max-w-5xl mx-auto">
 
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                            <span>Theft Case</span>
-                            <span>•</span>
-                            <span className="font-mono text-gray-400">{caseId}</span>
-                        </div>
-                        <h1 className="text-3xl font-bold text-gray-900">Case Details</h1>
-                    </div>
-
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 px-2">
+                    <div className="flex items-center gap-4">
                         <Link
                             to="/case"
-                            className="px-4 py-2 border rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition"
+                            className="p-3 bg-white border border-gray-200 text-gray-400 hover:text-black rounded-2xl transition-all shadow-sm shrink-0"
                         >
-                            Back to List
+                            <ArrowLeft className="w-5 h-5" />
                         </Link>
+                        <div>
+                            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">
+                                <span>Theft Case</span>
+                                <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                <span className="text-black">{caseId?.slice(-8).toUpperCase()}</span>
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 uppercase tracking-tighter leading-tight">
+                                Case Overview
+                            </h1>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:gap-3 bg-white/50 backdrop-blur-sm p-2 rounded-[1.5rem] border border-white shadow-sm self-start sm:self-center w-full sm:w-auto">
                         <Link
                             to={`/case/theft-case/edit/${caseId}`}
-                            className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition flex items-center gap-2"
+                            className="flex-1 sm:flex-none px-6 py-2.5 bg-blue-600 text-white text-[11px] font-black uppercase rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                         >
-                            <Edit className="w-4 h-4" />
-                            Edit Case
+                            <Edit className="w-3.5 h-3.5" /> Edit Case
                         </Link>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="space-y-6">
+                <div className="space-y-4 sm:space-y-6">
                     {Object.entries(SECTIONS_CONFIG).map(([key, config]) => (
                         <SectionCard
                             key={key}

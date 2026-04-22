@@ -131,24 +131,24 @@ function Analytics() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         {/* Header */}
-        <div className={`mb-8 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Analytics Dashboard
-                </h1>
+        <div className={`mb-6 sm:mb-8 transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'}`}>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <p className="text-gray-600 ml-15">Comprehensive insights and statistics</p>
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent uppercase tracking-tighter">
+                  Analytics
+                </h1>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">Comprehensive Insights</p>
+              </div>
             </div>
             
             {/* Time Range Selector */}
-            <div className="flex gap-2 bg-white rounded-xl shadow-lg p-1">
+            <div className="w-full md:w-auto flex gap-1 bg-white/50 backdrop-blur-sm rounded-xl shadow-sm p-1 border border-white">
               {[
                 { label: '7D', value: '7' },
                 { label: '30D', value: '30' },
@@ -158,10 +158,10 @@ function Analytics() {
                 <button
                   key={range.value}
                   onClick={() => setTimeRange(range.value)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-black uppercase transition-all ${
                     timeRange === range.value
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-black text-white shadow-lg'
+                      : 'text-gray-500 hover:bg-white'
                   }`}
                 >
                   {range.label}
@@ -172,62 +172,62 @@ function Analytics() {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           {statCards.map((stat, i) => {
             const Icon = stat.icon;
             const TrendIcon = stat.trend === 'up' ? TrendingUp : TrendingDown;
             return (
               <div
                 key={i}
-                className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 animate-fadeInUp"
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 animate-fadeInUp"
                 style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 bg-gradient-to-br from-${stat.color}-500 to-${stat.color}-600 rounded-xl flex items-center justify-center shadow-lg`}>
-                    <Icon className="w-6 h-6 text-white" />
+                <div className="flex items-start justify-between mb-3 sm:mb-4">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-lg flex items-center justify-center shadow-md`}>
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div className={`flex items-center gap-1 text-sm font-semibold ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
-                    <TrendIcon className="w-4 h-4" />
+                  <div className={`flex items-center gap-0.5 text-[10px] font-black uppercase ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                    <TrendIcon className="w-3 h-3" />
                     <span>{stat.change}</span>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
-                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.title}</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 tracking-tighter">{stat.value}</p>
               </div>
             );
           })}
         </div>
 
         {/* Financial Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover:shadow-2xl transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 text-green-600 rounded-lg flex items-center justify-center">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Total Billed</h3>
+              <h3 className="text-xs sm:text-sm font-black text-gray-900 uppercase">Total Billed</h3>
             </div>
-            <p className="text-3xl font-bold text-gray-900">₹{analytics.totalBilled.toLocaleString()}</p>
+            <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">₹{analytics.totalBilled.toLocaleString()}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover:shadow-2xl transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-white" />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Total Received</h3>
+              <h3 className="text-xs sm:text-sm font-black text-gray-900 uppercase">Total Received</h3>
             </div>
-            <p className="text-3xl font-bold text-gray-900">₹{analytics.totalReceived.toLocaleString()}</p>
+            <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">₹{analytics.totalReceived.toLocaleString()}</p>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 hover:shadow-2xl transition-all">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex items-center justify-center">
-                <Clock className="w-5 h-5 text-white" />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3 mb-3 sm:mb-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">Pending Amount</h3>
+              <h3 className="text-xs sm:text-sm font-black text-gray-900 uppercase">Pending</h3>
             </div>
-            <p className="text-3xl font-bold text-gray-900">₹{analytics.pendingAmount.toLocaleString()}</p>
+            <p className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">₹{analytics.pendingAmount.toLocaleString()}</p>
           </div>
         </div>
       </div>

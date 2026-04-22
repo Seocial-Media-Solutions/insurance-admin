@@ -106,16 +106,15 @@ function Dashboard() {
         <div className="absolute -bottom-[10%] left-[20%] w-[35%] h-[35%] rounded-full bg-black/5 blur-[110px] animate-pulse delay-1000"></div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         {/* Header */}
         <div
-          className={`mb-10 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
+          className={`mb-8 sm:mb-10 transition-all duration-1000 ${mounted ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"
             }`}
         >
           
-
           {/* Primary Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
             {statsLoading ? (
               Array.from({ length: 4 }).map((_, i) => <CardSkeleton key={i} />)
             ) : (
@@ -125,9 +124,8 @@ function Dashboard() {
                   <Link
                     to={stat.to}
                     key={index}
-                    className="rounded-[2.5rem] shadow-xl border p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group overflow-hidden relative bg-white/60 backdrop-blur-sm"
+                    className="rounded-[2.5rem] shadow-xl border border-gray-100 p-6 sm:p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 group overflow-hidden relative bg-white/60 backdrop-blur-sm"
                     style={{
-                      borderColor: "rgba(229, 231, 235, 0.5)",
                       animationDelay: `${index * 150}ms`,
                     }}
                   >
@@ -138,26 +136,24 @@ function Dashboard() {
                       <IconComponent size={128} />
                     </div>
                     
-                    <div className="flex items-center justify-between mb-6 relative z-10">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6 relative z-10">
                       <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 bg-black"
-                        style={{ boxShadow: `0 10px 20px -5px ${stat.color}44` }}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform duration-500 group-hover:scale-110 bg-black"
                       >
                         <IconComponent
-                          size={28}
+                          size={24}
                           className="text-white"
                         />
                       </div>
                       <div
-                        className="text-5xl font-black tabular-nums tracking-tighter"
-                        style={{ color: "#111827" }}
+                        className="text-4xl sm:text-5xl font-black tabular-nums tracking-tighter text-gray-900"
                       >
                         {stat.value}
                       </div>
                     </div>
                     <div>
-                      <p className="font-extrabold text-xl text-gray-900 tracking-tight">{stat.label}</p>
-                      <div className="w-8 h-1 bg-gray-100 rounded-full mt-2 group-hover:w-16 transition-all duration-500" style={{ backgroundColor: `${stat.color}44` }}></div>
+                      <p className="font-black text-lg sm:text-xl text-gray-900 uppercase tracking-tighter">{stat.label}</p>
+                      <div className="w-8 h-1 bg-gray-100 rounded-full mt-2 group-hover:w-16 transition-all duration-500"></div>
                     </div>
                   </Link>
                 );
@@ -166,14 +162,14 @@ function Dashboard() {
           </div>
 
           {/* Secondary Stats Strip */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-12 sm:mb-16">
             {statsLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-white/40 p-5 flex items-center gap-5 bg-white/30 backdrop-blur-[2px]">
-                  <Skeleton width="3rem" height="3rem" borderRadius="0.75rem" />
-                  <div className="flex-1">
+                <div key={i} className="rounded-2xl border border-white/40 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 bg-white/30 backdrop-blur-[2px]">
+                  <Skeleton width="2.5rem" height="2.5rem" borderRadius="0.75rem" />
+                  <div className="flex-1 w-full">
                     <Skeleton width="60%" height="0.5rem" className="mb-2" />
-                    <Skeleton width="40%" height="1.5rem" />
+                    <Skeleton width="40%" height="1rem" />
                   </div>
                 </div>
               ))
@@ -184,16 +180,16 @@ function Dashboard() {
                   <Link
                     to={stat.to}
                     key={index}
-                    className="rounded-2xl border border-white/40 p-5 hover:border-blue-400/50 hover:bg-white/80 transition-all duration-300 flex items-center gap-5 shadow-sm hover:shadow-md bg-white/30 backdrop-blur-[2px]"
+                    className="rounded-2xl border border-white/40 p-4 sm:p-5 hover:border-black/10 hover:bg-white/80 transition-all duration-300 flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-5 shadow-sm hover:shadow-md bg-white/30 backdrop-blur-[2px]"
                   >
-                    <div className="p-3 rounded-xl bg-gray-50 group-hover:bg-blue-50 transition-colors shadow-inner">
-                      <IconComponent size={22} className="text-gray-700" />
+                    <div className="p-2.5 rounded-xl bg-gray-100 group-hover:bg-black group-hover:text-white transition-all shadow-inner shrink-0">
+                      <IconComponent size={18} className="text-gray-700 group-hover:text-white" />
                     </div>
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-[0.15em] text-gray-400">
+                    <div className="overflow-hidden w-full">
+                      <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-gray-400 truncate">
                         {stat.label}
                       </p>
-                      <p className="text-2xl font-black tabular-nums text-gray-900">
+                      <p className="text-xl sm:text-2xl font-black tabular-nums text-gray-900">
                         {stat.value}
                       </p>
                     </div>
@@ -205,21 +201,21 @@ function Dashboard() {
         </div>
 
         {/* Quick Actions Grid */}
-        <div className="mb-20">
-          <div className="flex items-center justify-between mb-8 px-2">
+        <div className="mb-16 sm:mb-20">
+          <div className="flex items-center justify-between mb-6 sm:mb-8 px-2">
             <div>
-              <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase tabular-nums">Quick Actions</h2>
-              <p className="text-gray-500 font-bold text-sm">Rapid access to core operations</p>
+              <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase">Quick Actions</h2>
+              <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Rapid operations</p>
             </div>
-            <div className="h-px flex-grow bg-gray-100 mx-8 opacity-50"></div>
+            <div className="h-px flex-grow bg-gray-100 ml-6 opacity-50"></div>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
             {[
-              { to: "/cases/addcase", label: "Add New Case", icon: PlusCircle, color: "text-blue-300", bg: "bg-blue-50" },
-              { to: "/casefirm", label: "Add Case Firm", icon: Building2, color: "text-purple-300", bg: "bg-purple-50" },
-              { to: "/cases/assignments", label: "Assign Task", icon: ClipboardList, color: "text-orange-300", bg: "bg-orange-50" },
-              { to: "/field-executives/add", label: "Add Executive", icon: UserPlus, color: "text-green-300", bg: "bg-green-50" },
+              { to: "/cases/addcase", label: "Add New Case", icon: PlusCircle, color: "text-blue-500", bg: "bg-blue-50/50" },
+              { to: "/casefirm", label: "Add Case Firm", icon: Building2, color: "text-purple-500", bg: "bg-purple-50/50" },
+              { to: "/cases/assignments", label: "Assign Task", icon: ClipboardList, color: "text-orange-500", bg: "bg-orange-50/50" },
+              { to: "/field-executives/add", label: "Add Executive", icon: UserPlus, color: "text-green-500", bg: "bg-green-50/50" },
             ].map((action, i) => (
               <Link
                 key={i}
@@ -231,12 +227,12 @@ function Dashboard() {
                       ? { activeTab: "assign" } 
                       : undefined
                 }
-                className="group p-6 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 flex flex-col items-center text-center gap-4"
+                className="group p-5 sm:p-6 rounded-[2rem] sm:rounded-[2.5rem] bg-white border border-gray-50 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 flex flex-col items-center text-center gap-3 sm:gap-4 active:scale-95"
               >
-                <div className={`w-16 h-16 rounded-2xl ${action.bg} ${action.color} flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-sm`}>
-                  <action.icon size={28} strokeWidth={2.5} />
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${action.bg} ${action.color} flex items-center justify-center group-hover:scale-110 transition-all duration-500 shadow-sm border border-white`}>
+                  <action.icon size={24} className="sm:w-7 sm:h-7" strokeWidth={2.5} />
                 </div>
-                <span className="font-black text-sm tracking-tight text-gray-800 uppercase tabular-nums">
+                <span className="font-black text-[10px] sm:text-xs tracking-widest text-gray-800 uppercase tabular-nums">
                   {action.label}
                 </span>
               </Link>

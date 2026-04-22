@@ -443,7 +443,7 @@ export default function OdCaseEditor() {
       rtiDetails: [],
     },
     observationFindingsConclusion: {
-      headerType: "Observation and Finding",
+      headerType: "Observation / Findings",
       points: [],
       discrepancy: "",
     },
@@ -606,68 +606,80 @@ export default function OdCaseEditor() {
           </div>
         </div>
       )}
+
       {/* Header */}
       <div className="bg-white border-b z-20 shadow-sm flex-none transition-all">
-        <div className="w-full px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="w-full px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <Link
                 to="/case"
-                className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
-                <span className="font-medium">Back</span>
               </Link>
-              <div className="h-6 w-px bg-gray-300"></div>
+              <div className="h-6 w-px bg-gray-200 hidden sm:block"></div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">OD Case Editor</h1>
-                {caseData?.odDetails?.claimSummary?.vehicleNo && (
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Vehicle: {caseData.odDetails.claimSummary.vehicleNo}
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              {/* Generate DOCX Button */}
-              <button
-                onClick={handleGenerateDocx}
-                disabled={isGenerating || !caseData}
-                className={`flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-colors ${isGenerating || !caseData ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-4 h-4" />
-                    DOCX Preview
-                  </>
-                )}
-              </button>
-
-              {/* Case ID */}
-              <div className="text-right">
-                <p className="text-xs text-gray-500">Case ID</p>
-                <div className="flex items-center gap-2 justify-end">
-                  <p className="text-sm font-mono text-gray-700">{caseId}</p>
-                  <button
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                    className={`ml-2 p-1.5 rounded-md transition-all ${isSidebarOpen
-                      ? 'bg-blue-100 text-blue-600 ring-1 ring-blue-200'
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700'
-                      }`}
-                    title={isSidebarOpen ? "Hide Progress Tracker" : "Show Progress Tracker"}
-                  >
-                    <PanelRight className="w-4 h-4" />
-                  </button>
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-black text-gray-900 uppercase tracking-tighter leading-tight">
+                  OD Case Editor
+                </h1>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black uppercase rounded border border-blue-100">
+                    {caseId?.slice(-6).toUpperCase()}
+                  </span>
+                  {caseData?.odDetails?.claimSummary?.vehicleNo && (
+                    <p className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase truncate max-w-[150px]">
+                      {caseData.odDetails.claimSummary.vehicleNo}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
+
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-hide">
+              <button
+                onClick={handleGenerateDocx}
+                disabled={isGenerating || !caseData}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-black hover:bg-gray-900 text-white text-xs font-black uppercase rounded-lg shadow-sm transition-all disabled:opacity-50 shrink-0"
+              >
+                {isGenerating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                {isGenerating ? "Generating..." : "DOCX Preview"}
+              </button>
+              
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className={`p-2 rounded-lg transition-all border shrink-0 ${
+                  isSidebarOpen
+                    ? 'bg-blue-50 text-blue-600 border-blue-100'
+                    : 'bg-gray-50 text-gray-500 border-gray-200'
+                }`}
+              >
+                <PanelRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile Section Selector (Tab Bar) */}
+      <div className="md:hidden bg-white border-b overflow-x-auto flex-none sticky top-0 z-10 scrollbar-hide">
+        <div className="flex px-4 py-2 gap-2">
+          {sections.map((section) => {
+            const isActive = activeSection === section.key;
+            return (
+              <button
+                key={section.key}
+                onClick={() => handleSectionChange(section.key)}
+                className={`px-4 py-2 rounded-full text-[10px] font-black uppercase whitespace-nowrap transition-all border ${
+                  isActive
+                    ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                    : "bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100"
+                }`}
+              >
+                {section.label || section.key.split('.').pop().replace(/([A-Z])/g, ' $1').trim()}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -759,6 +771,6 @@ export default function OdCaseEditor() {
           />
         )
       }
-    </div >
+    </div>
   );
 }
