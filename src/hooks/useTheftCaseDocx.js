@@ -538,7 +538,7 @@ export const useTheftCaseDocx = () => {
             }
 
             const keys = data.keysRemark || {};
-            const hasData = keys.keysProvided || keys.keyTagNumberProvided || keys.keyTagNumberInInvoice || keys.remarks;
+            const hasData = !!keys.remarks;
 
             if (hasData) {
                 children.push(new Table({
@@ -567,32 +567,22 @@ export const useTheftCaseDocx = () => {
                                 })
                             ]
                         }),
-                        // Standard Rows
-                        createStandardRow("Keys Provided", keys.keysProvided),
-                        createStandardRow("Key Tag No (Provided)", keys.keyTagNumberProvided),
-                        createStandardRow("Key Tag No (Invoice)", keys.keyTagNumberInInvoice),
-                        createStandardRow("Mismatch?", keys.keyTagMismatch),
-                        // Narrative content row (if remarks exist)
-                        ...(keys.remarks ? [
-                            new TableRow({
-                                children: [
-                                    new TableCell({
-                                        children: [
-                                            new Paragraph({
-                                                children: [new TextRun({ text: "Detailed Remarks", bold: true, size: 24 })],
-                                                spacing: { after: 100 }
-                                            }),
-                                            new Paragraph({
-                                                children: [new TextRun({ text: keys.remarks, size: 24 })],
-                                                alignment: AlignmentType.JUSTIFIED
-                                            })
-                                        ],
-                                        columnSpan: 2,
-                                        spacing: { before: 100, after: 100 }
-                                    })
-                                ]
-                            })
-                        ] : [])
+                        // Narrative content row (remarks)
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [new TextRun({ text: keys.remarks, size: 24})],
+                                            alignment: AlignmentType.JUSTIFIED,
+                                            spacing: { before: 200, after: 200 }
+                                        })
+                                    ],
+                                    columnSpan: 2,
+                                    // spacing: { before: 100, after: 100 }
+                                })
+                            ]
+                        })
                     ]
                 }));
             }
