@@ -28,7 +28,8 @@ export const getInputType = (fieldName) => {
         lower.includes("remark") ||
         lower.includes("findings") ||
         lower.includes("conclusion") ||
-        lower.includes("delay")
+        lower.includes("delay") ||
+        lower.includes("statementofinsured")
     ) {
         return "textarea";
     }

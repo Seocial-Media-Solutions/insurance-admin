@@ -130,17 +130,27 @@ function DragDropUpload({
       e.preventDefault();
       setIsDragging(false);
 
-      const droppedFiles = Array.from(e.dataTransfer.files || []);
-      if (droppedFiles.length === 0) return;
+      const maxMB = parseInt(import.meta.env.VITE_MAX_FILE_SIZE) || 5;
+      const maxBytes = maxMB * 1024 * 1024;
 
-      // Filter valid types
       const validFiles = droppedFiles.filter((file) => {
-        return accept
+        const isCorrectType = accept
           .split(",")
           .map((a) => a.trim())
           .some(
-            (t) => t === "image/*" || file.type === t || file.name.endsWith(t)
+            (t) => t === "image/*" || file.type === t || file.name.toLowerCase().endsWith(t.replace('*', ''))
           );
+        
+        if (!isCorrectType) return false;
+
+        if (file.size > maxBytes) {
+          import('react-hot-toast').then(({ toast }) => {
+            toast.error(`File ${file.name} is too large. Max size is ${maxMB}MB`);
+          });
+          return false;
+        }
+
+        return true;
       });
 
       if (validFiles.length > 0) {
@@ -151,6 +161,23 @@ function DragDropUpload({
     },
     [accept, onChange, multiple]
   );
+
+  const handleFileInput = (e) => {
+    const maxMB = parseInt(import.meta.env.VITE_MAX_FILE_SIZE) || 5;
+    const maxBytes = maxMB * 1024 * 1024;
+    const files = Array.from(e.target.files || []);
+    
+    const tooLarge = files.some(f => f.size > maxBytes);
+    if (tooLarge) {
+      import('react-hot-toast').then(({ toast }) => {
+        toast.error(`One or more files are too large. Max size is ${maxMB}MB`);
+      });
+      e.target.value = ''; // Clear selection
+      return;
+    }
+
+    if (onChange) onChange(e);
+  };
 
   /* -------------------------------------
      Remove File
@@ -367,28 +394,7 @@ function DragDropUpload({
           type="file"
           accept={accept}
           multiple={multiple} // Pass multiple prop
-          onChange={(e) => {
-            // If multiple, verify we get a FileList and pass it as array
-            // Or just pass the FileList, but our logic above uses arrays.
-            // Let's standardise on passing arrays in the synthetic event for convenience?
-            // odCase.jsx expects e.target.files (FileList-like)
-
-            // Standard behavior: e.target.files is a FileList
-            // We can just pass it through.
-
-            // However, for "Add More" flow to work seamlessly purely via input, 
-            // standard input replaces files.
-            // If we want to append, we'd need to handle that state manually.
-            // But for now, let's just stick to standard "replace selection" behavior of input
-            // unless we manually merge in onChange.
-
-            // Wait, odCase.jsx does: [...e.target.files]. It replaces.
-            // If user wants to add more, they might expect Append.
-            // But let's stick to standard behavior first to fix the "not working" bug.
-            // Improvements can come later.
-
-            if (onChange) onChange(e);
-          }}
+          onChange={handleFileInput}
           required={required}
           className="hidden"
           capture={

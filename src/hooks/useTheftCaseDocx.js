@@ -335,6 +335,7 @@ export const useTheftCaseDocx = () => {
                 }));
             }
 
+
             // 5. Purchase & Registration
             const purchase = data.purchaseAndRegistrationParticulars || {};
             children.push(createShadedHeading("PURCHASE & REGISTRATION PARTICULARS"));
@@ -410,7 +411,71 @@ export const useTheftCaseDocx = () => {
                     createStandardRow("Translation of Insured Statement", visit.statementTranslationRequired),
                 ]
             }));
+            // 8b. Insured Statement (In Witness Narrative Style)
+            if (visit.statementOfInsured) {
+                children.push(createShadedHeading("INSURED STATEMENT"));
+                
+                // Title
+                children.push(new Paragraph({
+                    children: [
+                        new TextRun({ text: `Details of the insured : ${insuredName}`, bold: true, size: 24 }),
+                    ],
+                    spacing: { before: 300, after: 100 },
+                }));
 
+                // Profile Table
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        createStandardRow("Name of insured", insuredName),
+                        createStandardRow("Address", insured.currentAddress || "N/A"),
+                        createStandardRow("Relation with Insured", "Self"),
+                    ]
+                }));
+
+                // Narrative Box
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: `Version of insured: ${insuredName}:-`,
+                                                    bold: true,
+                                                    underline: {},
+                                                    size: 24
+                                                }),
+                                            ],
+                                            spacing: { before: 200, after: 200 },
+                                        }),
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: '"', size: 22 }),
+                                                new TextRun({ text: visit.statementOfInsured, size: 22 }),
+                                                new TextRun({ text: '"', size: 22 }),
+                                            ],
+                                            alignment: AlignmentType.JUSTIFY,
+                                            spacing: { after: 200 },
+                                        }),
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({ text: "Statement enclosed.", bold: true, size: 22 }),
+                                            ],
+                                            spacing: { after: 200 },
+                                        }),
+                                    ],
+                                    margins: { top: 200, bottom: 200, left: 200, right: 200 }
+                                })
+                            ]
+                        })
+                    ],
+                    spacing: { before: 200, after: 400 }
+                }));
+            }
             // 9. Witness Details
             if (data.witnessDetails && Array.isArray(data.witnessDetails) && data.witnessDetails.length > 0) {
                 children.push(createShadedHeading("WITNESSES DETAILS"));
@@ -573,7 +638,7 @@ export const useTheftCaseDocx = () => {
                                 new TableCell({
                                     children: [
                                         new Paragraph({
-                                            children: [new TextRun({ text: keys.remarks, size: 24})],
+                                            children: [new TextRun({ text: keys.remarks, size: 24 })],
                                             alignment: AlignmentType.JUSTIFIED,
                                             spacing: { before: 200, after: 200 }
                                         })
@@ -748,6 +813,24 @@ export const useTheftCaseDocx = () => {
                 }
             };
 
+            // 4b. Insured DL Particulars
+            const dlParticulars = data.insuredDlParticulars || {};
+            if (dlParticulars && dlParticulars.dlDetails) {
+                children.push(createShadedHeading("INSURED DL PARTICULARS"));
+                children.push(new Table({
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    rows: [
+                        createStandardRow("Driver Details", dlParticulars.driverDetails),
+                        createStandardRow("DL Details", dlParticulars.dlDetails),
+                        createStandardRow("Date of Birth", dlParticulars.dateOfBirth),
+                        createStandardRow("Name of RTO", dlParticulars.nameOfRto),
+                        createStandardRow("Validity Details (MCWG/LMV)", dlParticulars.validityDetailsMcwgLmv),
+                        createStandardRow("Validity Details (Transport)", dlParticulars.validityDetailsOfTransport),
+                        createStandardRow("Address of Driver", dlParticulars.addressOfDriver),
+                        createStandardRow("DL Status", dlParticulars.dlStatus),
+                    ]
+                }));
+            }
             // 21. Insured Documents Photos
             const iDocs = data.insuredDocuments || {};
             const insuredImgs = [];

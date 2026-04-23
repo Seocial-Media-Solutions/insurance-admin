@@ -16,7 +16,11 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
         }
       } catch (error) {
-        setUser(null);
+        // Only clear user if it's explicitly an auth error (401)
+        if (error.response?.status === 401) {
+          setUser(null);
+        }
+        // Other errors (rate limits, server errors) shouldn't necessarily log the user out
       } finally {
         setLoading(false);
       }

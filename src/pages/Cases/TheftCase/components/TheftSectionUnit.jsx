@@ -27,8 +27,17 @@ function SectionUnit({
 
     // Use correct mutation
     const { mutateAsync: updateSection, isLoading: loading } = useUpdateTheftCaseSection({
-        onSuccess: () => {
+        onSuccess: (response) => {
             setFileMetadata({}); // Clear metadata on success
+            
+            // Sync the parent form state immediately with the updated section data
+            if (response?.data) {
+                setForm(prev => {
+                    const newForm = { ...prev };
+                    setNestedValue(newForm, sectionKey, response.data);
+                    return newForm;
+                });
+            }
         },
     });
 
@@ -464,6 +473,47 @@ function SectionUnit({
                                                 sectionPath={apiPath}
                                                 fieldName={field}
                                             />
+                                        )}
+
+                                        {/* Display pending files (previews) */}
+                                        {currentSection[field] && (
+                                            <div className="mt-3 flex flex-wrap gap-3">
+                                                {(Array.isArray(currentSection[field]) ? currentSection[field] : [currentSection[field]])
+                                                    .filter(f => f instanceof File)
+                                                    .map((file, i) => (
+                                                        <div key={i} className="relative group w-20 h-20 rounded-lg overflow-hidden border-2 border-dashed border-indigo-300 bg-indigo-50/50 shadow-sm">
+                                                            <img 
+                                                                src={URL.createObjectURL(file)} 
+                                                                alt="preview" 
+                                                                className="w-full h-full object-cover"
+                                                                onLoad={(e) => {
+                                                                    // We don't revoke immediately to keep it visible
+                                                                }}
+                                                            />
+                                                            <div className="absolute inset-0 bg-indigo-600/20 flex items-center justify-center">
+                                                                <span className="bg-white/90 px-1.5 py-0.5 rounded text-[8px] font-black text-indigo-700 uppercase shadow-sm">Pending</span>
+                                                            </div>
+                                                            <button 
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    const current = currentSection[field];
+                                                                    if (Array.isArray(current)) {
+                                                                        updateField(field, current.filter((_, idx) => idx !== i));
+                                                                    } else {
+                                                                        updateField(field, null);
+                                                                    }
+                                                                }}
+                                                                className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
                                         )}
                                     </div>
                                 );

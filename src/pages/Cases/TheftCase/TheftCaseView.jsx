@@ -161,7 +161,7 @@ export default function TheftCaseView() {
         },
         visitToInsured: {
             label: "Visit to Insured",
-            fields: { dateOfLoss: "", policyStartDate: "", firDateAndDelayReason: "", insurerIntimationDateAndDelayReason: "", insuredProfession: "", annualIncome: "", possessionOfKeys: "", economicStatus: "", lifestyleMatchWithVehicleOwnership: "", writtenStatementAndClaimForm: "", familyProfessionalBackground: "", statementTranslationRequired: "", versionOfInsured: "", versionOfWitnessShivPrasad: "", versionOfWitnessRahulKumar: "" }
+            fields: { dateOfLoss: "", policyStartDate: "", firDateAndDelayReason: "", insurerIntimationDateAndDelayReason: "", insuredProfession: "", annualIncome: "", possessionOfKeys: "", economicStatus: "", lifestyleMatchWithVehicleOwnership: "", writtenStatementAndClaimForm: "", statementOfInsured: "", familyProfessionalBackground: "", statementTranslationRequired: "", versionOfInsured: "", versionOfWitnessShivPrasad: "", versionOfWitnessRahulKumar: "" }
         },
         visitToPersonPossessingVehicle: {
             label: "Visit to Person Possessing Vehicle",
@@ -173,48 +173,49 @@ export default function TheftCaseView() {
         },
         lossSiteInspection: {
             label: "Loss Site Inspection",
-            fields: { parkingLocationDescription: "", theftSpotLatitude: "", theftSpotLongitude: "" }
+            fields: { parkingLocationDescription: "", theftSpotLatitude: "", theftSpotLongitude: "", spotImages: [] },
+            fileFields: { spotImages: true }
         },
         keysRemark: {
             label: "Keys Remark",
-            fields: { keysProvided: "", keyTagNumberProvided: "", keyTagNumberInInvoice: "", keyTagMismatch: "" }
+            fields: { remarks: "" }
         },
-        feedbackFromTheftLocation: {
+        feedBackFromLocationOfTheft: {
             label: "Feedback from Theft Location",
-            fields: { parkingAttendantStatement: "", shopkeeperStatement: "", watchmanStatement: "" }
+            fields: { statementOfParkingAttendant: "", statementOfShopkeepers: "", statementOfWatchman: "" }
         },
-        garageVisit: {
+        visitToServiceStation: {
             label: "Garage Visit",
-            fields: { garageName: "" }
+            fields: { nameOfGarage: "" }
         },
-        additionalInvestigationCommercialUse: {
+        additionalInvestigationIfCommercialUseSuspected: {
             label: "Additional Investigation",
-            fields: { suspectedInvolvementOfFriendsOrFamily: "", intentionalDelayInPoliceReport: "", inconsistentStatements: "", authoritiesUnwillingToProvideFacts: "", newspaperCuttingAvailable: "", incomeCertificateAvailable: "" }
+            fields: { suspectedInvolvementOfFriendsFamilyOnAnyReport: "", intentionalDelayInReportIncidentToPolice: "", anyInconsistentStatementOfFacts: "", anyConcernedAuthoritiesUnwillingToProvideFacts: "", newsPaperCuttingAvailableOrNot: "", incomeCertificateAvailableOrNot: "" }
         },
         findings: {
             label: "Findings",
-            fields: { suspectedInvolvementOfFriendsOrFamily: "", intentionalDelayInPoliceReport: "", inconsistentStatementsOfFacts: "", authoritiesUnwillingToProvideFacts: "", newspaperCuttingAvailable: "", incomeCertificateAvailable: "" }
+            fields: { suspectedInvolvementOfFriendsFamilyOnAnyReport: "", intentionalDelayInReportIncidentToPolice: "", anyInconsistentStatementOfFacts: "", anyConcernedAuthoritiesUnwillingToProvideFacts: "", newsPaperCuttingAvailableOrNot: "", incomeCertificateAvailableOrNot: "" }
         },
-        briefDetailsOfCase: {
+        briefDetailsOfTheCase: {
             label: "Brief Details",
-            fields: { investigationInstructionDate: "", insuredContactDate: "", insuredMeetingDate: "", documentsProvidedByInsured: "", vehiclePurchaseDetails: "", vehicleRegistrationDetails: "", lastParkingDetails: "", firDetails: "", reasonForFIRDelay: "", policeIntimationDate: "", insurerIntimationDate: "" }
+            fields: { briefDetailsOfTheCase: [] }
         },
         conclusion: {
             label: "Conclusion",
-            fields: { serviceBillsProvided: "", financeStatus: "", cctvAvailability: "", cctvLink: "", keysAndTagVerification: "", ncrbReportStatus: "", drivingLicenseStatus: "", delayInFIRAndInsurerIntimation: "", finalClaimOpinion: "" }
+            fields: { conclusion: [] }
         },
         documentsSubmittedAndVerified: {
             label: "Documents Verified",
             fields: { intimationLetter: "", claimForm: "", letterToRtoPoliceNcrb: "", rcCopy: "", onlineRcExtract: "", kycForm: "", insuredPanCard: "", insuredAadharCard: "", insurancePolicyCopy: "", originalFir: "", qst: "", purchaseInvoice: "", bankPassbookDetails: "", ncrbVehicleEnquiryReport: "", rtiCopyWithReceiptAndReply: "", vehicleKeys: "", insuredStatement: "", witnessStatement: "", photosCollected: "", form29AndForm30: "", courtFinalReport: "" }
         },
-        photosAndDocuments: {
-            label: "Photos & Documents",
-            fields: { rcPhoto: "", insuredPanCardPhoto: "", witnessAadharCardPhoto: "", insuredDlPhoto: "", insuredDlOnlineVerificationReport: "", insuredWithKeysPhoto: "", insuredWithStatementAndIdPhoto: "", witnessRahulWithStatementAndIdPhoto: "", witnessShivPrasadWithStatementPhoto: "", insuredAsWitnessForShivPrasadPhoto: "", witnessRahulWithStatementPhoto: "", insuredAsWitnessForRahulStatementPhoto: "", bankPassbookPhoto: "", spotPhotos: "" },
-            fileFields: { rcPhoto: true, insuredPanCardPhoto: true, witnessAadharCardPhoto: true, insuredDlPhoto: true, insuredDlOnlineVerificationReport: true, insuredWithKeysPhoto: true, insuredWithStatementAndIdPhoto: true, witnessRahulWithStatementAndIdPhoto: true, witnessShivPrasadWithStatementPhoto: true, insuredAsWitnessForShivPrasadPhoto: true, witnessRahulWithStatementPhoto: true, insuredAsWitnessForRahulStatementPhoto: true, bankPassbookPhoto: true, spotPhotos: true }
-        },
         insuredDlParticulars: {
             label: "Insured DL Particulars",
-            fields: { driverDetails: "", dlNumber: "", dateOfBirth: "", rtoName: "", validityNonTransport: "", validityTransport: "", driverAddress: "", dlStatus: "" }
+            fields: { driverDetails: "", dlDetails: "", dateOfBirth: "", nameOfRto: "", validityDetailsMcwgLmv: "", validityDetailsOfTransport: "", addressOfDriver: "", dlStatus: "" }
+        },
+        insuredDocuments: {
+            label: "Insured Documents",
+            fields: { rcPhoto: [], rcverification: null, dlPhoto: [], dlverification: null, bankPassbookDetails: null, insuredPanCardPhoto: [], insuredAadharCardPhoto: [] },
+            fileFields: { rcPhoto: true, rcverification: true, dlPhoto: true, dlverification: true, bankPassbookDetails: true, insuredPanCardPhoto: true, insuredAadharCardPhoto: true }
         }
     };
 
