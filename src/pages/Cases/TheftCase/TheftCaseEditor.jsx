@@ -203,7 +203,6 @@ export default function TheftCaseEditor() {
     visitToFinancer: {
       financerName: "",
       totalInstallments: "",
-      remarks: "",
       installmentsPaid: "",
       chequesBounced: "",
       lastInstallmentDate: "",
@@ -586,7 +585,6 @@ export default function TheftCaseEditor() {
     visitToFinancer: {
       financerName: "Name of Financier",
       totalInstallments: "No. of Total Instalments",
-      remarks: "Financier Remarks (e.g. As per insured...)",
       installmentsPaid: "No. of Instalment paid",
       chequesBounced: "No. of Cheques Bounced",
       lastInstallmentDate: "Date of Last Instalment",

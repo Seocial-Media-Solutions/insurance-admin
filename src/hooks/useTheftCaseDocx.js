@@ -95,7 +95,7 @@ export const useTheftCaseDocx = () => {
             toast.error("No data available to generate document");
             return null;
         }
-
+        console.log(data);
         setIsGenerating(true);
         const toastId = toast.loading("Generating Theft Case Report...");
 
@@ -254,11 +254,14 @@ export const useTheftCaseDocx = () => {
                 new Paragraph({
                     children: [
                         new TextRun({
-                            text: `Sub: Investigation Report of Theft Claim of Vehicle No. ${vehicleNo} (Insured: ${insuredName}).`,
+                            text: `Theft Investigation Report `,
                             bold: true,
+                            alignment: AlignmentType.CENTER,
+                            size: 36,
                             underline: { type: "single" },
                         }),
                     ],
+                    alignment: AlignmentType.CENTER,
                     spacing: { after: 200 },
                 })
             );
@@ -278,7 +281,7 @@ export const useTheftCaseDocx = () => {
                     width: { size: 130, type: WidthType.PERCENTAGE },
                     rows: [
                         createStandardRow("Claim No.", summary.claimNo || "N/A"),
-                        createStandardRow("Policy No.", summary.policyNo || "N/A"),
+                        createStandardRow("Policy No.", data.policyAndIncidentDetails?.policyNo || "N/A"),
                         createStandardRow("Date of Appointment for Investigation", formatDate(summary.dateOfAppointmentForInvestigation)),
                         createStandardRow("Date of First Contact with Claimant", formatDate(summary.dateOfFirstContactWithClaimant)),
                     ]
@@ -414,7 +417,7 @@ export const useTheftCaseDocx = () => {
             // 8b. Insured Statement (In Witness Narrative Style)
             if (visit.statementOfInsured) {
                 children.push(createShadedHeading("INSURED STATEMENT"));
-                
+
                 // Title
                 children.push(new Paragraph({
                     children: [
@@ -423,23 +426,18 @@ export const useTheftCaseDocx = () => {
                     spacing: { before: 300, after: 100 },
                 }));
 
-                // Profile Table
+                // Combined Statement Table
                 children.push(new Table({
                     width: { size: 100, type: WidthType.PERCENTAGE },
                     rows: [
                         createStandardRow("Name of insured", insuredName),
                         createStandardRow("Address", insured.currentAddress || "N/A"),
                         createStandardRow("Relation with Insured", "Self"),
-                    ]
-                }));
-
-                // Narrative Box
-                children.push(new Table({
-                    width: { size: 100, type: WidthType.PERCENTAGE },
-                    rows: [
+                        // Narrative Row spanning 2 columns
                         new TableRow({
                             children: [
                                 new TableCell({
+                                    columnSpan: 2,
                                     children: [
                                         new Paragraph({
                                             children: [
@@ -468,12 +466,17 @@ export const useTheftCaseDocx = () => {
                                             spacing: { after: 200 },
                                         }),
                                     ],
-                                    margins: { top: 200, bottom: 200, left: 200, right: 200 }
+                                    margins: { top: 200, bottom: 200, left: 200, right: 200 },
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                    },
                                 })
                             ]
                         })
-                    ],
-                    spacing: { before: 200, after: 400 }
+                    ]
                 }));
             }
             // 9. Witness Details
@@ -488,24 +491,18 @@ export const useTheftCaseDocx = () => {
                         spacing: { before: 300, after: 100 },
                     }));
 
-                    // Structured Table
+                    // Combined Witness Table
                     children.push(new Table({
                         width: { size: 100, type: WidthType.PERCENTAGE },
                         rows: [
                             createStandardRow("Name", witness.witnessName),
                             createStandardRow("Address", witness.witnessAddress),
-                            createStandardRow("Relation with Insured", witness.relationWithInsured),
-
-                        ]
-                    }));
-
-                    // Narrative Portion in a boxed cell
-                    children.push(new Table({
-                        width: { size: 100, type: WidthType.PERCENTAGE },
-                        rows: [
+                            createStandardRow("Relation with Insured", witness.witnessRelation),
+                            // Narrative Row spanning 2 columns
                             new TableRow({
                                 children: [
                                     new TableCell({
+                                        columnSpan: 2,
                                         children: [
                                             // Title: Version of witness [Name]:-
                                             new Paragraph({
@@ -538,12 +535,17 @@ export const useTheftCaseDocx = () => {
                                                 spacing: { after: 200 },
                                             }),
                                         ],
-                                        margins: { top: 200, bottom: 200, left: 200, right: 200 }
+                                        margins: { top: 200, bottom: 200, left: 200, right: 200 },
+                                        borders: {
+                                            top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                            bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                            left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                            right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        },
                                     })
                                 ]
                             })
-                        ],
-                        spacing: { before: 200, after: 400 }
+                        ]
                     }));
                 });
             }
@@ -567,12 +569,11 @@ export const useTheftCaseDocx = () => {
             children.push(new Table({
                 width: { size: 100, type: WidthType.PERCENTAGE },
                 rows: [
-                    createStandardRow("Name of Financier", financer.financerName),
-                    createStandardRow("No. of Total Instalments", financer.totalInstallments),
-                    createStandardRow("Note/Remarks", financer.remarks),
-                    createStandardRow("No. of Instalment paid", financer.installmentsPaid),
-                    createStandardRow("No. of Cheques Bounced", financer.chequesBounced),
-                    createStandardRow("Date of Last Instalment", formatDate(financer.lastInstallmentDate)),
+                    createStandardRow("Name of Financier", financer.financerName || "N/A"),
+                    createStandardRow("No. of Total Instalments", financer.totalInstallments || "N/A"),
+                    createStandardRow("No. of Instalment paid", financer.installmentsPaid || "N/A"),
+                    createStandardRow("No. of Cheques Bounced", financer.chequesBounced || "N/A"),
+                    createStandardRow("Date of Last Instalment", financer.lastInstallmentDate || "N/A"),
                 ]
             }));
 
@@ -584,8 +585,9 @@ export const useTheftCaseDocx = () => {
                 if (inspection.parkingLocationDescription) {
                     children.push(new Paragraph({
                         children: [new TextRun({ text: inspection.parkingLocationDescription, size: 24 })],
+                        border: { top: { style: BorderStyle.SINGLE, size: 1, color: "000000" }, left: { style: BorderStyle.SINGLE, size: 1, color: "000000" }, right: { style: BorderStyle.SINGLE, size: 1, color: "000000" } },
                         alignment: AlignmentType.JUSTIFIED,
-                        spacing: { before: 200, after: 200 }
+
                     }));
                 }
 
@@ -594,10 +596,11 @@ export const useTheftCaseDocx = () => {
                         children: [
                             new TextRun({ text: "Theft Spot Latitude : ", bold: true, size: 24 }),
                             new TextRun({ text: inspection.theftSpotLatitude || "N/A", size: 24 }),
-                            new TextRun({ text: "                                                              & Longitude: ", bold: true, size: 24 }),
+                            new TextRun({ text: "               & Longitude: ", bold: true, size: 24 }),
                             new TextRun({ text: inspection.theftSpotLongitude || "N/A", size: 24 }),
                         ],
-                        spacing: { after: 200 }
+                        spacing: { after: 200 },
+                        border: { left: { style: BorderStyle.SINGLE, size: 1, color: "000000" }, right: { style: BorderStyle.SINGLE, size: 1, color: "000000" }, bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" } },
                     }));
                 }
             }
@@ -742,11 +745,29 @@ export const useTheftCaseDocx = () => {
                     rows: docRows
                 }));
             }
-
+            children.push(new Paragraph({
+                spacing: { after: 200 }
+            }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `This report is issued without Prejudice For  ` ,bold:true,   })]
+            }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `For Satyendra Kumar Garg`, bold: true})],
+                alignment: AlignmentType.RIGHT,
+                spacing: { after: 700 },
+                size: 100,
+              
+            }));
+            children.push(new Paragraph({
+                children: [new TextRun({ text: `Signature` ,bold:true,    })],
+                alignment: AlignmentType.RIGHT,
+                size: 100,
+             
+            }));
             // PHOTOGRAPHS SECTION - ONE BY ONE
 
             // Function to generate image tables
-            const createImageGallery = async (images, title) => {
+            const createImageGallery = async (images, title, columns = 2, width = 300, height = 200) => {
                 if (!images || images.length === 0) return;
 
                 children.push(createShadedHeading(title));
@@ -777,7 +798,7 @@ export const useTheftCaseDocx = () => {
                     cells.push(new TableCell({
                         children: [
                             new Paragraph({
-                                children: [new ImageRun({ data: img.uint8Array, transformation: { width: 300, height: 250 } })],
+                                children: [new ImageRun({ data: img.uint8Array, transformation: { width, height } })],
                                 alignment: AlignmentType.CENTER
                             }),
                             new Paragraph({
@@ -786,11 +807,11 @@ export const useTheftCaseDocx = () => {
                                 spacing: { after: 200 }
                             })
                         ],
-                        width: { size: 50, type: WidthType.PERCENTAGE },
+                        width: { size: 100 / columns, type: WidthType.PERCENTAGE },
                         borders: { top: { style: BorderStyle.NIL }, bottom: { style: BorderStyle.NIL }, left: { style: BorderStyle.NIL }, right: { style: BorderStyle.NIL } }
                     }));
 
-                    if (cells.length === 2) {
+                    if (cells.length === columns) {
                         rows.push(new TableRow({ children: cells }));
                         cells = [];
                     }
@@ -813,6 +834,22 @@ export const useTheftCaseDocx = () => {
                 }
             };
 
+
+            // 21. Insured Documents Photos
+            const iDocs = data.insuredDocuments || {};
+            const insuredImgs = [];
+            [
+                'rcPhoto', 'rcverification', 'dlPhoto',
+                'insuredPanCardPhoto', 'insuredAadharCardPhoto', 'bankPassbookDetails'
+            ].forEach(k => {
+                const val = iDocs[k];
+                if (val) {
+                    const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                    if (Array.isArray(val)) val.forEach(img => insuredImgs.push({ ...img, label }));
+                    else insuredImgs.push({ ...val, label });
+                }
+            });
+            await createImageGallery(insuredImgs, "INSURED DOCUMENTS");
             // 4b. Insured DL Particulars
             const dlParticulars = data.insuredDlParticulars || {};
             if (dlParticulars && dlParticulars.dlDetails) {
@@ -830,23 +867,13 @@ export const useTheftCaseDocx = () => {
                         createStandardRow("DL Status", dlParticulars.dlStatus),
                     ]
                 }));
-            }
-            // 21. Insured Documents Photos
-            const iDocs = data.insuredDocuments || {};
-            const insuredImgs = [];
-            [
-                'rcPhoto', 'rcverification', 'dlPhoto', 'dlverification',
-                'insuredPanCardPhoto', 'insuredAadharCardPhoto', 'bankPassbookDetails'
-            ].forEach(k => {
-                const val = iDocs[k];
-                if (val) {
-                    const label = k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-                    if (Array.isArray(val)) val.forEach(img => insuredImgs.push({ ...img, label }));
-                    else insuredImgs.push({ ...val, label });
-                }
-            });
-            await createImageGallery(insuredImgs, "INSURED DOCUMENTS");
 
+                // Add DL verification image below particulars if exists (2x size, 1 column)
+                if (iDocs.dlverification) {
+                    const dlV = Array.isArray(iDocs.dlverification) ? iDocs.dlverification : [iDocs.dlverification];
+                    await createImageGallery(dlV.map(img => ({ ...img, label: "DL Verification" })), "DL VERIFICATION IMAGE", 1, 550, 400);
+                }
+            }
             // 22. Witness Document and Photos
             const witnessImgs = [];
             if (data.witnessDetails && Array.isArray(data.witnessDetails)) {
@@ -879,7 +906,7 @@ export const useTheftCaseDocx = () => {
             }
 
             if (investigationImgs.length > 0) {
-                await createImageGallery(investigationImgs, "INVESTIGATION & SPOT PHOTOS (2x2 Grid)");
+                await createImageGallery(investigationImgs, "INVESTIGATION & SPOT PHOTOS");
             }
 
             // Footer Design (Matching OD)
