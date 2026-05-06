@@ -187,7 +187,7 @@ export const useDocxGenerator = () => {
                   new Paragraph({
                     children: [
                       new TextRun({
-                        text: "Flat No. H-207, Hanging Gardens,",
+                        text: "Flat No. B-406, Hanging Gardens,",
                         size: 19,
                         font: "Times New Roman",
                         color: "333333",
@@ -377,34 +377,34 @@ export const useDocxGenerator = () => {
         })
       );
 
-  // --- INSURED CUM DRIVER DETAILS ---
-docChildren.push(createHeading("Insured cum driver Details"));
+      // --- INSURED CUM DRIVER DETAILS ---
+      docChildren.push(createHeading("Insured cum driver Details"));
 
-const insured = investigation?.caseId;
-const driver = investigation?.people?.find(p => p.relationWithCase?.toLowerCase() === "driver") 
-             || investigation?.people?.[0]; // fallback to first person if no explicit driver
+      const insured = investigation?.caseId;
+      const driver = investigation?.people?.find(p => p.relationWithCase?.toLowerCase() === "driver")
+        || investigation?.people?.[0]; // fallback to first person if no explicit driver
 
-// Helper functions
-const getDocument = (person, type) =>
-  person?.documents?.find(doc => doc.documentType?.toLowerCase() === type.toLowerCase())?.documentNumber || "N/A";
+      // Helper functions
+      const getDocument = (person, type) =>
+        person?.documents?.find(doc => doc.documentType?.toLowerCase() === type.toLowerCase())?.documentNumber || "N/A";
 
-const driverDetailsRows = [
-  createTwoColumnTableRow("Name of Insured", insured?.nameOfInsured || "N/A"),
-  createTwoColumnTableRow("PAN Card", getDocument(driver, "PAN Card")),
-  createTwoColumnTableRow("Aadhar Card No.", getDocument(driver, "Aadhar Card")),
-  createTwoColumnTableRow("Address of Insured as per RC", insured?.addressOfInsured || "N/A"),
-  createTwoColumnTableRow("Address of Insured as per Aadhar Card", driver?.address || "N/A"),
-  createTwoColumnTableRow("Insured Profession", insured?.profession || "N/A"),
-  createTwoColumnTableRow("Driver injured or not", driver?.injuredStatus || "N/A"),
-  createTwoColumnTableRow("Driver relationship", driver?.relationWithCase || "N/A"),
-  createTwoColumnTableRow("Attested Letter Copy from the Driver with Sign Across his Photograph", driver?.documents?.length ? "Available" : "Not Available"),
-  createTwoColumnTableRow("Driver Confirmation", driver?.confirmationStatus || "N/A"),
-  createTwoColumnTableRow("Obtained Google GPS Timeline", investigation?.gpsTimelineObtained || "N/A"),
-  createTwoColumnTableRow("Any Photos/Videos taken by insured and anyone", investigation?.mediaAvailable ? "Yes" : "No"),
-  createTwoColumnTableRow("Emp. Stability", insured?.employmentStatus || "N/A"),
-  createTwoColumnTableRow("DL details/ Any Endorsements", getDocument(driver, "Driving License")),
-  createTwoColumnTableRow("Name of RTO (Licencing Authority) from DL is issued", driver?.rtoName || "N/A"),
-];
+      const driverDetailsRows = [
+        createTwoColumnTableRow("Name of Insured", insured?.nameOfInsured || "N/A"),
+        createTwoColumnTableRow("PAN Card", getDocument(driver, "PAN Card")),
+        createTwoColumnTableRow("Aadhar Card No.", getDocument(driver, "Aadhar Card")),
+        createTwoColumnTableRow("Address of Insured as per RC", insured?.addressOfInsured || "N/A"),
+        createTwoColumnTableRow("Address of Insured as per Aadhar Card", driver?.address || "N/A"),
+        createTwoColumnTableRow("Insured Profession", insured?.profession || "N/A"),
+        createTwoColumnTableRow("Driver injured or not", driver?.injuredStatus || "N/A"),
+        createTwoColumnTableRow("Driver relationship", driver?.relationWithCase || "N/A"),
+        createTwoColumnTableRow("Attested Letter Copy from the Driver with Sign Across his Photograph", driver?.documents?.length ? "Available" : "Not Available"),
+        createTwoColumnTableRow("Driver Confirmation", driver?.confirmationStatus || "N/A"),
+        createTwoColumnTableRow("Obtained Google GPS Timeline", investigation?.gpsTimelineObtained || "N/A"),
+        createTwoColumnTableRow("Any Photos/Videos taken by insured and anyone", investigation?.mediaAvailable ? "Yes" : "No"),
+        createTwoColumnTableRow("Emp. Stability", insured?.employmentStatus || "N/A"),
+        createTwoColumnTableRow("DL details/ Any Endorsements", getDocument(driver, "Driving License")),
+        createTwoColumnTableRow("Name of RTO (Licencing Authority) from DL is issued", driver?.rtoName || "N/A"),
+      ];
 
 
       // DL Validity Table
@@ -477,28 +477,28 @@ const driverDetailsRows = [
 
       docChildren.push(createHeading("Vehicle Details"));
 
-const vehicle = investigation?.caseId || {};
+      const vehicle = investigation?.caseId || {};
 
-// optional helper (for readability)
-const safe = (val) => val || "N/A";
+      // optional helper (for readability)
+      const safe = (val) => val || "N/A";
 
-const vehicleDetailsRows = [
-  createTwoColumnTableRow("Vehicle Registration No.", safe(vehicle.vehicleNo)),
-  createTwoColumnTableRow("Name of Registered Owner", safe(vehicle.nameOfInsured)),
-  createTwoColumnTableRow("New Vehicle Invoice Details (Purchase)", safe(vehicle.billNo ? `Bill No: ${vehicle.billNo}, Amount: ₹${vehicle.feeBillRs}` : "N/A")),
-  createTwoColumnTableRow("Make & Model", safe(vehicle.makeModel)),
-  createTwoColumnTableRow("Registration Date", safe(vehicle.registrationDate)),
-  createTwoColumnTableRow("Year of Manufacture", safe(vehicle.yearOfManufacture)),
-  createTwoColumnTableRow("Chassis No.", safe(vehicle.chassisNo)),
-  createTwoColumnTableRow("Engine No.", safe(vehicle.engineNo)),
-  createTwoColumnTableRow("HYP Details", safe(vehicle.hypDetails)),
-  createTwoColumnTableRow("MV Tax Details (Tax from)", safe(vehicle.mvTaxFrom)),
-  createTwoColumnTableRow("Permit", safe(vehicle.permitDetails)),
-  createTwoColumnTableRow("Fitness", safe(vehicle.fitnessDetails)),
-  createTwoColumnTableRow("Body Type", safe(vehicle.bodyType)),
-  createTwoColumnTableRow("Seating Capacity", safe(vehicle.seatingCapacity)),
-  createTwoColumnTableRow("Owner Serial Number", safe(vehicle.ownerSerialNo)),
-];
+      const vehicleDetailsRows = [
+        createTwoColumnTableRow("Vehicle Registration No.", safe(vehicle.vehicleNo)),
+        createTwoColumnTableRow("Name of Registered Owner", safe(vehicle.nameOfInsured)),
+        createTwoColumnTableRow("New Vehicle Invoice Details (Purchase)", safe(vehicle.billNo ? `Bill No: ${vehicle.billNo}, Amount: ₹${vehicle.feeBillRs}` : "N/A")),
+        createTwoColumnTableRow("Make & Model", safe(vehicle.makeModel)),
+        createTwoColumnTableRow("Registration Date", safe(vehicle.registrationDate)),
+        createTwoColumnTableRow("Year of Manufacture", safe(vehicle.yearOfManufacture)),
+        createTwoColumnTableRow("Chassis No.", safe(vehicle.chassisNo)),
+        createTwoColumnTableRow("Engine No.", safe(vehicle.engineNo)),
+        createTwoColumnTableRow("HYP Details", safe(vehicle.hypDetails)),
+        createTwoColumnTableRow("MV Tax Details (Tax from)", safe(vehicle.mvTaxFrom)),
+        createTwoColumnTableRow("Permit", safe(vehicle.permitDetails)),
+        createTwoColumnTableRow("Fitness", safe(vehicle.fitnessDetails)),
+        createTwoColumnTableRow("Body Type", safe(vehicle.bodyType)),
+        createTwoColumnTableRow("Seating Capacity", safe(vehicle.seatingCapacity)),
+        createTwoColumnTableRow("Owner Serial Number", safe(vehicle.ownerSerialNo)),
+      ];
 
 
       const vehicleDetailsTable = new Table({

@@ -525,16 +525,16 @@ export const useODCaseDocx = () => {
                                 })
                             ],
                             alignment: AlignmentType.CENTER,
-                            spacing: { before: 800, after: 200 },
+                            spacing: { before: 200, after: 200 },
                         })
                     );
 
                     detailsOfDeceased.deceasedPersons.forEach((person, idx) => {
-                        if (idx > 0) children.push(new Paragraph({ spacing: { before: 200 } }));
+                        if (idx > 0) children.push(new Paragraph({}));
 
                         children.push(new Paragraph({
                             children: [new TextRun({ text: `Deceased Person ${idx + 1}`, bold: true, size: 24, underline: {} })],
-                            spacing: { after: 100 }
+
                         }));
 
                         const pmr = person.pmrDetails || {};
@@ -558,7 +558,6 @@ export const useODCaseDocx = () => {
                         children.push(new Table({ rows: pRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
                     });
                 } else if (detailsOfDeceased.availability) {
-                    children.push(new Paragraph({ spacing: { before: 800 } })); // Spacer for margin
                     children.push(
                         new Table({
                             width: { size: 100, type: WidthType.PERCENTAGE },
@@ -618,7 +617,28 @@ export const useODCaseDocx = () => {
                 };
 
                 for (const [key, label] of Object.entries(vehicleFields)) {
-                    vehicleRows.push(createStandardRow(label, vehicleDetails[key]));
+                    // Skip Permit State and City if Location Type is National
+                    if ((key === 'permitState' || key === 'permitCity') && vehicleDetails.permitLocationType === 'National') {
+                        continue;
+                    }
+
+                    // Skip permit details if not permitted
+                    const permitDependentFields = ["permitType", "permitLocationType", "permitState", "permitCity"];
+                    if (permitDependentFields.includes(key) && (vehicleDetails.permittedDetail || "").toLowerCase() !== "yes") {
+                        continue;
+                    }
+
+                    // Skip purchase details if not available
+                    const purchaseDependentFields = ["dateOfPurchase", "sellerAddress", "sellerContactNumber", "purchaseAmount"];
+                    if (purchaseDependentFields.includes(key) && vehicleDetails.dateOfPurchaseAvailability !== 'Available') {
+                        continue;
+                    }
+
+                    let val = vehicleDetails[key];
+                    if ((key === 'registrationDate' || key === 'dateOfPurchase') && val) {
+                        val = formatDate(val).replace(/\./g, '/');
+                    }
+                    vehicleRows.push(createStandardRow(label, val));
                 }
 
                 children.push(new Table({ rows: vehicleRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
@@ -796,6 +816,71 @@ export const useODCaseDocx = () => {
                     );
                 }
 
+
+                // Accident Details As Per Insured Cum Driver (Full width row)
+                if (meetingData.accidentDetailsAsPerDriver) {
+                    meetingRows.push(
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: "Accident Details As Per Insured Cum Driver:",
+                                                    bold: true,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                    columnSpan: 2,
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                    },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: meetingData.accidentDetailsAsPerDriver,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                            alignment: AlignmentType.JUSTIFIED,
+                                        }),
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: "Statement enclosed.",
+                                                    bold: true,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                            spacing: { before: 100 },
+                                        }),
+                                    ],
+                                    columnSpan: 2,
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                    },
+                                }),
+                            ],
+                        })
+                    );
+                }
+
                 // Statement of the Insured (Full width row)
                 if (meetingData.accidentDetailsAsPerInsured) {
                     meetingRows.push(
@@ -862,9 +947,72 @@ export const useODCaseDocx = () => {
                     );
                 }
 
+                // Accident details as per Occupant (Full width row)
+                if (meetingData.accidentDetailsAsPerOccupant) {
+                    meetingRows.push(
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: "Accident details as per Occupant:",
+                                                    bold: true,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                        }),
+                                    ],
+                                    columnSpan: 2,
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                    },
+                                }),
+                            ],
+                        }),
+                        new TableRow({
+                            children: [
+                                new TableCell({
+                                    children: [
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: meetingData.accidentDetailsAsPerOccupant,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                            alignment: AlignmentType.JUSTIFIED,
+                                        }),
+                                        new Paragraph({
+                                            children: [
+                                                new TextRun({
+                                                    text: "Statement enclosed.",
+                                                    bold: true,
+                                                    size: 20,
+                                                }),
+                                            ],
+                                            spacing: { before: 100 },
+                                        }),
+                                    ],
+                                    columnSpan: 2,
+                                    borders: {
+                                        top: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        bottom: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        left: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                        right: { style: BorderStyle.SINGLE, size: 1, color: "000000" },
+                                    },
+                                }),
+                            ],
+                        })
+                    );
+                }
+
                 // Additional meeting fields
                 const additionalFields = {
-                    accidentDetailsAsPerOccupant: "Accident details as per Occupant- True version of statement submitted not brief",
                     rehabilitationDetails: "How Insured/driver rehabilitated from loss location to _______ by _______?",
                     firstContactAfterAccident: "After accident first contact details?",
                 };

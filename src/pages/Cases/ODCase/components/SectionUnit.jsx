@@ -1145,7 +1145,6 @@ function SectionUnit({
                                     "sellerAddress",
                                     "sellerContactNumber",
                                     "purchaseAmount",
-                                    "fitnessDetail"
                                 ];
 
                                 // PERMIT LOGIC
@@ -1305,53 +1304,51 @@ function SectionUnit({
                                     );
                                 }
 
-                                if (purchaseDependentFields.includes(field)) {
-                                    if (!isPurchaseAvailable) return null;
+                                // Custom rendering for fitnessDetail: Yes/No + Calendar
+                                if (field === "fitnessDetail") {
+                                    const fitnessVal = currentSection.fitnessDetail || "";
+                                    const isFitnessYes = fitnessVal !== "" && fitnessVal !== "No";
+                                    const dateValue = fitnessVal === "Yes" ? "" : fitnessVal;
 
-                                    // Custom rendering for fitnessDetail: Yes/No + Calendar
-                                    if (field === "fitnessDetail") {
-                                        const fitnessVal = currentSection.fitnessDetail || "";
-                                        const isFitnessYes = fitnessVal !== "" && fitnessVal !== "No";
-                                        const dateValue = fitnessVal === "Yes" ? "" : fitnessVal;
+                                    return (
+                                        <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <label className="block">
+                                                    <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Detail</span>
+                                                    <select
+                                                        disabled={readonlyFields.includes(field)}
+                                                        className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
+                                                        value={isFitnessYes ? "Yes" : fitnessVal}
+                                                        onChange={(e) => {
+                                                            updateField("fitnessDetail", e.target.value);
+                                                        }}
+                                                    >
+                                                        <option value="">Select Option</option>
+                                                        <option value="Yes">Yes</option>
+                                                        <option value="No">No</option>
+                                                    </select>
+                                                    {error && <span className="text-xs text-red-500 mt-1 block font-medium">{error}</span>}
+                                                </label>
 
-                                        return (
-                                            <div key={field} className="col-span-1 md:col-span-2 lg:col-span-3">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {isFitnessYes && (
                                                     <label className="block">
-                                                        <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Detail</span>
-                                                        <select
+                                                        <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Valid Upto</span>
+                                                        <input
+                                                            type="date"
                                                             disabled={readonlyFields.includes(field)}
                                                             className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
-                                                            value={isFitnessYes ? "Yes" : fitnessVal}
-                                                            onChange={(e) => {
-                                                                updateField("fitnessDetail", e.target.value);
-                                                            }}
-                                                        >
-                                                            <option value="">Select Option</option>
-                                                            <option value="Yes">Yes</option>
-                                                            <option value="No">No</option>
-                                                        </select>
-                                                        {error && <span className="text-xs text-red-500 mt-1 block font-medium">{error}</span>}
+                                                            value={dateValue}
+                                                            onChange={(e) => updateField("fitnessDetail", e.target.value || "Yes")}
+                                                        />
                                                     </label>
-
-                                                    {isFitnessYes && (
-                                                        <label className="block">
-                                                            <span className="text-sm font-semibold text-gray-700 mb-1 block">Fitness Valid Upto</span>
-                                                            <input
-                                                                type="date"
-                                                                disabled={readonlyFields.includes(field)}
-                                                                className={`w-full border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all ${error ? "border-red-500 bg-red-50" : "border-gray-300"} ${readonlyFields.includes(field) ? "bg-gray-100 cursor-not-allowed text-gray-500" : ""}`}
-                                                                value={dateValue}
-                                                                onChange={(e) => updateField("fitnessDetail", e.target.value || "Yes")}
-                                                            />
-                                                        </label>
-                                                    )}
-                                                </div>
+                                                )}
                                             </div>
-                                        );
-                                    }
+                                        </div>
+                                    );
+                                }
 
-                                    // If available, let it fall through to default rendering below
+                                if (purchaseDependentFields.includes(field)) {
+                                    if (!isPurchaseAvailable) return null;
                                 }
                             }
 

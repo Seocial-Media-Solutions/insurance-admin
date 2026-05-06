@@ -165,7 +165,7 @@ export const useTheftCaseDocx = () => {
                                     new Paragraph({
                                         children: [
                                             new TextRun({
-                                                text: "Flat No. H-207, Hanging Gardens,",
+                                                text: "Flat No. B-406, Hanging Gardens,",
                                                 size: 30,
                                                 font: "Times New Roman",
                                                 color: "767676",
@@ -749,20 +749,20 @@ export const useTheftCaseDocx = () => {
                 spacing: { after: 200 }
             }));
             children.push(new Paragraph({
-                children: [new TextRun({ text: `This report is issued without Prejudice For  ` ,bold:true,   })]
+                children: [new TextRun({ text: `This report is issued without Prejudice For  `, bold: true, })]
             }));
             children.push(new Paragraph({
-                children: [new TextRun({ text: `For Satyendra Kumar Garg`, bold: true})],
+                children: [new TextRun({ text: `For Satyendra Kumar Garg`, bold: true })],
                 alignment: AlignmentType.RIGHT,
                 spacing: { after: 700 },
                 size: 100,
-              
+
             }));
             children.push(new Paragraph({
-                children: [new TextRun({ text: `Signature` ,bold:true,    })],
+                children: [new TextRun({ text: `Signature`, bold: true, })],
                 alignment: AlignmentType.RIGHT,
                 size: 100,
-             
+
             }));
             // PHOTOGRAPHS SECTION - ONE BY ONE
 
