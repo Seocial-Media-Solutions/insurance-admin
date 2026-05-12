@@ -28,6 +28,7 @@ function SectionUnit({
     const [errors, setErrors] = useState({});
     const [fileMetadata, setFileMetadata] = useState({}); // Track metadata for file fields
     const [isSaving, setIsSaving] = useState(false);
+    const [showPhotoInputs, setShowPhotoInputs] = useState({});
     const submittingRef = useRef(false);
     // Use TanStack Query mutation (v5: isLoading → isPending)
     const { mutateAsync: updateSection, isPending: mutationPending } = useUpdateODCaseSection({
@@ -2716,75 +2717,96 @@ function SectionUnit({
                                                     <div key={itemKey} className="space-y-5">
                                                         <div className="flex items-center justify-between">
                                                             <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest">{currentUiLabel}</h4>
-                                                            {limit && (
-                                                                <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                                                                    Max {limit} {limit > 1 ? 'Files' : 'File'}
-                                                                </span>
-                                                            )}
+                                                            <div className="flex items-center gap-3">
+                                                                <label className="inline-flex items-center cursor-pointer">
+                                                                    <span className="mr-2 text-xs font-medium text-gray-600">Photo Available:</span>
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                                        checked={showPhotoInputs[itemKey] !== false}
+                                                                        onChange={(e) => {
+                                                                            const val = e.target.checked;
+                                                                            setShowPhotoInputs(prev => ({ ...prev, [itemKey]: val }));
+                                                                            if (!val) {
+                                                                                updateField(itemKey, isMultiple ? [] : null);
+                                                                            }
+                                                                        }}
+                                                                    />
+                                                                </label>
+                                                                {limit && (
+                                                                    <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                                                                        Max {limit} {limit > 1 ? 'Files' : 'File'}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
 
-                                                        <DragDropUpload
-                                                            id={`${sectionKey}-${itemKey}`}
-                                                            accept="image/*"
-                                                            multiple={isMultiple}
-                                                            value={currentSection[itemKey]}
-                                                            isOptional={true}
-                                                            title="" // Clearing title as we have custom h4 above
-                                                            limit={limit}
-                                                            onMetadataChange={(metadata) => {
-                                                                setFileMetadata(prev => ({ ...prev, [itemKey]: metadata }));
-                                                            }}
-                                                            onChange={(e) => {
-                                                                const sFiles = e.target.files;
+                                                        {showPhotoInputs[itemKey] !== false && (
+                                                            <>
+                                                                <DragDropUpload
+                                                                    id={`${sectionKey}-${itemKey}`}
+                                                                    accept="image/*"
+                                                                    multiple={isMultiple}
+                                                                    value={currentSection[itemKey]}
+                                                                    isOptional={true}
+                                                                    title="" // Clearing title as we have custom h4 above
+                                                                    limit={limit}
+                                                                    onMetadataChange={(metadata) => {
+                                                                        setFileMetadata(prev => ({ ...prev, [itemKey]: metadata }));
+                                                                    }}
+                                                                    onChange={(e) => {
+                                                                        const sFiles = e.target.files;
 
-                                                                // Removal: sFiles is null/empty
-                                                                if (!sFiles || sFiles.length === 0) {
-                                                                    updateField(itemKey, isMultiple ? [] : null);
-                                                                    return;
-                                                                }
+                                                                        // Removal: sFiles is null/empty
+                                                                        if (!sFiles || sFiles.length === 0) {
+                                                                            updateField(itemKey, isMultiple ? [] : null);
+                                                                            return;
+                                                                        }
 
-                                                                // Pre-array (from internal removal or something)
-                                                                if (Array.isArray(sFiles)) {
-                                                                    updateField(itemKey, sFiles);
-                                                                    return;
-                                                                }
+                                                                        // Pre-array (from internal removal or something)
+                                                                        if (Array.isArray(sFiles)) {
+                                                                            updateField(itemKey, sFiles);
+                                                                            return;
+                                                                        }
 
-                                                                // Selection append logic
-                                                                const newFiles = Array.from(sFiles);
+                                                                        // Selection append logic
+                                                                        const newFiles = Array.from(sFiles);
 
-                                                                // Limit Enforcement
-                                                                if (limit) {
-                                                                    const currentCount = Array.isArray(currentSection[itemKey])
-                                                                        ? currentSection[itemKey].length
-                                                                        : (currentSection[itemKey] ? 1 : 0);
+                                                                        // Limit Enforcement
+                                                                        if (limit) {
+                                                                            const currentCount = Array.isArray(currentSection[itemKey])
+                                                                                ? currentSection[itemKey].length
+                                                                                : (currentSection[itemKey] ? 1 : 0);
 
-                                                                    if (currentCount + newFiles.length > limit) {
-                                                                        toast.error(`Maximum ${limit} ${limit > 1 ? 'photos' : 'photo'} allowed for ${currentUiLabel}`);
-                                                                        return;
-                                                                    }
-                                                                }
+                                                                            if (currentCount + newFiles.length > limit) {
+                                                                                toast.error(`Maximum ${limit} ${limit > 1 ? 'photos' : 'photo'} allowed for ${currentUiLabel}`);
+                                                                                return;
+                                                                            }
+                                                                        }
 
-                                                                updateField(
-                                                                    itemKey,
-                                                                    isMultiple
-                                                                        ? [...(currentSection[itemKey] || []), ...newFiles]
-                                                                        : newFiles[0]
-                                                                );
-                                                            }}
-                                                        />
-
-                                                        {existingImgs && (
-                                                            <div className="pt-2 border-t border-gray-50">
-                                                                <ImageGallery
-                                                                    images={existingImgs}
-                                                                    title={currentUiLabel}
-                                                                    caseId={caseId}
-                                                                    sectionPath={apiPath}
-                                                                    fieldName={itemKey}
-                                                                    setForm={setForm}
-                                                                    sectionKey={sectionKey}
+                                                                        updateField(
+                                                                            itemKey,
+                                                                            isMultiple
+                                                                                ? [...(currentSection[itemKey] || []), ...newFiles]
+                                                                                : newFiles[0]
+                                                                        );
+                                                                    }}
                                                                 />
-                                                            </div>
+
+                                                                {existingImgs && (
+                                                                    <div className="pt-2 border-t border-gray-50">
+                                                                        <ImageGallery
+                                                                            images={existingImgs}
+                                                                            title={currentUiLabel}
+                                                                            caseId={caseId}
+                                                                            sectionPath={apiPath}
+                                                                            fieldName={itemKey}
+                                                                            setForm={setForm}
+                                                                            sectionKey={sectionKey}
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </>
                                                         )}
                                                     </div>
                                                 );

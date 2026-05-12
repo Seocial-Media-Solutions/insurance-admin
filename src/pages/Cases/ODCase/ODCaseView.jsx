@@ -400,14 +400,18 @@ const MeetingDetails = ({ data }) => {
               label="Accident version-- exact loss location details"
               value={data.accidentVersionLocationDetails}
             />
-            <StatementRow
-              label="Statement of the Insured's / deceased Wife:"
-              value={data.accidentDetailsAsPerInsured}
-            />
-            <TableRow
-              label="Accident details as per Occupant- True version"
-              value={data.accidentDetailsAsPerOccupant}
-            />
+            {data.accidentDetailsAsPerInsured && String(data.accidentDetailsAsPerInsured).trim() !== "" && String(data.accidentDetailsAsPerInsured).trim() !== "-" && (
+              <StatementRow
+                label="Statement of the Insured's / deceased Wife:"
+                value={data.accidentDetailsAsPerInsured}
+              />
+            )}
+            {data.accidentDetailsAsPerOccupant && String(data.accidentDetailsAsPerOccupant).trim() !== "" && String(data.accidentDetailsAsPerOccupant).trim() !== "-" && (
+              <TableRow
+                label="Accident details as per Occupant- True version"
+                value={data.accidentDetailsAsPerOccupant}
+              />
+            )}
             <TableRow
               label="How Insured/driver rehabilitated from loss location?"
               value={data.rehabilitationDetails}
@@ -596,21 +600,33 @@ const PoliceRecordDetails = ({ data }) => {
             <TableRow label="FIR Status" value={data.firStatus} />
             {data.firStatus === 'yes' && (
               <>
-                <TableRow
-                  label="Name of Police Station"
-                  value={data.policeStationName}
-                />
-                <TableRow
-                  label="Name of Police Station District"
-                  value={data.nameOfPoliceStationDistrict}
-                />
-                <TableRow label="FIR No./ NCR No." value={data.firNo} />
-                <TableRow
-                  label="FIR Date & Time"
-                  value={formatDateTime(data.firDateAndTime)}
-                />
-                <TableRow label="District" value={data.district} />
-                <TableRow label="State" value={data.state} />
+                {data.policeStationName && String(data.policeStationName).trim() !== "" && String(data.policeStationName).trim() !== "Detail not available" && String(data.policeStationName).trim() !== "N/A" && String(data.policeStationName).trim() !== "-" && (
+                  <TableRow
+                    label="Name of Police Station"
+                    value={data.policeStationName}
+                  />
+                )}
+                {data.nameOfPoliceStationDistrict && String(data.nameOfPoliceStationDistrict).trim() !== "" && String(data.nameOfPoliceStationDistrict).trim() !== "Detail not available" && String(data.nameOfPoliceStationDistrict).trim() !== "N/A" && String(data.nameOfPoliceStationDistrict).trim() !== "-" && (
+                  <TableRow
+                    label="Name of Police Station District"
+                    value={data.nameOfPoliceStationDistrict}
+                  />
+                )}
+                {data.firNo && String(data.firNo).trim() !== "" && String(data.firNo).trim() !== "Detail not available" && String(data.firNo).trim() !== "N/A" && String(data.firNo).trim() !== "-" && (
+                  <TableRow label="FIR No./ NCR No." value={data.firNo} />
+                )}
+                {data.firDateAndTime && String(data.firDateAndTime).trim() !== "" && String(data.firDateAndTime).trim() !== "Detail not available" && String(data.firDateAndTime).trim() !== "N/A" && String(data.firDateAndTime).trim() !== "-" && (
+                  <TableRow
+                    label="FIR Date & Time"
+                    value={formatDateTime(data.firDateAndTime)}
+                  />
+                )}
+                {data.district && String(data.district).trim() !== "" && String(data.district).trim() !== "Detail not available" && String(data.district).trim() !== "N/A" && String(data.district).trim() !== "-" && (
+                  <TableRow label="District" value={data.district} />
+                )}
+                {data.state && String(data.state).trim() !== "" && String(data.state).trim() !== "Detail not available" && String(data.state).trim() !== "N/A" && String(data.state).trim() !== "-" && (
+                  <TableRow label="State" value={data.state} />
+                )}
               </>
             )}
             <TableRow label="PMR" value={data.pmr || "Yes"} />

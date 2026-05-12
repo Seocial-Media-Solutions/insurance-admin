@@ -160,7 +160,7 @@ export const useODCaseDocx = () => {
                                     new Paragraph({
                                         children: [
                                             new TextRun({
-                                                text: "Flat No. H-207, Hanging Gardens,",
+                                                text: "Flat No. B-406, Hanging Gardens,",
                                                 size: 30,
                                                 font: "Times New Roman",
                                                 color: "767676",
@@ -223,7 +223,7 @@ export const useODCaseDocx = () => {
             // Date (Top Right)
             children.push(
                 new Paragraph({
-                    children: [new TextRun({ text: letterData.date ? formatDate(letterData.date) : getCurrentDate() })],
+                    children: [new TextRun({ text: `Dt. ${letterData.date ? formatDate(letterData.date) : getCurrentDate()}` })],
                     alignment: AlignmentType.RIGHT,
                     spacing: { after: 200 },
                 })
@@ -644,6 +644,7 @@ export const useODCaseDocx = () => {
                 children.push(new Table({ rows: vehicleRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
             }
 
+            /*
             // Special Section: Policy Details Table
             const policyDetailsData = data.policyBreakInDetails || {};
             if (policyDetailsData && Object.keys(policyDetailsData).length > 0) {
@@ -696,6 +697,7 @@ export const useODCaseDocx = () => {
                     children.push(new Paragraph({ text: "No details provided.", spacing: { before: 100 } }));
                 }
             }
+            */
 
             // Special Section: DL Particulars Table
             const dlParticulars = data.dlParticulars || [];
@@ -818,7 +820,7 @@ export const useODCaseDocx = () => {
 
 
                 // Accident Details As Per Insured Cum Driver (Full width row)
-                if (meetingData.accidentDetailsAsPerDriver) {
+                if (meetingData.accidentDetailsAsPerDriver && String(meetingData.accidentDetailsAsPerDriver).trim() !== "" && String(meetingData.accidentDetailsAsPerDriver).trim() !== "-") {
                     meetingRows.push(
                         new TableRow({
                             children: [
@@ -882,7 +884,7 @@ export const useODCaseDocx = () => {
                 }
 
                 // Statement of the Insured (Full width row)
-                if (meetingData.accidentDetailsAsPerInsured) {
+                if (meetingData.accidentDetailsAsPerInsured && String(meetingData.accidentDetailsAsPerInsured).trim() !== "" && String(meetingData.accidentDetailsAsPerInsured).trim() !== "-") {
                     meetingRows.push(
                         new TableRow({
                             children: [
@@ -948,7 +950,7 @@ export const useODCaseDocx = () => {
                 }
 
                 // Accident details as per Occupant (Full width row)
-                if (meetingData.accidentDetailsAsPerOccupant) {
+                if (meetingData.accidentDetailsAsPerOccupant && String(meetingData.accidentDetailsAsPerOccupant).trim() !== "" && String(meetingData.accidentDetailsAsPerOccupant).trim() !== "-") {
                     meetingRows.push(
                         new TableRow({
                             children: [
@@ -1437,6 +1439,12 @@ export const useODCaseDocx = () => {
                     garageRows.push(createStandardRow("  - Check-out Date & Time", formatDateTime(garageData.vehicleStatusAfter24Hrs.checkOutDateTime), 50));
                 }
 
+                let jobCardValue = "Not Available";
+                if (String(garageData.jobCardDetails?.availability).toLowerCase() === "yes") {
+                    jobCardValue = `No: ${garageData.jobCardDetails.jobCardNo || "N/A"}, Dt: ${garageData.jobCardDetails.dateOfJobCard || "N/A"}, Garage: ${garageData.jobCardDetails.nameOfGarage || "N/A"}`;
+                }
+                garageRows.push(createStandardRow("Job Card Details", jobCardValue, 50));
+
                 children.push(new Table({ rows: garageRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
 
                 // --- Towing Vendor Details (Vertical Property Table Style) ---
@@ -1484,33 +1492,7 @@ export const useODCaseDocx = () => {
                     });
                 }
 
-                // Job Card Details Table
-                if (String(garageData.jobCardDetails?.availability).toLowerCase() === "yes") {
-                    children.push(
-                        new Paragraph({
-                            text: "Job Card Details",
-                            heading: HeadingLevel.HEADING_4,
-                            spacing: { before: 200, after: 100 },
-                        })
-                    );
-
-                    const jobCardRows = [
-                        createStandardRow("Job Card No", garageData.jobCardDetails.jobCardNo, 50),
-                        createStandardRow("Date of Job Card", garageData.jobCardDetails.dateOfJobCard, 50),
-                        createStandardRow("Name of Garage", garageData.jobCardDetails.nameOfGarage, 50),
-                    ];
-                    children.push(new Table({ rows: jobCardRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
-                } else {
-                    children.push(
-                        new Paragraph({
-                            children: [
-                                new TextRun({ text: "Job Card Details: ", bold: true }),
-                                new TextRun({ text: "Not Available" })
-                            ],
-                            spacing: { before: 200, after: 100 },
-                        })
-                    );
-                }
+                // Job Card Details moved to Garage Visit table
             }
 
             // Special Section: Police record details Table
@@ -1557,12 +1539,14 @@ export const useODCaseDocx = () => {
                     }
 
                     // Handle dates specifically
-                    if (key === 'firDateAndTime') {
+                    if (key === 'firDateAndTime' && value) {
                         value = formatDate(value);
                     }
 
-                    value = value || "Detail not available";
-                    policeRows.push(createStandardRow(label, value));
+                    // Only add row if value is available and not a placeholder
+                    if (value && String(value).trim() !== "" && String(value).trim() !== "Detail not available" && String(value).trim() !== "N/A" && String(value).trim() !== "-") {
+                        policeRows.push(createStandardRow(label, value));
+                    }
                 }
 
                 children.push(new Table({ rows: policeRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
@@ -1743,7 +1727,7 @@ export const useODCaseDocx = () => {
                     }
                 },
                 {
-                    title: "Spot Visit Photos",
+                    title: "Spot Photos",
                     data: data.spotVisit || {},
                     fields: {
                         spotImages: "Spot Photos",
@@ -1888,7 +1872,7 @@ export const useODCaseDocx = () => {
                             const isGPSTimeline = section.title === "GPS Timeline";
                             const isVerification = fieldKey === "rcverification" || fieldKey === "dlverification";
                             const isStandardDoc = ["rcPhoto", "dlPhoto", "insuredPanCardPhoto", "insuredAadharCardPhoto"].includes(fieldKey);
-                            const squareLayoutTitles = ["Spot Visit Photos", "Garage Visit Photos", "Witness Photos & Documents"];
+                            const squareLayoutTitles = ["Spot Photos", "Garage Visit Photos", "Witness Photos & Documents"];
                             const isSquareLayout = squareLayoutTitles.includes(section.title);
 
                             const columns = isVerification ? 1 : (isGPSTimeline ? 3 : 2);
@@ -1953,19 +1937,7 @@ export const useODCaseDocx = () => {
                                                     }),
                                                 ],
                                                 alignment: horizontalAlign,
-                                                spacing: { after: 100 },
-                                            }),
-                                            new Paragraph({
-                                                children: [
-                                                    new TextRun({
-                                                        text: img.label,
-                                                        size: 18,
-                                                        italic: true,
-                                                        color: "000000",
-                                                    }),
-                                                ],
-                                                alignment: horizontalAlign,
-                                                spacing: { after: 200 },
+                                                spacing: { after: 400 },
                                             })
                                         ],
                                         width: { size: Math.floor(100 / columns), type: WidthType.PERCENTAGE },

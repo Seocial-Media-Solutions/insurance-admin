@@ -230,7 +230,7 @@ export const useTheftCaseDocx = () => {
 
             children.push(
                 new Paragraph({
-                    children: [new TextRun({ text: date })],
+                    children: [new TextRun({ text: `Dt. ${date}` })],
                     alignment: AlignmentType.RIGHT,
                     spacing: { after: 200 },
                 }),
@@ -799,12 +799,8 @@ export const useTheftCaseDocx = () => {
                         children: [
                             new Paragraph({
                                 children: [new ImageRun({ data: img.uint8Array, transformation: { width, height } })],
-                                alignment: AlignmentType.CENTER
-                            }),
-                            new Paragraph({
-                                children: [new TextRun({ text: img.label || img.title || `Image ${idx + 1}` })],
                                 alignment: AlignmentType.CENTER,
-                                spacing: { after: 200 }
+                                spacing: { after: 400 }
                             })
                         ],
                         width: { size: 100 / columns, type: WidthType.PERCENTAGE },
