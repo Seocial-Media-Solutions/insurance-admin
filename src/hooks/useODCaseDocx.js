@@ -350,15 +350,15 @@ export const useODCaseDocx = () => {
                 for (const [key, label] of Object.entries(claimFields)) {
                     let value = claimSummary[key];
 
-                    // Policy details now pulled from special section
+                    // Policy details now pulled from special section with fallback
                     if (key === 'policyNo') {
-                        value = policyData.policyNo || data.policyNo || "";
+                        value = policyData.policyNo || data.policyNo || value || "";
                     } else if (key === 'policyDuration') {
-                        value = policyData.policyPeriod || data.policyPeriod || "";
+                        value = policyData.policyPeriod || data.policyPeriod || value || "";
                     } else if (key === 'dateOfLossAndTime') {
                         value = formatDateTime(meetingData.dateAndTimeOfLoss || claimSummary.dateOfLossAndTime);
                     } else if (key === 'firDetailsDate') {
-                        value = formatDate(policeData.firDateAndTime);
+                        value = policeData.firDateAndTime ? formatDate(policeData.firDateAndTime) : (value || "");
                     }
 
                     claimSummaryRows.push(createStandardRow(label, value));
@@ -1498,27 +1498,8 @@ export const useODCaseDocx = () => {
             // Special Section: Police record details Table
             const policeData = data.policeRecordDetails || {};
             if (policeData && Object.keys(policeData).length > 0) {
-                children.push(
-                    new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: "  Police record details  ",
-                                bold: true,
-                                size: 32,
-                                shading: {
-                                    type: "clear",
-                                    fill: "D9D9D9",
-                                }
-                            })
-                        ],
-                        alignment: AlignmentType.CENTER,
-                        spacing: { before: 400, after: 200 },
-                    })
-                );
-
                 const policeRows = [];
 
-                // Police Record Fields
                 // Police Record Fields
                 const policeFields = {
                     policeStationName: "Name of Police Station",
@@ -1549,7 +1530,28 @@ export const useODCaseDocx = () => {
                     }
                 }
 
-                children.push(new Table({ rows: policeRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                // Only create table and header if there are rows
+                if (policeRows.length > 0) {
+                    children.push(
+                        new Paragraph({
+                            children: [
+                                new TextRun({
+                                    text: "  Police record details  ",
+                                    bold: true,
+                                    size: 32,
+                                    shading: {
+                                        type: "clear",
+                                        fill: "D9D9D9",
+                                    }
+                                })
+                            ],
+                            alignment: AlignmentType.CENTER,
+                            spacing: { before: 400, after: 200 },
+                        })
+                    );
+
+                    children.push(new Table({ rows: policeRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
+                }
             }
 
             // Special Section: Observation, Findings & Conclusion
