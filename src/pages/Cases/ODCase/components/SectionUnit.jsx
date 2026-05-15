@@ -364,7 +364,9 @@ function SectionUnit({
                 validityNonTransport: "",
                 validityTransport: "",
                 driverAddress: "",
-                dlStatus: ""
+                dlStatus: "",
+                dlExtract: "",
+                photos: []
             };
             updateList([...list, newHolder]);
         };
@@ -380,18 +382,50 @@ function SectionUnit({
             updateList(newList);
         };
 
-        const handleDLSubmit = () => withSaving(() => toast.promise(
-            updateSection({
-                caseId,
-                sectionPath: apiPath,
-                formData: list,
-            }),
-            {
-                loading: "Saving DL Particulars...",
-                success: "DL Particulars saved successfully!",
-                error: (err) => err.response?.data?.message || err.message || "Failed to save DL Particulars",
+        const handleDLSubmit = () => withSaving(async () => {
+            const hasNewFiles = list.some(h => Array.isArray(h.photos) && h.photos.some(img => img instanceof File));
+
+            let formData;
+
+            if (hasNewFiles) {
+                const fd = new FormData();
+
+                // Build list metadata (without File objects)
+                const listMeta = list.map(h => ({
+                    ...h,
+                    photos: Array.isArray(h.photos) ? h.photos.filter(img => !(img instanceof File)) : []
+                }));
+                fd.append("data", JSON.stringify(listMeta));
+
+                // Append image files per holder
+                list.forEach((holder, idx) => {
+                    if (Array.isArray(holder.photos)) {
+                        holder.photos.forEach((img) => {
+                            if (img instanceof File) {
+                                fd.append(`holders_${idx}_photos`, img);
+                            }
+                        });
+                    }
+                });
+
+                formData = fd;
+            } else {
+                formData = list;
             }
-        ));
+
+            return toast.promise(
+                updateSection({
+                    caseId,
+                    sectionPath: apiPath,
+                    formData,
+                }),
+                {
+                    loading: "Saving DL Particulars...",
+                    success: "DL Particulars saved successfully!",
+                    error: (err) => err.response?.data?.message || err.message || "Failed to save DL Particulars",
+                }
+            );
+        });
 
         return (
             <div id={id} className={`scroll-mt-48 border rounded-xl bg-white shadow-sm mb-8 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-100' : ''}`}>
@@ -449,7 +483,8 @@ function SectionUnit({
                                         { key: "validityNonTransport", label: "Validity (Non-Transport)", type: "date" },
                                         { key: "validityTransport", label: "Validity (Transport)", type: "date" },
                                         { key: "driverAddress", label: "Driver Address" },
-                                        { key: "dlStatus", label: "DL Status" }
+                                        { key: "dlStatus", label: "DL Status" },
+                                        { key: "dlExtract", label: "DL Extract" }
                                     ].map((f) => (
                                         <div key={f.key} className="col-span-1">
                                             <label className="block text-sm font-semibold text-gray-700 mb-1">{f.label}</label>
@@ -462,6 +497,32 @@ function SectionUnit({
                                             />
                                         </div>
                                     ))}
+                                </div>
+                                <div className="p-4 border-t">
+                                    <DragDropUpload
+                                        id={`dl-holder-${idx}-photos`}
+                                        accept="image/*"
+                                        multiple={true}
+                                        value={holder.photos || []}
+                                        isOptional={true}
+                                        title={`${holder.nameOfDlHolder || `Holder ${idx + 1}`}'s Photos`}
+                                        onChange={(e) => {
+                                            const files = e.target.files;
+                                            const newFiles = files ? Array.from(files) : [];
+                                            updateHolder(idx, "photos", [...(holder.photos || []), ...newFiles]);
+                                        }}
+                                    />
+                                    {holder.photos && holder.photos.length > 0 && holder.photos.some(img => !(img instanceof File)) && (
+                                        <ImageGallery
+                                            images={holder.photos.filter(img => !(img instanceof File))}
+                                            title={`${holder.nameOfDlHolder || `Holder ${idx + 1}`}'s Photos`}
+                                            caseId={caseId}
+                                            sectionPath={apiPath}
+                                            fieldName={`${idx}.photos`}
+                                            setForm={setForm}
+                                            sectionKey={sectionKey}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}

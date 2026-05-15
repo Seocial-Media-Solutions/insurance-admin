@@ -20,11 +20,12 @@ const formatValue = (val) => {
 // Helper: Format Dates
 const formatDate = (dateString) => {
   if (!dateString) return "__________";
-  return new Date(dateString).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "__________";
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 // Helper: Format Date Time (YYYY-MM-DD at hh:mm am/pm)

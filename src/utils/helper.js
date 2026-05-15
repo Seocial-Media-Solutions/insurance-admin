@@ -9,7 +9,7 @@ export const formatDate = (date) => {
   
   // If it's already a string in DD.MM.YYYY or DD/MM/YYYY format, return it or parse it
   if (typeof dateValue === 'string' && /^\d{2}[./-]\d{2}[./-]\d{4}$/.test(dateValue)) {
-      return dateValue.replace(/[/]/g, '.').replace(/-/g, '.');
+      return dateValue.replace(/[.]/g, '/').replace(/-/g, '/');
   }
 
   const d = new Date(dateValue);
@@ -18,7 +18,7 @@ export const formatDate = (date) => {
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
+  return `${day}/${month}/${year}`;
 };
 
 // Helper function to format date range "YYYY-MM-DD to YYYY-MM-DD" -> "DD.MM.YYYY to DD.MM.YYYY"
@@ -45,7 +45,7 @@ export const formatDateTime = (date) => {
 
   // If it's already a string in a readable format, return it or clean it
   if (typeof dateValue === 'string' && (dateValue.includes(".") || dateValue.includes("/") || dateValue.includes(" at "))) {
-      return dateValue.replace(/[/]/g, '.');
+      return dateValue.replace(/[.]/g, '/');
   }
 
   const d = new Date(dateValue);
@@ -57,7 +57,7 @@ export const formatDateTime = (date) => {
   const hours = String(d.getHours()).padStart(2, "0");
   const minutes = String(d.getMinutes()).padStart(2, "0");
 
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
 };
 
 // Helper function to get current date
@@ -66,7 +66,7 @@ export const getCurrentDate = () => {
   const day = String(d.getDate()).padStart(2, "0");
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
-  return `${day}.${month}.${year}`;
+  return `${day}/${month}/${year}`;
 };
 
 // Helper function to convert an image URL to a base64 string with compression

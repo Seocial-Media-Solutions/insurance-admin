@@ -33,7 +33,9 @@ const ImageGallery = ({ images, title, caseId, sectionPath, fieldName, setForm, 
                             if (setForm && sectionKey) {
                                 setForm(prev => {
                                     const newForm = { ...prev };
-                                    const section = { ...(newForm[sectionKey] || {}) };
+                                    const section = Array.isArray(newForm[sectionKey]) 
+                                        ? [...newForm[sectionKey]] 
+                                        : { ...(newForm[sectionKey] || {}) };
                                     
                                     // Handle nested fieldNames like "persons.0.images"
                                     if (fieldName.includes('.')) {

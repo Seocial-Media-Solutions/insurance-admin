@@ -636,7 +636,7 @@ export const useODCaseDocx = () => {
 
                     let val = vehicleDetails[key];
                     if ((key === 'registrationDate' || key === 'dateOfPurchase') && val) {
-                        val = formatDate(val).replace(/\./g, '/');
+                        val = formatDate(val);
                     }
                     vehicleRows.push(createStandardRow(label, val));
                 }
@@ -720,7 +720,8 @@ export const useODCaseDocx = () => {
                     })
                 );
 
-                dlParticulars.forEach((dl, index) => {
+                for (let index = 0; index < dlParticulars.length; index++) {
+                    const dl = dlParticulars[index];
                     if (index > 0) {
                         children.push(
                             new Paragraph({
@@ -740,6 +741,7 @@ export const useODCaseDocx = () => {
                         validityTransport: "Validity details of Transport",
                         driverAddress: "Address",
                         dlStatus: "DL Status (Active/Expired)",
+                        dlExtract: "DL Extract",
                     };
 
                     for (const [key, label] of Object.entries(dlFields)) {
@@ -747,7 +749,39 @@ export const useODCaseDocx = () => {
                     }
 
                     children.push(new Table({ rows: dlRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
-                });
+
+                    // Render photos for this holder
+                    if (Array.isArray(dl.photos) && dl.photos.length > 0) {
+                        for (const imgItem of dl.photos) {
+                            const imgUrl = typeof imgItem === "string" ? imgItem : (imgItem?.imageUrl || imgItem?.url || imgItem?.secure_url);
+                            if (!imgUrl) continue;
+
+                            try {
+                                const base64 = await convertImageToBase64(imgUrl);
+                                if (base64) {
+                                    const binaryString = atob(base64);
+                                    const binaryData = new Uint8Array(binaryString.length);
+                                    for (let j = 0; j < binaryString.length; j++) {
+                                        binaryData[j] = binaryString.charCodeAt(j);
+                                    }
+
+                                    children.push(new Paragraph({
+                                        children: [
+                                            new ImageRun({
+                                                data: binaryData,
+                                                transformation: { width: 300, height: 200 },
+                                            }),
+                                        ],
+                                        alignment: AlignmentType.CENTER,
+                                        spacing: { before: 200, after: 200 },
+                                    }));
+                                }
+                            } catch (e) {
+                                console.error(`Error processing image in dlParticulars`, e);
+                            }
+                        }
+                    }
+                }
             }
 
             // Special Section: Meeting Details Table
@@ -1469,11 +1503,9 @@ export const useODCaseDocx = () => {
 
                     garageData.towingVendorDetails.forEach((t, idx) => {
                         if (!t) return;
-                        if (idx > 0) children.push(new Paragraph({ spacing: { before: 200 } }));
-
                         children.push(new Paragraph({
                             children: [new TextRun({ text: `Towing Vendor ${idx + 1}`, bold: true, size: 24, underline: {} })],
-                            spacing: { after: 100 }
+                            spacing: { before: idx > 0 ? 200 : 0, after: 100 }
                         }));
 
                         const tRows = [
@@ -1546,7 +1578,7 @@ export const useODCaseDocx = () => {
                                 })
                             ],
                             alignment: AlignmentType.CENTER,
-                            spacing: { before: 400, after: 200 },
+                            spacing: { before: 200, after: 200 },
                         })
                     );
 
@@ -1897,124 +1929,36 @@ export const useODCaseDocx = () => {
                                 imgHeight = 300;
                             }
 
-                            let currentTableRows = [];
-
-                            for (let i = 0; i < validImages.length; i += columns) {
-                                const imagesInRow = validImages.slice(i, i + columns);
-                                const cells = imagesInRow.map((img, cellIdx) => {
-                                    // Robust base64 to Uint8Array conversion
-                                    let binaryData;
-                                    try {
-                                        const binaryString = atob(img.base64);
-                                        binaryData = new Uint8Array(binaryString.length);
-                                        for (let j = 0; j < binaryString.length; j++) {
-                                            binaryData[j] = binaryString.charCodeAt(j);
-                                        }
-                                    } catch (err) {
-                                        console.error("Binary conversion failed", err);
-                                        return new TableCell({ children: [] });
+                            for (const img of validImages) {
+                                // Robust base64 to Uint8Array conversion
+                                let binaryData;
+                                try {
+                                    const binaryString = atob(img.base64);
+                                    binaryData = new Uint8Array(binaryString.length);
+                                    for (let j = 0; j < binaryString.length; j++) {
+                                        binaryData[j] = binaryString.charCodeAt(j);
                                     }
-
-                                    const currentIsDocument = isStandardDoc || img.isDocument;
-
-                                    const horizontalAlign = currentIsDocument
-                                        ? (cellIdx === 0 ? AlignmentType.RIGHT : AlignmentType.LEFT)
-                                        : AlignmentType.CENTER;
-
-                                    // Adjust sizes if it's a document but in a square layout section
-                                    let currentWidth = imgWidth;
-                                    let currentHeight = imgHeight;
-                                    if (img.isDocument) {
-                                        currentWidth = 316;
-                                        currentHeight = 200;
-                                    }
-
-                                    return new TableCell({
-                                        children: [
-                                            new Paragraph({
-                                                children: [
-                                                    new ImageRun({
-                                                        data: binaryData,
-                                                        transformation: { width: currentWidth, height: currentHeight },
-                                                    }),
-                                                ],
-                                                alignment: horizontalAlign,
-                                                spacing: { after: 400 },
-                                            })
-                                        ],
-                                        width: { size: Math.floor(100 / columns), type: WidthType.PERCENTAGE },
-                                        borders: {
-                                            top: { style: BorderStyle.NIL },
-                                            bottom: { style: BorderStyle.NIL },
-                                            left: { style: BorderStyle.NIL },
-                                            right: { style: BorderStyle.NIL }
-                                        }
-                                    });
-                                });
-
-                                // Fill remaining cell if odd number of images
-                                while (cells.length < columns) {
-                                    cells.push(new TableCell({
-                                        children: [],
-                                        width: { size: Math.floor(100 / columns), type: WidthType.PERCENTAGE },
-                                        borders: {
-                                            top: { style: BorderStyle.NIL },
-                                            bottom: { style: BorderStyle.NIL },
-                                            left: { style: BorderStyle.NIL },
-                                            right: { style: BorderStyle.NIL }
-                                        }
-                                    }));
+                                } catch (err) {
+                                    console.error("Binary conversion failed", err);
+                                    continue;
                                 }
 
-                                currentTableRows.push(new TableRow({ children: cells }));
-
-                                // Pagination
-                                if (currentTableRows.length === maxRowsPerPage) {
-                                    children.push(new Table({
-                                        rows: currentTableRows,
-                                        width: { size: 100, type: WidthType.PERCENTAGE },
-                                        borders: {
-                                            top: { style: BorderStyle.NIL },
-                                            bottom: { style: BorderStyle.NIL },
-                                            left: { style: BorderStyle.NIL },
-                                            right: { style: BorderStyle.NIL },
-                                            insideHorizontal: { style: BorderStyle.NIL },
-                                            insideVertical: { style: BorderStyle.NIL }
-                                        }
-                                    }));
-                                    currentTableRows = [];
-                                    if (i + columns < validImages.length) {
-                                        children.push(new Paragraph({ children: [new PageBreak()] }));
-                                        // Also add sub-label again on the new page
-                                        children.push(
-                                            new Paragraph({
-                                                children: [
-                                                    new TextRun({
-                                                        text: `${fieldLabel} (Continued)`,
-                                                        bold: true,
-                                                        size: 24,
-                                                        color: "333333",
-                                                    }),
-                                                ],
-                                                spacing: { before: 200, after: 100 },
-                                            })
-                                        );
-                                    }
+                                let currentWidth = imgWidth;
+                                let currentHeight = imgHeight;
+                                if (img.isDocument) {
+                                    currentWidth = 316;
+                                    currentHeight = 200;
                                 }
-                            }
 
-                            if (currentTableRows.length > 0) {
-                                children.push(new Table({
-                                    rows: currentTableRows,
-                                    width: { size: 100, type: WidthType.PERCENTAGE },
-                                    borders: {
-                                        top: { style: BorderStyle.NIL },
-                                        bottom: { style: BorderStyle.NIL },
-                                        left: { style: BorderStyle.NIL },
-                                        right: { style: BorderStyle.NIL },
-                                        insideHorizontal: { style: BorderStyle.NIL },
-                                        insideVertical: { style: BorderStyle.NIL }
-                                    }
+                                children.push(new Paragraph({
+                                    children: [
+                                        new ImageRun({
+                                            data: binaryData,
+                                            transformation: { width: currentWidth, height: currentHeight },
+                                        }),
+                                    ],
+                                    alignment: AlignmentType.CENTER,
+                                    spacing: { after: 400 },
                                 }));
                             }
                         }
