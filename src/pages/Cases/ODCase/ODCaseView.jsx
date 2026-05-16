@@ -585,6 +585,60 @@ const GarageVisitDetails = ({ data }) => {
   );
 };
 
+// - DL Particulars
+const DLParticularsDetails = ({ data }) => {
+  if (!data || !Array.isArray(data) || data.length === 0) return null;
+  return (
+    <div className="bg-white max-w-5xl mx-auto mb-8 text-gray-900 font-sans shadow-sm">
+      <div className="border-2 border-b-0 border-black bg-white p-2 text-center">
+        <h2 className="text-lg md:text-xl font-bold uppercase text-black">
+          DL Particulars
+        </h2>
+      </div>
+      <div className="border-2 border-black">
+        {data.map((holder, idx) => (
+          <div key={idx} className={idx > 0 ? "border-t-2 border-black" : ""}>
+            {data.length > 1 && (
+              <div className="bg-gray-100 p-2 font-bold text-center border-b border-black">
+                DL Holder #{idx + 1}
+              </div>
+            )}
+            <table className="w-full border-collapse">
+              <tbody>
+                <TableRow label="Name of DL Holder" value={holder.nameOfDlHolder} />
+                <TableRow label="DL Number" value={holder.dlNumber} />
+                <TableRow label="Date of Birth" value={holder.driverDob} />
+                <TableRow label="Issuing Authority (RTO)" value={holder.rtoName} />
+                <TableRow label="Validity details MCWG & LMV (NT)" value={holder.validityNonTransport} />
+                <TableRow label="Validity details of Transport" value={holder.validityTransport} />
+                <TableRow label="Address" value={holder.driverAddress} />
+                <TableRow label="DL Status (Active/Expired)" value={holder.dlStatus} />
+                <TableRow label="DL Extract" value={holder.dlExtract} />
+                {holder.photos && holder.photos.length > 0 && (
+                  <tr>
+                    <td colSpan="2" className="p-4">
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {holder.photos.map((img, imgIdx) => (
+                          <img 
+                            key={imgIdx}
+                            src={img.imageUrl || img.url || img.secure_url || img}
+                            alt={`DL Holder ${idx + 1} Photo ${imgIdx + 1}`}
+                            className="max-h-48 rounded shadow-md border border-gray-200"
+                          />
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // - Police Records
 const PoliceRecordDetails = ({ data }) => {
   if (!data) return null;
@@ -1052,6 +1106,7 @@ export default function ODCaseView() {
 
           {/* 4. Garage & Police Sections */}
           <GarageVisitDetails data={data.garageVisit} />
+          <DLParticularsDetails data={data.dlParticulars} />
           <PoliceRecordDetails data={data.policeRecordDetails} />
 
           {/* 5. Findings & Observations */}
