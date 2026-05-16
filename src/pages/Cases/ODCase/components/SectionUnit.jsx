@@ -503,13 +503,15 @@ function SectionUnit({
                                         id={`dl-holder-${idx}-photos`}
                                         accept="image/*"
                                         multiple={true}
-                                        value={holder.photos || []}
+                                        value={(holder.photos || []).filter(img => img instanceof File)}
                                         isOptional={true}
                                         title={`${holder.nameOfDlHolder || `Holder ${idx + 1}`}'s Photos`}
                                         onChange={(e) => {
                                             const files = e.target.files;
                                             const newFiles = files ? Array.from(files) : [];
-                                            updateHolder(idx, "photos", [...(holder.photos || []), ...newFiles]);
+                                            // Keep Cloudinary images, replace File objects with the new list from DragDropUpload
+                                            const existingCloudinary = (holder.photos || []).filter(img => !(img instanceof File));
+                                            updateHolder(idx, "photos", [...existingCloudinary, ...newFiles]);
                                         }}
                                     />
                                     {holder.photos && holder.photos.length > 0 && holder.photos.some(img => !(img instanceof File)) && (

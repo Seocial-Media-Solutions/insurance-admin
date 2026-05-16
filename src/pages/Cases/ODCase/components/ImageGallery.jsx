@@ -30,42 +30,43 @@ const ImageGallery = ({ images, title, caseId, sectionPath, fieldName, setForm, 
                     {
                         onSuccess: () => {
                             // Update local state if setForm is provided
-                            if (setForm && sectionKey) {
-                                setForm(prev => {
-                                    const newForm = { ...prev };
-                                    const section = Array.isArray(newForm[sectionKey]) 
-                                        ? [...newForm[sectionKey]] 
-                                        : { ...(newForm[sectionKey] || {}) };
-                                    
-                                    // Handle nested fieldNames like "persons.0.images"
-                                    if (fieldName.includes('.')) {
-                                        const parts = fieldName.split('.');
-                                        let current = section;
-                                        for (let i = 0; i < parts.length - 1; i++) {
-                                            const part = parts[i];
-                                            if (Array.isArray(current)) {
-                                                current = current[parseInt(part, 10)];
-                                            } else {
-                                                current = current[part];
+                                if (setForm && sectionKey) {
+                                    setForm(prev => {
+                                        // Deep clone the whole form to avoid mutation
+                                        const newForm = JSON.parse(JSON.stringify(prev));
+                                        
+                                        // Get the target section (could be array or object)
+                                        let section = newForm[sectionKey];
+                                        if (!section) return prev;
+
+                                        // Handle nested fieldNames like "0.photos" or "persons.0.images"
+                                        if (fieldName.includes('.')) {
+                                            const parts = fieldName.split('.');
+                                            let current = section;
+                                            for (let i = 0; i < parts.length - 1; i++) {
+                                                const part = parts[i];
+                                                if (Array.isArray(current)) {
+                                                    current = current[parseInt(part, 10)];
+                                                } else {
+                                                    current = current[part];
+                                                }
+                                            }
+                                            const lastPart = parts[parts.length - 1];
+                                            if (current && Array.isArray(current[lastPart])) {
+                                                current[lastPart] = current[lastPart].filter(img => img.publicId !== publicId);
+                                            }
+                                        } else {
+                                            // Simple field
+                                            if (Array.isArray(section[fieldName])) {
+                                                section[fieldName] = section[fieldName].filter(img => img.publicId !== publicId);
+                                            } else if (section[fieldName] && section[fieldName].publicId === publicId) {
+                                                section[fieldName] = null;
                                             }
                                         }
-                                        const lastPart = parts[parts.length - 1];
-                                        if (Array.isArray(current[lastPart])) {
-                                            current[lastPart] = current[lastPart].filter(img => img.publicId !== publicId);
-                                        }
-                                    } else {
-                                        // Simple field
-                                        if (Array.isArray(section[fieldName])) {
-                                            section[fieldName] = section[fieldName].filter(img => img.publicId !== publicId);
-                                        } else if (section[fieldName] && section[fieldName].publicId === publicId) {
-                                            section[fieldName] = null;
-                                        }
-                                    }
 
-                                    newForm[sectionKey] = section;
-                                    return newForm;
-                                });
-                            }
+                                        return newForm;
+                                    });
+                                }
                         },
                         onSettled: () => {
                             setDeletingId(null);
