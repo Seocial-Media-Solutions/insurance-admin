@@ -750,7 +750,7 @@ export const useODCaseDocx = () => {
 
                     children.push(new Table({ rows: dlRows, width: { size: 100, type: WidthType.PERCENTAGE } }));
 
-                    // Render photos for this holder
+                    // Render photos for this holder INLINE (as requested)
                     if (Array.isArray(dl.photos) && dl.photos.length > 0) {
                         for (const imgItem of dl.photos) {
                             const imgUrl = typeof imgItem === "string" ? imgItem : (imgItem?.imageUrl || imgItem?.url || imgItem?.secure_url);
@@ -759,6 +759,7 @@ export const useODCaseDocx = () => {
                             try {
                                 const base64 = await convertImageToBase64(imgUrl);
                                 if (base64) {
+                                    // Prepare binary data for docx
                                     const binaryString = atob(base64);
                                     const binaryData = new Uint8Array(binaryString.length);
                                     for (let j = 0; j < binaryString.length; j++) {
@@ -769,7 +770,7 @@ export const useODCaseDocx = () => {
                                         children: [
                                             new ImageRun({
                                                 data: binaryData,
-                                                transformation: { width: 300, height: 200 },
+                                                transformation: { width: 316, height: 200 }, // Standard size
                                             }),
                                         ],
                                         alignment: AlignmentType.CENTER,
@@ -777,7 +778,7 @@ export const useODCaseDocx = () => {
                                     }));
                                 }
                             } catch (e) {
-                                console.error(`Error processing image in dlParticulars`, e);
+                                console.error(`Error processing inline image for DL holder ${index}`, e);
                             }
                         }
                     }
@@ -1761,6 +1762,20 @@ export const useODCaseDocx = () => {
                     }
                 },
                 {
+                    title: "DL Holder Photos",
+                    data: data.dlParticulars?.length > 0 ? {
+                        allDlPhotos: data.dlParticulars.flatMap(h =>
+                            (Array.isArray(h.photos) ? h.photos : []).map(img => ({
+                                imageUrl: typeof img === 'string' ? img : img?.imageUrl || img?.url || img?.secure_url,
+                                title: `${h.nameOfDlHolder || 'Holder'}'s DL Photo`
+                            }))
+                        )
+                    } : {},
+                    fields: {
+                        allDlPhotos: "DL Holder Photos",
+                    }
+                },
+                {
                     title: "Spot Photos",
                     data: data.spotVisit || {},
                     fields: {
@@ -1905,7 +1920,7 @@ export const useODCaseDocx = () => {
 
                             const isGPSTimeline = section.title === "GPS Timeline";
                             const isVerification = fieldKey === "rcverification" || fieldKey === "dlverification";
-                            const isStandardDoc = ["rcPhoto", "dlPhoto", "insuredPanCardPhoto", "insuredAadharCardPhoto"].includes(fieldKey);
+                            const isStandardDoc = ["rcPhoto", "dlPhoto", "insuredPanCardPhoto", "insuredAadharCardPhoto", "allDlPhotos"].includes(fieldKey);
                             const squareLayoutTitles = ["Spot Photos", "Garage Visit Photos", "Witness Photos & Documents"];
                             const isSquareLayout = squareLayoutTitles.includes(section.title);
 
